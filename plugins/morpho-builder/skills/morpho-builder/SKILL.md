@@ -5,6 +5,19 @@ description: Use when building applications, bots, or integrations that interact
 
 # Morpho Builder Skill
 
+> **⚠️ EXPERIMENTAL BETA - CRITICAL SAFETY NOTICE**
+> 
+> This skill helps generate code for Morpho protocol integrations. The generated code is experimental and may contain errors.
+> 
+> **MANDATORY PRECAUTIONS:**
+> - **Audit all generated code** before production use
+> - **Verify all contract addresses and function calls**
+> - **Test extensively on testnets** before mainnet deployment
+> - **Never store private keys in code**
+> - **Implement proper error handling and validation**
+> - Generated code is provided "as is" without warranty
+> - Users are fully responsible for code review and security
+
 Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
 ## Protocol Overview

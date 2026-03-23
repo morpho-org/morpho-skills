@@ -12,6 +12,15 @@ description: >
 
 # morpho-cli
 
+> **⚠️ EXPERIMENTAL BETA - USE AT YOUR OWN RISK**
+> 
+> This skill generates unsigned transactions for the Morpho protocol. Always:
+> - **Thoroughly review ALL transaction parameters before signing**
+> - **Verify addresses, amounts, and operation types independently**
+> - **Never blindly trust AI-generated transactions**
+> - Test on testnets first when possible
+> - This software is provided "as is" without warranty
+
 Query Morpho protocol data and build unsigned transactions. All commands output JSON to stdout. No private keys needed.
 
 ```bash
