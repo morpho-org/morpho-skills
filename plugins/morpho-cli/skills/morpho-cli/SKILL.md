@@ -29,9 +29,9 @@ Always use `@latest`. Supported chains: `base`, `ethereum`. Every command requir
 
 ```bash
 # Read — query protocol state
-bunx @morpho-agents/cli@latest query-vaults    --chain base [--asset-symbol USDC] [--sort apy_desc] [--limit 5]
+bunx @morpho-agents/cli@latest query-vaults    --chain base [--asset-symbol USDC] [--sort apy_desc] [--limit 5] [--skip 0] [--fields apyPct,tvl,feePct]
 bunx @morpho-agents/cli@latest get-vault       --chain base --address 0x...
-bunx @morpho-agents/cli@latest query-markets   --chain base [--loan-asset 0x...] [--collateral-asset 0x...] [--limit 10]
+bunx @morpho-agents/cli@latest query-markets   --chain base [--loan-asset 0x...] [--collateral-asset 0x...] [--sort-by supplyApy] [--sort-direction desc] [--limit 10] [--skip 0] [--fields supplyApy,totalSupply]
 bunx @morpho-agents/cli@latest get-market      --chain base --id 0x...
 bunx @morpho-agents/cli@latest get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
 bunx @morpho-agents/cli@latest get-position    --chain base --user-address 0x... [--vault-address 0x...]
@@ -59,15 +59,6 @@ Every write operation follows three steps. Never skip a step.
 2. **Simulate** — pass `transactions` and `analysisContext` from the prepare response to `simulate-transactions` as JSON strings. Returns `{success, gasUsed, results, analysis}` with pre/post state deltas.
 3. **Present** — show the summary, list of unsigned transactions, simulation results, and any warnings (low health factor, partial liquidity) in tabular format. Do not present if simulation fails — diagnose first.
 
-## Interpreting Responses
-
-| Field | Format | How to display |
-|-------|--------|----------------|
-| `apy` | Decimal string (`"0.0534"`) | Multiply by 100 → `5.34%` |
-| `tvl`, token amounts | Raw integer string | Divide by `10^asset.decimals`. USDC/USDT = 6, WETH/DAI = 18 |
-| Vault positions | Shares + asset values | Report both share count and asset equivalent |
-| Market positions | Supply, borrow, collateral | All raw units — convert using token decimals |
-
 ## Simulation Failures
 
 | Revert | Cause | What to do |
@@ -90,16 +81,6 @@ If `prepare-withdraw --amount max` returns a liquidity warning:
 2. **Never sign or broadcast** — unsigned payloads only
 3. **Watch health factor** for borrows — warn if below 1.1
 4. **Communicate liquidity constraints** clearly for partial withdrawals
-
-## Error Handling
-
-Errors go to stderr as JSON: `{"error": "<code>", "message": "<description>"}`.
-
-1. Read the error message — it tells you what's wrong
-2. Fix and retry if it's a parameter or chain issue
-3. Retry once for network errors, then report to user
-
-Do not fabricate data if a command fails. Tell the user what went wrong.
 
 ## Common Mistakes
 

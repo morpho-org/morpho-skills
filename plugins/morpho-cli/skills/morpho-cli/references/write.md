@@ -39,6 +39,7 @@ All `prepare-*` commands return the same `PreparedOperation` shape. `simulate-tr
     "chain": "base",
     "userAddress": "0x...",
     "vaultAddress": "0x...",
+    "marketId": "0x... (for market operations)",
     "assets": [
       { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base" }
     ],
@@ -53,13 +54,21 @@ All `prepare-*` commands return the same `PreparedOperation` shape. `simulate-tr
       "message": "Insufficient vault liquidity for full withdrawal",
       "code": "INSUFFICIENT_LIQUIDITY"
     }
-  ]
+  ],
+  "preview": {
+    "vault": {
+      "sharesReceived": "987654321",
+      "positionAssets": "1000000000",
+      "positionShares": "987654321"
+    }
+  }
 }
 ```
 
 ### Fields
 
-- **`operation`** — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"`
+- **`operation`** — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
+- **`chain`** — chain slug (`"base"` | `"ethereum"`)
 - **`summary`** — human-readable description of the operation
 - **`transactions`** — ordered array of unsigned transactions to sign and send
   - `to` — contract address
@@ -69,11 +78,31 @@ All `prepare-*` commands return the same `PreparedOperation` shape. `simulate-tr
   - `description` — what this transaction does
 - **`requirements`** — approvals/permits needed (already included in `transactions`)
   - `type` — `"approval"` | `"permit"` | `"permit2"` | `"unsupported"`
-  - For `"unsupported"`: includes `reason` and `notes` fields
+  - All types include `token` (address) and `spender` (address)
+  - `"approval"` / `"permit"` / `"permit2"`: include `amount` (string), and optionally `deadline` (string)
+  - `"unsupported"`: includes `reason` (string) and optionally `notes` (string)
 - **`analysisContext`** — pass this to `simulate-transactions` for pre/post state analysis
+  - `vaultAddress` — present for vault operations (optional)
+  - `marketId` — present for market operations (optional)
 - **`warnings`** — array of warnings (may be empty)
   - `level` — `"info"` | `"warning"` | `"error"`
+  - `message` — human-readable description
   - `code` — machine-readable code (optional)
+- **`preview`** — pre-computed position preview from SDK math (optional)
+  - **`vault`** — for vault operations (`deposit`, `withdraw`)
+    - `sharesReceived` — vault shares minted or burned (optional)
+    - `assetsReceived` — assets received, withdraw only (optional)
+    - `positionAssets` — total position value in assets after operation
+    - `positionShares` — total share balance after operation
+  - **`market`** — for market operations (`supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral`)
+    - `supplyAssets` — user supply in assets after operation
+    - `borrowAssets` — user borrow in assets after operation
+    - `collateral` — user collateral after operation
+    - `healthFactor` — health factor after operation (optional)
+    - `isHealthy` — whether position is above liquidation threshold (optional)
+    - `maxBorrowableAssets` — max additional borrowable in loan token assets (optional)
+    - `utilizationBefore` / `utilizationAfter` — market utilization before and after
+    - `borrowApyBefore` / `borrowApyAfter` — borrow APY before and after (optional)
 
 ## simulate-transactions
 
@@ -87,13 +116,33 @@ All `prepare-*` commands return the same `PreparedOperation` shape. `simulate-tr
       "transactionIndex": 0,
       "success": true,
       "gasUsed": "45000",
-      "returnData": "0x..."
+      "returnData": "0x...",
+      "logs": [
+        {
+          "address": "0x...",
+          "contract": "ERC20",
+          "eventName": "Approval",
+          "description": "Approved 1000 USDC to vault",
+          "args": { "owner": "0x...", "spender": "0x...", "value": "1000000000" },
+          "formatted": { "owner": "0x...", "spender": "0x...", "value": "1000 USDC" }
+        }
+      ]
     },
     {
       "transactionIndex": 1,
       "success": true,
       "gasUsed": "200000",
-      "returnData": "0x..."
+      "returnData": "0x...",
+      "logs": [
+        {
+          "address": "0x...",
+          "contract": "ERC4626",
+          "eventName": "Deposit",
+          "description": "Deposited 1000 USDC into vault",
+          "args": { "sender": "0x...", "owner": "0x...", "assets": "1000000000", "shares": "987654321" },
+          "formatted": { "sender": "0x...", "owner": "0x...", "assets": "1000 USDC", "shares": "987654321" }
+        }
+      ]
     }
   ],
   "morphoAnalysis": {
@@ -125,20 +174,47 @@ All `prepare-*` commands return the same `PreparedOperation` shape. `simulate-tr
 
 ### Fields
 
+- **`chain`** — chain slug (`"base"` | `"ethereum"`)
 - **`allSucceeded`** — `true` if every transaction executed without revert
 - **`totalGasUsed`** — sum of gas across all transactions
 - **`executionResults`** — per-transaction results
   - `success` — `false` if reverted
+  - `gasUsed` — gas used (`"0"` on failure)
+  - `returnData` — hex return data (optional, absent on failure)
   - `revertReason` — present only on failure (e.g., `"ERC4626ExceededMaxWithdraw"`)
-- **`morphoAnalysis`** — Morpho-specific pre/post state (only present if `analysisContext` was passed)
-  - **`vault`** — for vault operations: shares/assets before/after with deltas
+  - `logs` — decoded event logs (optional, present when `analysisContext` was passed and transaction emitted decodable events)
+    - `address` — emitting contract address
+    - `contract` — contract name (e.g., `"ERC20"`, `"ERC4626"`, `"Morpho"`)
+    - `eventName` — event name (e.g., `"Approval"`, `"Deposit"`, `"Supply"`)
+    - `description` — human-readable summary of the event
+    - `args` — raw event arguments as key-value pairs
+    - `formatted` — human-readable formatted arguments
+- **`morphoAnalysis`** — Morpho-specific pre/post state (optional, present when `analysisContext` was passed and all transactions succeeded)
+  - `protocol` — `"morpho"`
+  - `operation` — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
+  - **`vault`** — present for vault operations (`deposit`, `withdraw`)
+    - `vaultAddress` — vault contract address
+    - `sharesBefore` / `sharesAfter` — user's vault shares before and after
+    - `assetsBefore` / `assetsAfter` — user's asset value before and after
+    - `shareDelta` / `assetDelta` — change in shares and assets
     - `projectedApy` — estimated APY (optional)
-    - `marketStates` — per-market supply/borrow/utilization (optional)
-  - **`market`** — for market operations: supply/borrow before/after with deltas
+    - `marketStates` — per-market snapshots (optional), each with:
+      - `marketId`, `totalSupplyAssets`, `totalBorrowAssets`, `totalSupplyShares`, `totalBorrowShares`, `utilization`
+  - **`market`** — present for market operations (`supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral`)
+    - `marketId` — market unique key
+    - `supplyBefore` / `supplyAfter` — user's supply before and after
+    - `borrowBefore` / `borrowAfter` — user's borrow before and after
+    - `supplyDelta` / `borrowDelta` — change in supply and borrow
+    - `utilizationBefore` / `utilizationAfter` — market utilization change (optional)
+    - `borrowRateBefore` / `borrowRateAfter` — borrow rate change (optional)
+    - `borrowAPYBefore` / `borrowAPYAfter` — borrow APY change (optional)
     - `healthFactor` — post-operation health factor (optional)
     - `liquidationRisk` — risk level string (optional)
-    - `utilizationBefore` / `utilizationAfter` — market utilization change (optional)
-    - `borrowAPYBefore` / `borrowAPYAfter` — borrow rate change (optional)
-  - **`warnings`** — Morpho-specific warnings (health factor, liquidity)
-- **`postStateReads`** — decoded on-chain reads after simulation
-- **`warnings`** — top-level warnings
+  - **`warnings`** — Morpho-specific warnings, each with `level`, `message`, and optional `code`
+- **`postStateReads`** — decoded on-chain reads after simulation (optional, only when `analysisContext.postStateReads` was provided and all transactions succeeded)
+  - `label` — description of the read (e.g., `"vault shares"`)
+  - `raw` — raw hex return data (optional)
+  - `decoded` — decoded value as string (optional)
+  - `type` — Solidity type (e.g., `"uint256"`)
+  - `error` — error message if decoding failed (optional)
+- **`warnings`** — top-level warnings, each with `level` (`"info"` | `"warning"` | `"error"`), `message`, and optional `code`
