@@ -29,9 +29,9 @@ Supported chains: `base`, `ethereum`. Every command requires `--chain`.
 
 ```bash
 # Read — query protocol state
-morpho query-vaults    --chain base [--asset-symbol USDC] [--sort apy_desc] [--limit 5] [--skip 0] [--fields apyPct,tvl,feePct]
+morpho query-vaults    --chain base [--asset-symbol USDC] [--asset-address 0x...] [--sort apy_desc|apy_asc|tvl_desc|tvl_asc] [--limit 5] [--skip 0] [--fields address,name,symbol,apyPct,tvl,tvlUsd,feePct]
 morpho get-vault       --chain base --address 0x...
-morpho query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy] [--sort-direction desc] [--limit 10] [--skip 0] [--fields supplyApy,totalSupply]
+morpho query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
 morpho get-market      --chain base --id 0x...
 morpho get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
 morpho get-position    --chain base --user-address 0x... [--vault-address 0x...]
