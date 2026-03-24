@@ -15,7 +15,7 @@ description: >
 Query Morpho protocol data and build unsigned transactions. All commands output JSON to stdout. No private keys needed.
 
 ```bash
-bunx @morpho-agents/cli@latest <command> [options]
+morpho <command> [options]
 ```
 
 Always use `@latest`. Supported chains: `base`, `ethereum`. Every command requires `--chain`.
@@ -29,26 +29,26 @@ Always use `@latest`. Supported chains: `base`, `ethereum`. Every command requir
 
 ```bash
 # Read — query protocol state
-bunx @morpho-agents/cli@latest query-vaults    --chain base [--asset-symbol USDC] [--sort apy_desc] [--limit 5] [--skip 0] [--fields apyPct,tvl,feePct]
-bunx @morpho-agents/cli@latest get-vault       --chain base --address 0x...
-bunx @morpho-agents/cli@latest query-markets   --chain base [--loan-asset 0x...] [--collateral-asset 0x...] [--sort-by supplyApy] [--sort-direction desc] [--limit 10] [--skip 0] [--fields supplyApy,totalSupply]
-bunx @morpho-agents/cli@latest get-market      --chain base --id 0x...
-bunx @morpho-agents/cli@latest get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
-bunx @morpho-agents/cli@latest get-position    --chain base --user-address 0x... [--vault-address 0x...]
+morpho query-vaults    --chain base [--asset-symbol USDC] [--sort apy_desc] [--limit 5] [--skip 0] [--fields apyPct,tvl,feePct]
+morpho get-vault       --chain base --address 0x...
+morpho query-markets   --chain base [--loan-asset 0x...] [--collateral-asset 0x...] [--sort-by supplyApy] [--sort-direction desc] [--limit 10] [--skip 0] [--fields supplyApy,totalSupply]
+morpho get-market      --chain base --id 0x...
+morpho get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
+morpho get-position    --chain base --user-address 0x... [--vault-address 0x...]
 
 # Write — prepare unsigned transactions (amounts are human-readable, e.g. 1000 = 1000 USDC)
-bunx @morpho-agents/cli@latest prepare-deposit  --chain base --vault-address 0x... --user-address 0x... --amount 1000
-bunx @morpho-agents/cli@latest prepare-withdraw --chain base --vault-address 0x... --user-address 0x... --amount max
-bunx @morpho-agents/cli@latest prepare-supply   --chain base --market-id 0x... --user-address 0x... --amount 5000
-bunx @morpho-agents/cli@latest prepare-borrow   --chain base --market-id 0x... --user-address 0x... --collateral-amount 3000 --borrow-amount 1
-bunx @morpho-agents/cli@latest prepare-repay    --chain base --market-id 0x... --user-address 0x... --amount max
+morpho prepare-deposit  --chain base --vault-address 0x... --user-address 0x... --amount 1000
+morpho prepare-withdraw --chain base --vault-address 0x... --user-address 0x... --amount max
+morpho prepare-supply   --chain base --market-id 0x... --user-address 0x... --amount 5000
+morpho prepare-borrow   --chain base --market-id 0x... --user-address 0x... --collateral-amount 3000 --borrow-amount 1
+morpho prepare-repay    --chain base --market-id 0x... --user-address 0x... --amount max
 
 # Simulate — always simulate before presenting transactions to the user
-bunx @morpho-agents/cli@latest simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'
+morpho simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'
 
 # Utility
-bunx @morpho-agents/cli@latest health-check
-bunx @morpho-agents/cli@latest get-supported-chains
+morpho health-check
+morpho get-supported-chains
 ```
 
 ## Write Workflow: Prepare → Simulate → Present
