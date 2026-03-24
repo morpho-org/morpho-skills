@@ -90,6 +90,7 @@ All `prepare-*` commands return a `PrepareResult` envelope containing an `operat
 
 ### operation fields
 
+
 - **`operation`** — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
 - **`chain`** — chain slug (`"base"` | `"ethereum"`)
 - **`summary`** — human-readable description of the operation

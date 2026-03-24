@@ -60,6 +60,7 @@ Every write operation follows two steps. Simulation runs automatically inside `p
 
 Use `simulate-transactions` separately only for re-simulating with different parameters or simulating arbitrary transactions.
 
+
 ## Simulation Failures
 
 | Revert | Cause | What to do |
@@ -90,6 +91,7 @@ When a morpho CLI command fails, **stop and report the error to the user**. Do n
 - Fall back to alternative tools or APIs
 - Attempt to work around missing required options
 - Pipe output through `jq` or other filters — use the CLI's built-in flags (`--fields`, `--sort-by`, `--limit`, etc.) to shape the response
+
 
 ## Common Mistakes
 
