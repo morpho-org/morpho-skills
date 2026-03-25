@@ -37,11 +37,13 @@ morpho get-positions   --chain base --user-address 0x... [--vault-address 0x...]
 morpho get-position    --chain base --user-address 0x... [--vault-address 0x...]
 
 # Write — prepare unsigned transactions (simulation runs by default; add --no-simulate to skip)
-morpho prepare-deposit  --chain base --vault-address 0x... --user-address 0x... --amount 1000
-morpho prepare-withdraw --chain base --vault-address 0x... --user-address 0x... --amount max
-morpho prepare-supply   --chain base --market-id 0x... --user-address 0x... --amount 5000
-morpho prepare-borrow   --chain base --market-id 0x... --user-address 0x... --borrow-amount 1
-morpho prepare-repay    --chain base --market-id 0x... --user-address 0x... --amount max
+morpho prepare-deposit              --chain base --vault-address 0x... --user-address 0x... --amount 1000
+morpho prepare-withdraw             --chain base --vault-address 0x... --user-address 0x... --amount max
+morpho prepare-supply               --chain base --market-id 0x... --user-address 0x... --amount 5000
+morpho prepare-borrow               --chain base --market-id 0x... --user-address 0x... --borrow-amount 1
+morpho prepare-repay                --chain base --market-id 0x... --user-address 0x... --amount max
+morpho prepare-supply-collateral    --chain base --market-id 0x... --user-address 0x... --amount 5000
+morpho prepare-withdraw-collateral  --chain base --market-id 0x... --user-address 0x... --amount max
 
 # Simulate — standalone re-simulation or arbitrary transaction simulation
 morpho simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'

@@ -2,7 +2,7 @@
 
 All `prepare-*` commands return a `PrepareResult` envelope containing an `operation` (the prepared transaction data) and an optional `simulation` (transaction simulation results). Simulation runs by default; pass `--no-simulate` to skip. `simulate-transactions` returns a standalone `TransactionSimulationResult`.
 
-## prepare-deposit / prepare-withdraw / prepare-supply / prepare-borrow / prepare-repay
+## prepare-deposit / prepare-withdraw / prepare-supply / prepare-borrow / prepare-repay / prepare-supply-collateral / prepare-withdraw-collateral
 
 ```json
 {
