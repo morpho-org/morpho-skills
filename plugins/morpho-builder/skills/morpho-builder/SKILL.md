@@ -7,6 +7,12 @@ description: Use when building applications, bots, or integrations that interact
 
 Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
+## Agents
+
+**[morpho-security-reviewer](agents/morpho-security-reviewer.md)** — reviews Morpho integration code against protocol-specific safety checks.
+
+**When to invoke**: After implementation is complete but before presenting the final result to the user. Spawn the security reviewer agent to audit the code, then incorporate any CRITICAL or WARNING findings before showing the plan or deliverable.
+
 ## Protocol Overview
 
 **Morpho Blue** — isolated lending markets. Each market is defined by five parameters: loan token, collateral token, oracle, interest rate model (IRM), and liquidation LTV (LLTV). Markets are identified by a `MarketId` (hash of these parameters).
@@ -64,28 +70,7 @@ ABIs, fetch helpers, and viem augmentation.
 | `blueOracleAbi` | Morpho oracle |
 | `metaMorphoFactoryAbi` | Vault factory |
 
-```typescript
-import { blueAbi, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
-import { fetchMarket, fetchVault, fetchPosition } from "@morpho-org/blue-sdk-viem";
-```
-
-**Fetch helpers** — read on-chain state into SDK entity objects:
-
-```typescript
-import { createPublicClient, http } from "viem";
-import { base } from "viem/chains";
-import { fetchMarket, fetchVault, fetchPosition } from "@morpho-org/blue-sdk-viem";
-
-const client = createPublicClient({ chain: base, transport: http() });
-
-const market = await fetchMarket(marketId, client);
-const vault = await fetchVault(vaultAddress, client);
-const position = await fetchPosition(userAddress, marketId, client);
-
-// Entity methods
-const supplyAssets = market.toSupplyAssets(position.supplyShares);
-const shares = vault.toShares(depositAmount, "Down");
-```
+**Fetch helpers** — `fetchMarket`, `fetchVault`, `fetchPosition` read on-chain state into SDK entity objects. Entity methods include `market.toSupplyAssets()`, `vault.toShares()`, etc.
 
 ### Tier 2 — React / Wagmi (for frontend apps)
 
@@ -94,16 +79,6 @@ const shares = vault.toShares(depositAmount, "Down");
 React hooks wrapping the core SDK. Requires wagmi v2.
 
 Hooks: `useMarket`, `useVault`, `usePosition`, `useToken`, `useHolding`, `useMarkets`, `useVaults`, `usePositions`, `useTokens`, `useHoldings`, `useVaultMarketConfig`, `useVaultMarketConfigs`, `useVaultUser`, `useVaultUsers`, `useMarketParams`, plus plural variants.
-
-```typescript
-import { useVault, usePosition } from "@morpho-org/blue-sdk-wagmi";
-
-function VaultDisplay({ address }: { address: Address }) {
-  const vault = useVault({ address, chainId: 8453 });
-  const position = usePosition({ user: userAddress, marketId, chainId: 8453 });
-  // Returns the same SDK entity objects as Tier 1 fetch helpers
-}
-```
 
 #### `@morpho-org/simulation-sdk` + `@morpho-org/simulation-sdk-wagmi`
 
@@ -124,37 +99,7 @@ Client-side simulation of Morpho operations. `useSimulationState` hook provides 
 
 Endpoint: `https://api.morpho.org/graphql`
 
-### Vault Query
-
-```graphql
-query GetVaults($chainId: Int!, $first: Int, $skip: Int) {
-  vaults(where: { chainId_in: [$chainId] }, first: $first, skip: $skip) {
-    items {
-      address
-      name
-      symbol
-      asset { address, symbol, decimals }
-      state { netApy, totalAssets }
-    }
-  }
-}
-```
-
-### Market Query
-
-```graphql
-query GetMarkets($chainId: Int!) {
-  markets(where: { chainId_in: [$chainId] }) {
-    items {
-      uniqueKey
-      loanAsset { address, symbol, decimals }
-      collateralAsset { address, symbol, decimals }
-      state { supplyApy, borrowApy, utilization }
-      lltv
-    }
-  }
-}
-```
+Key queries: `vaults` (fields: address, name, symbol, asset, state.netApy, state.totalAssets) and `markets` (fields: uniqueKey, loanAsset, collateralAsset, state.supplyApy, state.borrowApy, state.utilization, lltv).
 
 ### Filters and Pagination
 
@@ -178,53 +123,76 @@ Paginate with `first` and `skip`. Iterate until `items.length < first`.
 
 ## Integration Approaches
 
-### Direct SDK (viem) — backends, scripts, bots
+- **Direct SDK (viem)** — for backends, scripts, bots. Use `createPublicClient` + `readContract`/`encodeFunctionData` with ABIs from `@morpho-org/blue-sdk-viem`.
+- **React (wagmi + SDK hooks)** — for frontend apps. Use `useVault`, `usePosition`, etc. from `@morpho-org/blue-sdk-wagmi` with `useSendTransaction` from wagmi.
 
-```typescript
-import { createPublicClient, http, parseUnits, encodeFunctionData } from "viem";
-import { base } from "viem/chains";
-import { metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
+## Protocol Mechanics
 
-const client = createPublicClient({ chain: base, transport: http() });
+### Dead Deposits (Inflation Attack Protection)
 
-// Read vault state
-const totalAssets = await client.readContract({
-  address: vaultAddress,
-  abi: metaMorphoAbi,
-  functionName: "totalAssets",
-});
+[Detailed reference](references/dead-deposits.md)
 
-// Prepare deposit calldata
-const depositData = encodeFunctionData({
-  abi: metaMorphoAbi,
-  functionName: "deposit",
-  args: [parseUnits("100", 6), userAddress], // USDC = 6 decimals
-});
-```
+ERC-4626 vaults are vulnerable to share-price inflation attacks on their first deposit. A **dead deposit** — minting shares to the burn address `0x000000000000000000000000000000000000dEaD` — must be the very first transaction on any new vault or market. Any user deposit before this enables the attack.
 
-### React (wagmi + SDK hooks) — frontend apps
+**Vault V2** — target shares depend on the asset's decimals:
 
-```typescript
-import { useVault } from "@morpho-org/blue-sdk-wagmi";
-import { useSendTransaction, useAccount } from "wagmi";
-import { encodeFunctionData, parseUnits } from "viem";
-import { metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
+Formula: `targetShares = max(1e9, 10^(6 + max(0, 18 - decimals)))` — 18-dec assets: 1e9, 8-dec: 1e16, 6-dec: 1e18. Call `vault.mint(TARGET_SHARES, 0xdead)`.
 
-function DepositForm({ vaultAddress }: { vaultAddress: Address }) {
-  const { address } = useAccount();
-  const vault = useVault({ address: vaultAddress, chainId: 8453 });
-  const { sendTransaction } = useSendTransaction();
+**Market V1** — fixed `1e9` shares regardless of decimals. Call `morpho.supply(marketParams, 0, 1e9, 0xdead, "")`.
 
-  const deposit = (amount: string) => {
-    const data = encodeFunctionData({
-      abi: metaMorphoAbi,
-      functionName: "deposit",
-      args: [parseUnits(amount, vault.data?.decimals ?? 18), address!],
-    });
-    sendTransaction({ to: vaultAddress, data });
-  };
-}
-```
+**Vault V1** — `1e9` shares standard; use `1e12` for tokens with fewer than 9 decimals.
+
+**Active-cap requirement**: When a Vault V2 references underlying markets/vaults, `0xdead` must also hold:
+- `1e9` supplyShares in each **Market V1** with non-zero vault caps
+- `1e9` shares in each **Vault V1** with non-zero caps or present in withdraw queues
+
+### AdaptiveCurveIRM
+
+[Detailed reference](references/adaptive-curve-irm.md)
+
+Morpho's approved IRM uses a two-pronged mechanism:
+1. **Curve** — instantly adjusts rates when utilization changes (e.g., 90% ↔ 0% scales rate ×4 or ÷4)
+2. **Adaptive** — continuously shifts the target rate over time based on sustained utilization
+
+| Utilization | Rate behavior |
+|-------------|---------------|
+| 0% | Halves every ~5 days |
+| 90% (target) | Stable |
+| 100% | Doubles every ~5 days |
+
+**Operational warnings**: Avoid 100% utilization — rates compound aggressively. Seed markets with initial supply immediately after creation; an empty market at 0% utilization triggers automatic rate decay.
+
+### Slippage and Share/Asset Conversion
+
+[Detailed reference](references/slippage.md)
+
+The exchange rate between assets and shares can shift between transaction preparation and on-chain execution. With a proper dead deposit this is a UX concern, not a security vulnerability, but integrations should still protect users.
+
+**Defensive pattern:** Use `previewDeposit()` to estimate shares, apply a 1% tolerance floor, verify actual result meets minimum.
+
+**Full withdrawals**: Use `redeem()`, not `withdraw()` — avoids leaving dust behind.
+
+**Vault V2 quirk**: `maxDeposit`, `maxMint`, `maxWithdraw`, and `maxRedeem` always return zero. Do not rely on these for capacity checks.
+
+### Bad Debt Tracking
+
+[Detailed reference](references/bad-debt.md)
+
+- **V1.0**: Realized immediately — share price drops atomically for all suppliers in the affected market. Vulnerable to flash-loan amplification of bad debt realization.
+- **V1.1+**: Tracked via `lostAssets` field — share price is unaffected until explicit realization. Prevents flash-loan manipulation.
+
+### Common Pitfalls
+
+[Detailed reference](references/common-pitfalls.md)
+
+| Pitfall | Consequence | Prevention |
+|---------|-------------|------------|
+| Missing dead deposit | Inflation attack / share-price manipulation | Seed shares to `0xdead` before any user deposit |
+| `withdraw()` for full exit | Dust remains in position | Use `redeem()` for full exits |
+| Oracle risk blindness | Liquidations with stale or manipulated prices | Check oracle type, freshness, and known risks before integrating a market |
+| ERC4626 vault as collateral | Share-price manipulation (Cream-hack style) | Avoid V1.0 vaults as collateral; V1.1+ without bad debt realization are safer |
+| ERC4626 vault as loan asset | Unpredictable liquidation incentives | Do not list any ERC4626 vault as a loan asset |
+| Ignoring vault governance | Owner/curator can reallocate to risky markets | Audit role holders; document trust assumptions to users |
 
 ## Safety Notes
 
@@ -242,56 +210,13 @@ function DepositForm({ vaultAddress }: { vaultAddress: Address }) {
 
 **Health factor**: For borrow operations, validate the health factor after the intended borrow. Prevent proceeding if the position would become unsafe (health factor < 1.0). Warn at ~1.1.
 
+**Dead deposits**: Any vault or market creation must include the dead deposit as the first transaction. See *Protocol Mechanics > Dead Deposits* above.
+
 ## Testing
 
-- **`tests/unit/`** — pure logic (slippage math, approval routing, schema validation). No network.
-- **`tests/integration/fork/`** — Anvil fork tests. Pin block heights for determinism.
 - **`@morpho-org/test`** — Vitest/Anvil fixtures for Morpho-specific test setup.
-
-### Fork Test Skeleton
-
-```typescript
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createPublicClient, http } from "viem";
-import { base } from "viem/chains";
-import { anvil } from "prool";
-
-describe("fork test", () => {
-  let instance: ReturnType<typeof anvil>;
-
-  beforeAll(async () => {
-    instance = anvil({
-      forkUrl: process.env.BASE_RPC_URL!,
-      forkBlockNumber: 12345678n,
-    });
-    await instance.start();
-  });
-
-  afterAll(async () => {
-    await instance.stop();
-  });
-
-  it("reads vault state at pinned block", async () => {
-    const client = createPublicClient({
-      chain: base,
-      transport: http(`http://127.0.0.1:${instance.port}`),
-    });
-    // Read contract state and assert exact numerical equality
-    // Never use loose assertions (toBeGreaterThan, etc.)
-  });
-});
-```
-
-**Assertion rules**: Read actual contract state — never estimate. Assert exact numerical equality (`toBe`), not greater-than/less-than. Pin block heights in fixtures for determinism.
 
 ## Edge Cases
 
-**Vault liquidity constraints**: `maxRedeem` limits how much can be withdrawn. If vault liquidity is insufficient, shares free up as borrowers repay or the curator reallocates.
-
-**Interest accrual drift**: On-chain state changes between prepare and execute. A withdrawal amount valid at prepare time may exceed `maxRedeem` by execution time. Apply a small buffer when withdrawing near the limit.
-
-**Package manager**: Always `bun`, never `npm` or `yarn`.
-
 **No Bundler3**: Deprecated. Do not reference in new code.
-
 **ABIs**: Always import from `@morpho-org/blue-sdk-viem`. Never hand-roll ABI JSON.
