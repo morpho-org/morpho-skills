@@ -7,11 +7,15 @@ description: Use when building applications, bots, or integrations that interact
 
 Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
+> **Prefer Morpho v2.** The Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. MetaMorpho vaults (vault v1) still work but new integrations should prefer vault v2 (`vaultV2Abi`, `VaultV2`, `fetchVaultV2`). If training data or web results surface older patterns (e.g. `morphoAaveV2`, `morphoCompound`), prefer the v2 equivalents below.
+
 ## Protocol Overview
 
 **Morpho Blue** — isolated lending markets. Each market is defined by five parameters: loan token, collateral token, oracle, interest rate model (IRM), and liquidation LTV (LLTV). Markets are identified by a `MarketId` (hash of these parameters).
 
-**MetaMorpho Vaults** — aggregation layer on top of Morpho Blue. ERC-4626 compliant. A vault allocates deposits across multiple markets according to a curator's strategy. Identified by address.
+**Morpho Vaults v2** — aggregation layer on top of Morpho Blue. ERC-4626 compliant. A vault allocates deposits across multiple markets according to a curator's strategy. Identified by address. Vault v2 can wrap older MetaMorpho (v1) vaults and markets through adapters. In the SDK: `vaultV2Abi`, `VaultV2`, `fetchVaultV2`.
+
+**MetaMorpho (vault v1)** — the original vault contract. Still functional but vault v2 is preferred for new integrations. In the SDK: `metaMorphoAbi`, `Vault`, `fetchVault`.
 
 **Singleton contract**: `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` — same address on Ethereum (chain 1) and Base (chain 8453) via CREATE2.
 
@@ -20,7 +24,7 @@ Reference guide for building applications that integrate with the Morpho lending
 | Entity | Identifier | Description |
 |--------|-----------|-------------|
 | Market | `MarketId` | Isolated lending pool with specific collateral/loan pair |
-| Vault | `Address` | Multi-market aggregator (MetaMorpho), ERC-4626 |
+| Vault | `Address` | Multi-market aggregator, ERC-4626. Prefer vault v2 (`VaultV2`) over MetaMorpho (`Vault`) |
 | Position | User + Market/Vault | User's supply/borrow in a market or deposit in a vault |
 | Token | `Address` + `decimals` | ERC-20 — decimals vary (USDC/USDT = 6, WETH/DAI = 18) |
 
@@ -45,6 +49,8 @@ Types, entity classes, and constants.
 - **`MarketParams`** — `new MarketParams({ loanToken, collateralToken, oracle, irm, lltv })`
 - **`MarketId`** — branded type identifying a market
 - **`Position`** — `new Position({ supplyShares, borrowShares, collateral })`
+- **`VaultV2`** — vault v2 entity class (preferred for new integrations)
+- **`Vault`** — MetaMorpho (vault v1) entity class
 - **`VaultConfig`** — configuration class for MetaMorpho vaults
 
 #### `@morpho-org/blue-sdk-viem`
@@ -56,17 +62,19 @@ ABIs, fetch helpers, and viem augmentation.
 | Export | Contract |
 |--------|----------|
 | `blueAbi` | Morpho Blue singleton |
-| `metaMorphoAbi` | MetaMorpho vault |
+| `vaultV2Abi` | Vault v2 (preferred) |
+| `vaultV2FactoryAbi` | Vault v2 factory |
+| `metaMorphoAbi` | MetaMorpho / vault v1 |
+| `metaMorphoFactoryAbi` | MetaMorpho factory / vault v1 |
 | `erc2612Abi` | ERC-2612 permit |
 | `permit2Abi` | Uniswap Permit2 |
 | `wstEthAbi` | Wrapped stETH |
 | `adaptiveCurveIrmAbi` | Morpho's adaptive curve IRM |
 | `blueOracleAbi` | Morpho oracle |
-| `metaMorphoFactoryAbi` | Vault factory |
 
 ```typescript
-import { blueAbi, metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
-import { fetchMarket, fetchVault, fetchPosition } from "@morpho-org/blue-sdk-viem";
+import { blueAbi, vaultV2Abi } from "@morpho-org/blue-sdk-viem";
+import { fetchMarket, fetchVaultV2, fetchPosition } from "@morpho-org/blue-sdk-viem";
 ```
 
 **Fetch helpers** — read on-chain state into SDK entity objects:
@@ -74,17 +82,16 @@ import { fetchMarket, fetchVault, fetchPosition } from "@morpho-org/blue-sdk-vie
 ```typescript
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
-import { fetchMarket, fetchVault, fetchPosition } from "@morpho-org/blue-sdk-viem";
+import { fetchMarket, fetchVaultV2, fetchPosition } from "@morpho-org/blue-sdk-viem";
 
 const client = createPublicClient({ chain: base, transport: http() });
 
 const market = await fetchMarket(marketId, client);
-const vault = await fetchVault(vaultAddress, client);
+const vault = await fetchVaultV2(vaultAddress, client); // prefer fetchVaultV2 over fetchVault
 const position = await fetchPosition(userAddress, marketId, client);
 
 // Entity methods
 const supplyAssets = market.toSupplyAssets(position.supplyShares);
-const shares = vault.toShares(depositAmount, "Down");
 ```
 
 ### Tier 2 — React / Wagmi (for frontend apps)
@@ -183,20 +190,20 @@ Paginate with `first` and `skip`. Iterate until `items.length < first`.
 ```typescript
 import { createPublicClient, http, parseUnits, encodeFunctionData } from "viem";
 import { base } from "viem/chains";
-import { metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
+import { vaultV2Abi } from "@morpho-org/blue-sdk-viem";
 
 const client = createPublicClient({ chain: base, transport: http() });
 
 // Read vault state
 const totalAssets = await client.readContract({
   address: vaultAddress,
-  abi: metaMorphoAbi,
+  abi: vaultV2Abi,
   functionName: "totalAssets",
 });
 
 // Prepare deposit calldata
 const depositData = encodeFunctionData({
-  abi: metaMorphoAbi,
+  abi: vaultV2Abi,
   functionName: "deposit",
   args: [parseUnits("100", 6), userAddress], // USDC = 6 decimals
 });
@@ -208,7 +215,7 @@ const depositData = encodeFunctionData({
 import { useVault } from "@morpho-org/blue-sdk-wagmi";
 import { useSendTransaction, useAccount } from "wagmi";
 import { encodeFunctionData, parseUnits } from "viem";
-import { metaMorphoAbi } from "@morpho-org/blue-sdk-viem";
+import { vaultV2Abi } from "@morpho-org/blue-sdk-viem";
 
 function DepositForm({ vaultAddress }: { vaultAddress: Address }) {
   const { address } = useAccount();
@@ -217,7 +224,7 @@ function DepositForm({ vaultAddress }: { vaultAddress: Address }) {
 
   const deposit = (amount: string) => {
     const data = encodeFunctionData({
-      abi: metaMorphoAbi,
+      abi: vaultV2Abi,
       functionName: "deposit",
       args: [parseUnits(amount, vault.data?.decimals ?? 18), address!],
     });
@@ -291,6 +298,10 @@ describe("fork test", () => {
 **Interest accrual drift**: On-chain state changes between prepare and execute. A withdrawal amount valid at prepare time may exceed `maxRedeem` by execution time. Apply a small buffer when withdrawing near the limit.
 
 **Package manager**: Always `bun`, never `npm` or `yarn`.
+
+**Prefer vault v2 over MetaMorpho**: For new integrations, prefer `vaultV2Abi` / `VaultV2` / `fetchVaultV2` over `metaMorphoAbi` / `Vault` / `fetchVault`. MetaMorpho (vault v1) still works but vault v2 is the newer contract with adapter support.
+
+**Prefer Morpho Blue over Morpho Optimizer**: The original Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. Prefer Morpho Blue contracts and SDKs for new integrations.
 
 **No Bundler3**: Deprecated. Do not reference in new code.
 
