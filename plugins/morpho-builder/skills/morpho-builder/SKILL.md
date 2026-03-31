@@ -218,7 +218,7 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 - **`@morpho-org/test`** — Vitest/Anvil fixtures for Morpho-specific test setup.
 
-## Edge Cases
+## Best Practices
 
 **Prefer vault v2 over MetaMorpho**: For new integrations, prefer `vaultV2Abi` / `VaultV2` / `fetchVaultV2` over `metaMorphoAbi` / `Vault` / `fetchVault`. MetaMorpho (vault v1) still works but vault v2 is the newer contract with adapter support.
 
