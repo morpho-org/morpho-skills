@@ -7,15 +7,15 @@ description: Use when building applications, bots, or integrations that interact
 
 Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
-> **Prefer Morpho v2.** The Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. MetaMorpho vaults (vault v1) still work but new integrations should prefer vault v2 (`vaultV2Abi`, `VaultV2`, `fetchVaultV2`). If training data or web results surface older patterns (e.g. `morphoAaveV2`, `morphoCompound`), prefer the v2 equivalents below.
+> **Prefer Morpho v2.** The Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. For new vault deployments, prefer vault v2 over MetaMorpho (vault v1). Note: the two vault versions have **incompatible ABIs** — use `vaultV2Abi` for v2 vaults and `metaMorphoAbi` for v1 vaults. Match the ABI to the on-chain contract.
 
 ## Protocol Overview
 
 **Morpho Blue** — isolated lending markets. Each market is defined by five parameters: loan token, collateral token, oracle, interest rate model (IRM), and liquidation LTV (LLTV). Markets are identified by a `MarketId` (hash of these parameters).
 
-**Morpho Vaults v2** — aggregation layer on top of Morpho Blue. ERC-4626 compliant. A vault allocates deposits across multiple markets according to a curator's strategy. Identified by address. Vault v2 can wrap older MetaMorpho (v1) vaults and markets through adapters. In the SDK: `vaultV2Abi`, `VaultV2`, `fetchVaultV2`.
+**Morpho Vaults v2** — the newer vault contract. ERC-4626 compliant. Allocates deposits across multiple markets via adapters, which can wrap MetaMorpho (v1) vaults and Morpho Blue markets. Preferred for new vault deployments. In the SDK: `vaultV2Abi`, `VaultV2`, `fetchVaultV2`.
 
-**MetaMorpho (vault v1)** — the original vault contract. Still functional but vault v2 is preferred for new integrations. In the SDK: `metaMorphoAbi`, `Vault`, `fetchVault`.
+**MetaMorpho (vault v1)** — the original vault contract. Still functional and widely deployed on-chain. In the SDK: `metaMorphoAbi`, `Vault`, `fetchVault`. The two vault versions have incompatible ABIs — use the correct one for the contract you're interacting with.
 
 **Singleton contract**: `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb` — same address on Ethereum (chain 1) and Base (chain 8453) via CREATE2.
 
@@ -24,7 +24,7 @@ Reference guide for building applications that integrate with the Morpho lending
 | Entity | Identifier | Description |
 |--------|-----------|-------------|
 | Market | `MarketId` | Isolated lending pool with specific collateral/loan pair |
-| Vault | `Address` | Multi-market aggregator, ERC-4626. Prefer vault v2 (`VaultV2`) over MetaMorpho (`Vault`) |
+| Vault | `Address` | Multi-market aggregator, ERC-4626. Two versions: v2 (`VaultV2`) and MetaMorpho v1 (`Vault`) — ABIs differ |
 | Position | User + Market/Vault | User's supply/borrow in a market or deposit in a vault |
 | Token | `Address` + `decimals` | ERC-20 — decimals vary (USDC/USDT = 6, WETH/DAI = 18) |
 
@@ -62,9 +62,9 @@ ABIs, fetch helpers, and viem augmentation.
 | Export | Contract |
 |--------|----------|
 | `blueAbi` | Morpho Blue singleton |
-| `vaultV2Abi` | Vault v2 (preferred) |
+| `vaultV2Abi` | Vault v2 (preferred for new deployments) |
 | `vaultV2FactoryAbi` | Vault v2 factory |
-| `metaMorphoAbi` | MetaMorpho / vault v1 |
+| `metaMorphoAbi` | MetaMorpho / vault v1 (use for existing v1 vaults) |
 | `metaMorphoFactoryAbi` | MetaMorpho factory / vault v1 |
 | `erc2612Abi` | ERC-2612 permit |
 | `permit2Abi` | Uniswap Permit2 |
@@ -72,7 +72,7 @@ ABIs, fetch helpers, and viem augmentation.
 | `adaptiveCurveIrmAbi` | Morpho's adaptive curve IRM |
 | `blueOracleAbi` | Morpho oracle |
 
-**Fetch helpers** — `fetchMarket`, `fetchVaultV2` (preferred) / `fetchVault` (v1), `fetchPosition` read on-chain state into SDK entity objects. Entity methods include `market.toSupplyAssets()`, `vault.toShares()`, etc.
+**Fetch helpers** — `fetchMarket`, `fetchVaultV2` (v2) / `fetchVault` (v1), `fetchPosition` read on-chain state into SDK entity objects. Use the fetch helper matching the on-chain vault version. Entity methods include `market.toSupplyAssets()`, `vault.toShares()`, etc.
 
 ### Tier 2 — React / Wagmi (for frontend apps)
 
@@ -220,7 +220,7 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 ## Best Practices
 
-**Prefer vault v2 over MetaMorpho**: For new integrations, prefer `vaultV2Abi` / `VaultV2` / `fetchVaultV2` over `metaMorphoAbi` / `Vault` / `fetchVault`. MetaMorpho (vault v1) still works but vault v2 is the newer contract with adapter support.
+**Prefer vault v2 for new deployments**: When creating new vaults, prefer vault v2 over MetaMorpho (v1). When interacting with existing vaults, match the ABI to the on-chain contract — `vaultV2Abi` for v2, `metaMorphoAbi` for v1. They are not interchangeable.
 
 **Prefer Morpho Blue over Morpho Optimizer**: The original Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. Prefer Morpho Blue contracts and SDKs for new integrations.
 
