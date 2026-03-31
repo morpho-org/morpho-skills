@@ -39,12 +39,12 @@ Reference guide for building applications that integrate with the Morpho lending
 
 ## SDK Registry
 
-All packages are published under `@morpho-org` on npm.
+All packages are published under `@morpho-org` on npm. Vault v2 types (`VaultV2`, `vaultV2Abi`, `fetchVaultV2`) are included in `blue-sdk` and `blue-sdk-viem` — there is no separate vault-v2 npm package (contracts live at `github.com/morpho-org/vault-v2`).
 
 | Package | Purpose |
 |---------|---------|
 | `@morpho-org/blue-sdk` | Core types, entity classes (`Market`, `Vault`, `VaultV2`, `Position`, `MarketParams`), and constants |
-| `@morpho-org/blue-sdk-viem` | Viem augmentation — ABIs, fetch helpers (`fetchMarket`, `fetchVault`, `fetchVaultV2`, `fetchPosition`) |
+| `@morpho-org/blue-sdk-viem` | Viem augmentation — ABIs (`blueAbi`, `vaultV2Abi`, `metaMorphoAbi`), fetch helpers (`fetchMarket`, `fetchVault`, `fetchVaultV2`, `fetchPosition`) |
 | `@morpho-org/blue-sdk-ethers` | Ethers augmentation — same fetch helpers as viem, for Ethers-based projects |
 | `@morpho-org/blue-sdk-wagmi` | React hooks (`useMarket`, `useVault`, `usePosition`, etc.) wrapping core SDK. Requires wagmi v2 |
 | `@morpho-org/blue-api-sdk` | GraphQL SDK with typed queries for the Morpho API |
