@@ -17,13 +17,15 @@
       "name": "morpho-cli",
       "source": "./plugins/morpho-cli",
       "description": "CLI skill for querying Morpho protocol data and building unsigned transactions — vault APYs, market rates, user positions, deposits, withdrawals, and borrows",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "skills": ["./skills/morpho-cli"]
     },
     {
       "name": "morpho-builder",
       "source": "./plugins/morpho-builder",
       "description": "Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "skills": ["./skills/morpho-builder"]
     }
   ]
 }
