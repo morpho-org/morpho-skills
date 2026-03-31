@@ -7,12 +7,6 @@ description: Use when building applications, bots, or integrations that interact
 
 Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
-## Agents
-
-**[morpho-security-reviewer](agents/morpho-security-reviewer.md)** — reviews Morpho integration code against protocol-specific safety checks.
-
-**When to invoke**: After implementation is complete but before presenting the final result to the user. Spawn the security reviewer agent to audit the code, then incorporate any CRITICAL or WARNING findings before showing the plan or deliverable.
-
 ## Protocol Overview
 
 **Morpho Blue** — isolated lending markets. Each market is defined by five parameters: loan token, collateral token, oracle, interest rate model (IRM), and liquidation LTV (LLTV). Markets are identified by a `MarketId` (hash of these parameters).
@@ -220,3 +214,15 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 **No Bundler3**: Deprecated. Do not reference in new code.
 **ABIs**: Always import from `@morpho-org/blue-sdk-viem`. Never hand-roll ABI JSON.
+
+## Post-Implementation Review
+
+After finishing code or a plan, review it against these Morpho-specific checks before presenting the result. For each, mark CRITICAL (fund loss), WARNING (broken UX), or N/A.
+
+1. **Dead Deposit Protection** — vault/market creation includes dead deposit to `0xdead` as the first tx; correct formula per version ([reference](references/dead-deposits.md))
+2. **Slippage Protection** — deposits/withdrawals use preview functions + tolerance check; full exits use `redeem()` not `withdraw()`; no reliance on Vault V2 `max*` functions ([reference](references/slippage.md))
+3. **IRM Awareness** — new markets seeded promptly; no sustained 100% utilization; APY formulas correct ([reference](references/adaptive-curve-irm.md))
+4. **Bad Debt Safety** — no V1.0 vault as collateral; no ERC4626 vault as loan asset; dashboards surface `lostAssets` ([reference](references/bad-debt.md))
+5. **Token Approvals** — USDT resets allowance to 0 first; DAI uses `approve()` not `permit()` ([reference](references/common-pitfalls.md))
+6. **Vault Governance** — UI surfaces role holders; trust assumptions documented ([reference](references/common-pitfalls.md))
+7. **General Safety** — no hardcoded addresses; chain ID parameterized; decimals read not assumed; write ops simulate before execute; health factor validated; ABIs from `@morpho-org/blue-sdk-viem`
