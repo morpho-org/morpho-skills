@@ -37,11 +37,32 @@ Reference guide for building applications that integrate with the Morpho lending
 | Token amounts | Raw units | Divide by 10^decimals for human-readable. Use `parseUnits`/`formatUnits` from viem |
 | Health factor | Ratio | ≥ 1.0 = safe, < 1.0 = liquidatable |
 
-## SDK Ecosystem
+## SDK Registry
 
-### Tier 1 — Core SDKs (always relevant)
+All packages are published under `@morpho-org` on npm.
 
-#### `@morpho-org/blue-sdk`
+| Package | Purpose |
+|---------|---------|
+| `@morpho-org/blue-sdk` | Core types, entity classes (`Market`, `Vault`, `VaultV2`, `Position`, `MarketParams`), and constants |
+| `@morpho-org/blue-sdk-viem` | Viem augmentation — ABIs, fetch helpers (`fetchMarket`, `fetchVault`, `fetchVaultV2`, `fetchPosition`) |
+| `@morpho-org/blue-sdk-ethers` | Ethers augmentation — same fetch helpers as viem, for Ethers-based projects |
+| `@morpho-org/blue-sdk-wagmi` | React hooks (`useMarket`, `useVault`, `usePosition`, etc.) wrapping core SDK. Requires wagmi v2 |
+| `@morpho-org/blue-api-sdk` | GraphQL SDK with typed queries for the Morpho API |
+| `@morpho-org/simulation-sdk` | Framework-agnostic simulation of Morpho operations |
+| `@morpho-org/simulation-sdk-wagmi` | React hooks for client-side simulation (`useSimulationState`) |
+| `@morpho-org/bundler-sdk-viem` | Multi-step transaction bundling (approvals, transfers, Morpho ops in one tx) |
+| `@morpho-org/liquidity-sdk-viem` | Liquidity monitoring and bot infrastructure |
+| `@morpho-org/liquidation-sdk-viem` | Liquidation bot infrastructure |
+| `@morpho-org/migration-sdk-viem` | Migration from Aave/Compound to Morpho |
+| `@morpho-org/consumer-sdk` | Abstraction layer for Morpho's complexity |
+| `@morpho-org/morpho-ts` | Time and format utilities |
+| `@morpho-org/test` | Vitest/Anvil test fixtures for Morpho |
+| `@morpho-org/test-wagmi` | Wagmi test config extension of `@morpho-org/test` |
+| `@morpho-org/morpho-test` | Framework-agnostic test fixtures |
+
+## SDK Details
+
+### `@morpho-org/blue-sdk`
 
 Types, entity classes, and constants.
 
@@ -53,7 +74,7 @@ Types, entity classes, and constants.
 - **`Vault`** — MetaMorpho (vault v1) entity class
 - **`VaultConfig`** — configuration class for MetaMorpho vaults
 
-#### `@morpho-org/blue-sdk-viem`
+### `@morpho-org/blue-sdk-viem`
 
 ABIs, fetch helpers, and viem augmentation.
 
@@ -74,28 +95,15 @@ ABIs, fetch helpers, and viem augmentation.
 
 **Fetch helpers** — `fetchMarket`, `fetchVaultV2` (v2) / `fetchVault` (v1), `fetchPosition` read on-chain state into SDK entity objects. Use the fetch helper matching the on-chain vault version. Entity methods include `market.toSupplyAssets()`, `vault.toShares()`, etc.
 
-### Tier 2 — React / Wagmi (for frontend apps)
-
-#### `@morpho-org/blue-sdk-wagmi`
+### `@morpho-org/blue-sdk-wagmi`
 
 React hooks wrapping the core SDK. Requires wagmi v2.
 
 Hooks: `useMarket`, `useVault`, `usePosition`, `useToken`, `useHolding`, `useMarkets`, `useVaults`, `usePositions`, `useTokens`, `useHoldings`, `useVaultMarketConfig`, `useVaultMarketConfigs`, `useVaultUser`, `useVaultUsers`, `useMarketParams`, plus plural variants.
 
-#### `@morpho-org/simulation-sdk` + `@morpho-org/simulation-sdk-wagmi`
+### `@morpho-org/simulation-sdk` + `@morpho-org/simulation-sdk-wagmi`
 
 Client-side simulation of Morpho operations. `useSimulationState` hook provides simulated post-state for UI previews without submitting transactions.
-
-### Tier 3 — Specialized SDKs (awareness-level)
-
-| Package | Purpose |
-|---------|---------|
-| `@morpho-org/bundler-sdk-viem` | Transaction bundling for multi-step operations |
-| `@morpho-org/liquidity-sdk-viem` | Liquidity monitoring and bot infrastructure |
-| `@morpho-org/liquidation-sdk-viem` | Liquidation bot infrastructure |
-| `@morpho-org/migration-sdk-viem` | Migration from Aave/Compound to Morpho |
-| `@morpho-org/morpho-ts` | Time/format utilities |
-| `@morpho-org/test` | Vitest/Anvil test fixtures for Morpho |
 
 ## GraphQL API
 
