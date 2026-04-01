@@ -28,7 +28,9 @@ All read commands return JSON to stdout with a `tool` and `timestamp` field.
           "asset": { "address": "0x...", "symbol": "MORPHO", "decimals": 18, "chain": "base" },
           "supplyAprPct": "1.20"
         }
-      ]
+      ],
+      "version": "v1",
+      "type": "MorphoVault"
     }
   ],
   "chain": "base",
@@ -40,9 +42,12 @@ All read commands return JSON to stdout with a `tool` and `timestamp` field.
 ```
 
 - `apyPct` — percentage string (e.g., `"5.34"` = 5.34%)
-- `feePct` — performance fee as percentage (e.g., `"10"` = 10%)
+- `feePct` — total fee as percentage (e.g., `"10"` = 10%). For v1 this is the performance fee; for v2 it is `performanceFee + managementFee`
 - `tvl` — raw integer string, divide by `10^asset.decimals`
 - `rewards` — optional array of reward token incentives with APR percentages
+- `version` — `"v1"` or `"v2"`. V1 = MetaMorpho vaults, V2 = newer vault contracts. Always present
+- `type` — `"MorphoVault"` or `"FeeWrapper"` (v2 only, absent for v1). FeeWrapper adds a fee layer on top of another vault
+- Results include both v1 and v2 vaults merged and sorted together
 - `--fields` controls which optional fields are returned; omit to get all
 - `--sort` and `--skip` enable server-side sorting and pagination
 
@@ -84,7 +89,9 @@ All read commands return JSON to stdout with a `tool` and `timestamp` field.
         "supplyAssets": "50000000000",
         "supplyAssetsUsd": "50000.00"
       }
-    ]
+    ],
+    "version": "v1",
+    "type": "MorphoVault"
   },
   "chain": "base",
   "tool": "morpho_get_vault",
@@ -92,9 +99,12 @@ All read commands return JSON to stdout with a `tool` and `timestamp` field.
 }
 ```
 
-- Throws `NOT_FOUND` error if vault address does not exist
-- `allocations` — per-market breakdown of vault's deployed capital (optional, may be absent)
-- `allocations[].market.loanAsset` / `collateralAsset` — may be null or absent
+- Throws `NOT_FOUND` error if vault address does not exist on either v1 or v2
+- The tool automatically tries both v1 and v2 APIs — no version parameter needed
+- `version` — `"v1"` or `"v2"`. Always present
+- `type` — `"MorphoVault"` or `"FeeWrapper"` (v2 only, absent for v1)
+- `allocations` — per-market breakdown of vault's deployed capital (optional, may be absent). For v2 vaults, adapter addresses are used as `uniqueKey` identifiers
+- `allocations[].market.loanAsset` / `collateralAsset` — may be null or absent (always absent for v2 adapters)
 - `allocations[].supplyAssetsUsd` — optional, may be absent
 
 ## query-markets
