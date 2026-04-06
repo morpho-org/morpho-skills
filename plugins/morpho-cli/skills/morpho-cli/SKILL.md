@@ -12,6 +12,8 @@ description: >
 
 # morpho-cli
 
+> **Experimental (pre-v1.0)** — Command syntax, response schemas, and available operations may change. Always verify critical outputs independently.
+
 Query Morpho protocol data and build unsigned transactions. All commands output JSON to stdout. No private keys needed.
 
 ```bash

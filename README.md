@@ -1,5 +1,7 @@
 # Morpho Skills
 
+> **Experimental** — This project is under active development (pre-v1.0). Tool schemas, command syntax, and behavior may change without notice. The underlying MCP server and CLI are also experimental.
+
 ## Overview
 
 **morpho-cli** — A conversational skill that lets Claude query the Morpho lending protocol and prepare unsigned transactions directly from the CLI. Ask about vault APYs, market rates, user positions, or build deposit/withdraw/borrow operations on Ethereum and Base.
