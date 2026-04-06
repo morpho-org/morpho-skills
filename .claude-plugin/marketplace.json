@@ -10,20 +10,20 @@
     {
       "name": "morpho-mcp",
       "source": "./plugins/morpho-mcp",
-      "description": "MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
+      "description": "[Experimental] MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
       "version": "0.1.0"
     },
     {
       "name": "morpho-cli",
       "source": "./plugins/morpho-cli",
-      "description": "CLI skill for querying Morpho protocol data and building unsigned transactions — vault APYs, market rates, user positions, deposits, withdrawals, and borrows",
+      "description": "[Experimental] CLI skill for querying Morpho protocol data and building unsigned transactions — vault APYs, market rates, user positions, deposits, withdrawals, and borrows",
       "version": "0.1.0",
       "skills": ["./skills/morpho-cli"]
     },
     {
       "name": "morpho-builder",
       "source": "./plugins/morpho-builder",
-      "description": "Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
+      "description": "[Experimental] Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
       "version": "0.1.0",
       "skills": ["./skills/morpho-builder"]
     }

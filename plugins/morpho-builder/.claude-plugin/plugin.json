@@ -1,7 +1,7 @@
 {
   "name": "morpho-builder",
   "version": "0.1.0",
-  "description": "Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
+  "description": "[Experimental] Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
   "author": {
     "name": "Morpho Agents"
   },

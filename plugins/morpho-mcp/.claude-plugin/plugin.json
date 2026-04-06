@@ -1,7 +1,7 @@
 {
   "name": "morpho-mcp",
   "version": "0.1.0",
-  "description": "MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
+  "description": "[Experimental] MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
   "author": {
     "name": "Morpho Agents"
   },
