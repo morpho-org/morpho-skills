@@ -36,4 +36,4 @@ npx skills add morpho-org/morpho-skills --skill morpho-cli
 npx skills add morpho-org/morpho-skills --skill morpho-builder
 ```
 
-Add MCP with the following URL: `https://mcp.morpho.org/mcp`
+Add MCP with the following URL: `https://mcp.morpho.org`
