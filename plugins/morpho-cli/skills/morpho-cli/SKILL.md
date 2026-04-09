@@ -17,7 +17,7 @@ description: >
 Query Morpho protocol data and build unsigned transactions. All commands output JSON to stdout. No private keys needed.
 
 ```bash
-morpho <command> [options]
+bunx @morpho-org/cli <command> [options]
 ```
 
 Supported chains: `base`, `ethereum`. Every command requires `--chain`.
@@ -31,28 +31,28 @@ Supported chains: `base`, `ethereum`. Every command requires `--chain`.
 
 ```bash
 # Read — query protocol state
-morpho query-vaults    --chain base [--asset-symbol USDC] [--asset-address 0x...] [--sort apy_desc|apy_asc|tvl_desc|tvl_asc] [--limit 5] [--skip 0] [--fields address,name,symbol,apyPct,tvl,tvlUsd,feePct]
-morpho get-vault       --chain base --address 0x...
-morpho query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
-morpho get-market      --chain base --id 0x...
-morpho get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
-morpho get-position    --chain base --user-address 0x... [--vault-address 0x...]
+bunx @morpho-org/cli query-vaults    --chain base [--asset-symbol USDC] [--asset-address 0x...] [--sort apy_desc|apy_asc|tvl_desc|tvl_asc] [--limit 5] [--skip 0] [--fields address,name,symbol,apyPct,tvl,tvlUsd,feePct]
+bunx @morpho-org/cli get-vault       --chain base --address 0x...
+bunx @morpho-org/cli query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
+bunx @morpho-org/cli get-market      --chain base --id 0x...
+bunx @morpho-org/cli get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
+bunx @morpho-org/cli get-position    --chain base --user-address 0x... [--vault-address 0x...]
 
 # Write — prepare unsigned transactions (simulation runs by default; add --no-simulate to skip)
-morpho prepare-deposit              --chain base --vault-address 0x... --user-address 0x... --amount 1000
-morpho prepare-withdraw             --chain base --vault-address 0x... --user-address 0x... --amount max
-morpho prepare-supply               --chain base --market-id 0x... --user-address 0x... --amount 5000
-morpho prepare-borrow               --chain base --market-id 0x... --user-address 0x... --borrow-amount 1
-morpho prepare-repay                --chain base --market-id 0x... --user-address 0x... --amount max
-morpho prepare-supply-collateral    --chain base --market-id 0x... --user-address 0x... --amount 5000
-morpho prepare-withdraw-collateral  --chain base --market-id 0x... --user-address 0x... --amount max
+bunx @morpho-org/cli prepare-deposit              --chain base --vault-address 0x... --user-address 0x... --amount 1000
+bunx @morpho-org/cli prepare-withdraw             --chain base --vault-address 0x... --user-address 0x... --amount max
+bunx @morpho-org/cli prepare-supply               --chain base --market-id 0x... --user-address 0x... --amount 5000
+bunx @morpho-org/cli prepare-borrow               --chain base --market-id 0x... --user-address 0x... --borrow-amount 1
+bunx @morpho-org/cli prepare-repay                --chain base --market-id 0x... --user-address 0x... --amount max
+bunx @morpho-org/cli prepare-supply-collateral    --chain base --market-id 0x... --user-address 0x... --amount 5000
+bunx @morpho-org/cli prepare-withdraw-collateral  --chain base --market-id 0x... --user-address 0x... --amount max
 
 # Simulate — standalone re-simulation or arbitrary transaction simulation
-morpho simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'
+bunx @morpho-org/cli simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'
 
 # Utility
-morpho health-check
-morpho get-supported-chains
+bunx @morpho-org/cli health-check
+bunx @morpho-org/cli get-supported-chains
 ```
 
 ## Write Workflow: Prepare → Present
@@ -90,7 +90,7 @@ If `prepare-withdraw --amount max` returns a liquidity warning:
 
 ## CLI Errors
 
-When a morpho CLI command fails, **stop and report the error to the user**. Do not:
+When a `bunx @morpho-org/cli` command fails, **stop and report the error to the user**. Do not:
 - Retry with different parameters you invented
 - Fall back to alternative tools or APIs
 - Attempt to work around missing required options
