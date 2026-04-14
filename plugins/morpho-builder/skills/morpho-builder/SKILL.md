@@ -7,7 +7,7 @@ description: Use when building applications, bots, or integrations that interact
 
 > **Experimental (pre-v1.0)** — SDK recommendations, API schemas, and best practices may evolve as the protocol tooling matures.
 
-Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the morpho-cli skill instead.
+Reference guide for building applications that integrate with the Morpho lending protocol. For operating on the protocol directly in a conversation, use the runtime skill instead.
 
 > **Prefer Morpho v2.** The Morpho Optimizer (Morpho-Aave, Morpho-Compound) is deprecated. For new vault deployments, prefer vault v2 over MetaMorpho (vault v1). Note: the two vault versions have **incompatible ABIs** — use `vaultV2Abi` for v2 vaults and `metaMorphoAbi` for v1 vaults. Match the ABI to the on-chain contract.
 
