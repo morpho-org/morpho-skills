@@ -1,133 +1,229 @@
 # Write Command Response Schemas
 
-All `prepare-*` commands return a `PrepareResult` envelope containing an `operation` (the prepared transaction data) and an optional `simulation` (transaction simulation results). Simulation runs by default; pass `--no-simulate` to skip. `simulate-transactions` returns a standalone `TransactionSimulationResult`.
+## Write response shape
 
-## prepare-deposit / prepare-withdraw / prepare-supply / prepare-borrow / prepare-repay / prepare-supply-collateral / prepare-withdraw-collateral
+All `morpho_prepare_*` tools return a `PreparedOperation` directly (no wrapper envelope). Simulation runs by default inside `prepare-*`; pass `--no-simulate` to skip.
 
 ```json
 {
-  "operation": {
-    "operation": "deposit",
-    "chain": "base",
-    "summary": "Deposit 1000 USDC into Steakhouse USDC vault",
-    "transactions": [
-      {
-        "to": "0x...",
-        "data": "0x...",
-        "value": "0",
-        "chainId": "8453",
-        "description": "Approve 1000 USDC to vault"
-      },
-      {
-        "to": "0x...",
-        "data": "0x...",
-        "value": "0",
-        "chainId": "8453",
-        "description": "Deposit 1000 USDC into vault"
-      }
-    ],
-    "requirements": [
-      {
-        "type": "approval",
-        "token": "0x...",
-        "spender": "0x...",
-        "amount": "1000000000"
-      }
-    ],
-    "simulationPlan": {
-      "version": 1,
-      "protocol": "morpho",
-      "operation": "deposit",
-      "entrypointTxIndex": 0,
-      "subject": {
-        "kind": "vault_position",
-        "chain": "base",
-        "userAddress": "0x...",
-        "vaultAddress": "0x..."
-      },
-      "intent": {
-        "kind": "deposit_assets",
-        "assets": "1000000000",
-        "shares": "0"
-      },
-      "assets": [
-        { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base" }
-      ],
-      "observations": [],
-      "logDecoding": {},
-      "analysis": { "kind": "vault_analysis" }
-    },
-    "warnings": [
-      {
-        "level": "warning",
-        "message": "Insufficient vault liquidity for full withdrawal",
-        "code": "INSUFFICIENT_LIQUIDITY"
-      }
-    ],
-    "preview": {
-      "vault": {
-        "sharesReceived": "987654321",
-        "positionAssets": "1000000000",
-        "positionShares": "987654321"
-      }
+  "operation": "deposit",
+  "chain": "base",
+  "summary": "Deposit 1000 USDC into Steakhouse USDC",
+  "requirements": [
+    { "type": "approval", "token": "0x...", "spender": "0x...", "amount": "1000000000" }
+  ],
+  "transactions": [
+    { "to": "0x...", "data": "0x...", "value": "0", "chainId": "8453", "description": "Approve 1000 USDC to vault" },
+    { "to": "0x...", "data": "0x...", "value": "0", "chainId": "8453", "description": "Deposit 1000 USDC into vault" }
+  ],
+  "simulated": true,
+  "simulationOk": true,
+  "totalGasUsed": "350000",
+  "outcome": { ... },
+  "warnings": []
+}
+```
+
+- `operation` — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
+- `simulated` — whether the transactions were dry-run against a fork
+- `simulationOk` — present only when `simulated: true`; `false` means at least one tx reverted
+- `revertReason` — present only when `simulationOk: false`; carries the first failing tx's revert message
+- `totalGasUsed` — present only when `simulated: true`
+- `outcome` — canonical post-state view (see below); absent when not simulated and no SDK preview is available
+- `warnings` — always present (may be empty); check before presenting to the user
+
+### `requirements` variants
+
+- `{ "type": "approval", "token": "0x...", "spender": "0x...", "amount": "1000000000" }`
+- `{ "type": "permit", "token": "0x...", "spender": "0x...", "amount": "...", "deadline": "..." }`
+- `{ "type": "permit2", "token": "0x...", "spender": "0x...", "amount": "...", "deadline": "..." }`
+- `{ "type": "unsupported", "token": "0x...", "reason": "...", "notes": "..." }`
+
+Approvals are already included in `transactions` — `requirements` is informational only.
+
+### `outcome` field
+
+The `outcome` is the canonical post-state view, populated from simulation when available, or from SDK preview math otherwise. The agent does not need to know which source produced it — the shape is the same.
+
+```json
+{
+  "outcome": {
+    "vault": {
+      "sharesReceived": "987654321",
+      "assetsReceived": "1000000000",
+      "positionAssets": "1000000000",
+      "positionShares": "987654321"
     }
-  },
-  "simulation": {
-    "chain": "base",
-    "allSucceeded": true,
-    "totalGasUsed": "245000",
-    "executionResults": [ "..." ],
-    "analysis": { "..." : "..." },
-    "warnings": []
   }
 }
 ```
 
-### Top-level fields
+```json
+{
+  "outcome": {
+    "market": {
+      "supplied": "0",
+      "borrowed": "500000000",
+      "collateral": "1000000000000000000",
+      "healthFactor": "1.25",
+      "isHealthy": true,
+      "maxBorrowable": "200000000",
+      "utilizationBeforePct": "75",
+      "utilizationAfterPct": "78",
+      "borrowApyBeforePct": "3.12",
+      "borrowApyAfterPct": "3.45"
+    }
+  }
+}
+```
 
-- **`operation`** — the prepared operation (see below)
-- **`simulation`** — transaction simulation results (optional, absent when `--no-simulate` is used or simulation fails). See [simulate-transactions](#simulate-transactions) for the full schema.
+Either `vault` or `market` (or both) may be present depending on operation type.
 
-### operation fields
+**`vault` outcome fields:**
+- `sharesReceived` — vault shares minted (deposit) or burned (withdraw); optional
+- `assetsReceived` — assets received (withdraw only); optional
+- `positionAssets` — total position value in assets after operation
+- `positionShares` — total share balance after operation
 
+**`market` outcome fields (all amounts are raw integer strings):**
+- `supplied`, `borrowed`, `collateral` — user positions in loan-token and collateral-token units after operation
+- `healthFactor` — ratio; `< 1` is liquidatable; absent when there is no borrow
+- `isHealthy` — whether position is above liquidation threshold; optional
+- `maxBorrowable` — max additional borrowable in loan-token units; optional
+- `utilizationBeforePct`, `utilizationAfterPct` — market utilization as percent strings (`"75"` = 75%)
+- `borrowApyBeforePct`, `borrowApyAfterPct` — borrow APY as percent strings; optional
 
-- **`operation`** — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
-- **`chain`** — chain slug (`"base"` | `"ethereum"`)
-- **`summary`** — human-readable description of the operation
-- **`transactions`** — ordered array of unsigned transactions to sign and send
-  - `to` — contract address
-  - `data` — encoded calldata
-  - `value` — ETH value (usually `"0"`)
-  - `chainId` — `"1"` (Ethereum) or `"8453"` (Base)
-  - `description` — what this transaction does
-- **`requirements`** — approvals/permits needed (already included in `transactions`)
-  - `type` — `"approval"` | `"permit"` | `"permit2"` | `"unsupported"`
-  - All types include `token` (address) and `spender` (address)
-  - `"approval"` / `"permit"` / `"permit2"`: include `amount` (string), and optionally `deadline` (string)
-  - `"unsupported"`: includes `reason` (string) and optionally `notes` (string)
-- **`simulationPlan`** — used internally for simulation; pass to `simulate-transactions --analysis-context` for manual re-simulation
-- **`warnings`** — array of warnings (may be empty)
-  - `level` — `"info"` | `"warning"` | `"error"`
-  - `message` — human-readable description
-  - `code` — machine-readable code (optional)
-- **`preview`** — pre-computed position preview from SDK math (optional)
-  - **`vault`** — for vault operations (`deposit`, `withdraw`)
-    - `sharesReceived` — vault shares minted or burned (optional)
-    - `assetsReceived` — assets received, withdraw only (optional)
-    - `positionAssets` — total position value in assets after operation
-    - `positionShares` — total share balance after operation
-  - **`market`** — for market operations (`supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral`)
-    - `supplyAssets` — user supply in assets after operation
-    - `borrowAssets` — user borrow in assets after operation
-    - `collateral` — user collateral after operation
-    - `healthFactor` — health factor after operation (optional)
-    - `isHealthy` — whether position is above liquidation threshold (optional)
-    - `maxBorrowableAssets` — max additional borrowable in loan token assets (optional)
-    - `utilizationBefore` / `utilizationAfter` — market utilization before and after
-    - `borrowApyBefore` / `borrowApyAfter` — borrow APY before and after (optional)
+---
 
-## simulate-transactions
+## `morpho_prepare_deposit`
 
+**Input:**
+```json
+{
+  "chain": "base",
+  "vaultAddress": "0x...",
+  "userAddress": "0x...",
+  "amount": "1000"
+}
+```
+
+Returns a `PreparedOperation` with `operation: "deposit"`. The `outcome.vault` field is populated.
+
+---
+
+## `morpho_prepare_withdraw`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "vaultAddress": "0x...",
+  "userAddress": "0x...",
+  "amount": "1000"
+}
+```
+
+Use `"amount": "max"` to withdraw the full position. The `outcome.vault` field is populated, including `assetsReceived`.
+
+If `prepare-withdraw --amount max` returns a liquidity warning, parse the safe amount from `summary`, apply ~1% buffer, and re-call with the buffered amount.
+
+---
+
+## `morpho_prepare_supply`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "marketId": "0x...",
+  "userAddress": "0x...",
+  "amount": "5000"
+}
+```
+
+Returns a `PreparedOperation` with `operation: "supply"`. The `outcome.market` field is populated.
+
+---
+
+## `morpho_prepare_borrow`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "marketId": "0x...",
+  "userAddress": "0x...",
+  "borrowAmount": "1"
+}
+```
+
+Returns a `PreparedOperation` with `operation: "borrow"`. The `outcome.market` field is populated, including `healthFactor`.
+
+---
+
+## `morpho_prepare_repay`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "marketId": "0x...",
+  "userAddress": "0x...",
+  "amount": "500"
+}
+```
+
+Use `"amount": "max"` to repay the full debt. Returns a `PreparedOperation` with `operation: "repay"`.
+
+---
+
+## `morpho_prepare_supply_collateral`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "marketId": "0x...",
+  "userAddress": "0x...",
+  "amount": "1"
+}
+```
+
+Returns a `PreparedOperation` with `operation: "supply_collateral"`. The `outcome.market` field is populated.
+
+---
+
+## `morpho_prepare_withdraw_collateral`
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "marketId": "0x...",
+  "userAddress": "0x...",
+  "amount": "0.5"
+}
+```
+
+Use `"amount": "max"` to withdraw all collateral. Returns a `PreparedOperation` with `operation: "withdraw_collateral"`.
+
+---
+
+## `morpho_simulate_transactions`
+
+Used for standalone re-simulation or simulating arbitrary transactions. Pass the `simulationPlan` from a `PreparedOperation` as `--analysis-context` for Morpho-aware post-state analysis.
+
+**Input:**
+```json
+{
+  "chain": "base",
+  "from": "0x...",
+  "transactions": "[{\"to\":\"0x...\",\"data\":\"0x...\",\"value\":\"0\"}]",
+  "analysisContext": "<simulationPlan JSON string>"
+}
+```
+
+**Output:**
 ```json
 {
   "chain": "base",
@@ -149,22 +245,6 @@ All `prepare-*` commands return a `PrepareResult` envelope containing an `operat
           "formatted": { "owner": "0x...", "spender": "0x...", "value": "1000 USDC" }
         }
       ]
-    },
-    {
-      "transactionIndex": 1,
-      "success": true,
-      "gasUsed": "200000",
-      "returnData": "0x...",
-      "logs": [
-        {
-          "address": "0x...",
-          "contract": "ERC4626",
-          "eventName": "Deposit",
-          "description": "Deposited 1000 USDC into vault",
-          "args": { "sender": "0x...", "owner": "0x...", "assets": "1000000000", "shares": "987654321" },
-          "formatted": { "sender": "0x...", "owner": "0x...", "assets": "1000 USDC", "shares": "987654321" }
-        }
-      ]
     }
   ],
   "analysis": {
@@ -182,61 +262,21 @@ All `prepare-*` commands return a `PrepareResult` envelope containing an `operat
     },
     "warnings": []
   },
-  "observations": [
-    {
-      "key": "usdc_balance",
-      "raw": "0x...",
-      "decoded": "987654321",
-      "type": "uint256"
-    }
-  ],
   "warnings": []
 }
 ```
 
-### Fields
-
-- **`chain`** — chain slug (`"base"` | `"ethereum"`)
-- **`allSucceeded`** — `true` if every transaction executed without revert
-- **`totalGasUsed`** — sum of gas across all transactions
-- **`executionResults`** — per-transaction results
+- `allSucceeded` — `true` if every transaction executed without revert
+- `totalGasUsed` — sum of gas across all transactions
+- `executionResults` — per-transaction results
   - `success` — `false` if reverted
   - `gasUsed` — gas used (`"0"` on failure)
-  - `returnData` — hex return data (optional, absent on failure)
   - `revertReason` — present only on failure (e.g., `"ERC4626ExceededMaxWithdraw"`)
-  - `logs` — decoded event logs (optional, present when analysis context was passed and transaction emitted decodable events)
-    - `address` — emitting contract address
+  - `logs` — decoded event logs (present when analysis context was passed and events were decodable)
     - `contract` — contract name (e.g., `"ERC20 (USDC)"`, `"Morpho Blue"`)
-    - `eventName` — event name (e.g., `"Approval"`, `"Deposit"`, `"Supply"`)
-    - `description` — human-readable summary of the event
-    - `args` — raw event arguments as key-value pairs
-    - `formatted` — human-readable formatted arguments
-- **`analysis`** — Morpho-specific pre/post state (optional, present when analysis context was passed and all transactions succeeded)
-  - `protocol` — `"morpho"`
-  - `operation` — `"deposit"` | `"withdraw"` | `"supply"` | `"borrow"` | `"repay"` | `"supply_collateral"` | `"withdraw_collateral"`
-  - **`vault`** — present for vault operations (`deposit`, `withdraw`)
-    - `vaultAddress` — vault contract address
-    - `sharesBefore` / `sharesAfter` — user's vault shares before and after
-    - `assetsBefore` / `assetsAfter` — user's asset value before and after
-    - `shareDelta` / `assetDelta` — change in shares and assets
-    - `projectedApy` — estimated APY (optional)
-    - `marketStates` — per-market snapshots (optional), each with:
-      - `marketId`, `totalSupplyAssets`, `totalBorrowAssets`, `totalSupplyShares`, `totalBorrowShares`, `utilization`
-  - **`market`** — present for market operations (`supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral`)
-    - `marketId` — market unique key
-    - `supplyBefore` / `supplyAfter` — user's supply before and after
-    - `borrowBefore` / `borrowAfter` — user's borrow before and after
-    - `supplyDelta` / `borrowDelta` — change in supply and borrow
-    - `utilizationBefore` / `utilizationAfter` — market utilization change (optional)
-    - `borrowRateBefore` / `borrowRateAfter` — borrow rate change (optional)
-    - `borrowAPYBefore` / `borrowAPYAfter` — borrow APY change (optional)
-    - `healthFactor` — post-operation health factor (optional)
-    - `liquidationRisk` — risk level string (optional)
-  - **`warnings`** — Morpho-specific warnings, each with `level`, `message`, and optional `code`
-- **`observations`** — decoded on-chain reads after simulation (optional, only when simulation plan had observations and all transactions succeeded)
-  - `key` — observation identifier (e.g., `"usdc_balance"`)
-  - `raw` — raw hex return data (optional)
-  - `decoded` — decoded value as string (optional)
-  - `type` — Solidity type (e.g., `"uint256"`)
-  - `error` — error message if decoding failed (optional)
-- **`warnings`** — top-level warnings, each with `level` (`"info"` | `"warning"` | `"error"`), `message`, and optional `code`
+    - `args` — raw event arguments; `formatted` — human-readable formatted arguments
+- `analysis` — Morpho-specific pre/post state; present only when analysis context was passed and all transactions succeeded
+  - `vault` — for vault operations: `sharesBefore/After`, `assetsBefore/After`, `shareDelta`, `assetDelta`, `projectedApy`
+  - `market` — for market operations: `marketId`, `supplyBefore/After`, `borrowBefore/After`, `supplyDelta`, `borrowDelta`, `utilizationBefore/After`, `borrowAPYBefore/After`, `healthFactor`, `liquidationRisk`
+  - `warnings` — Morpho-specific warnings
+- `warnings` — top-level warnings; each has `level` (`"info"` | `"warning"` | `"error"`), `message`, optional `code`
