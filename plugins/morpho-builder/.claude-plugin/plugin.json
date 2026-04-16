@@ -6,6 +6,5 @@
     "name": "Morpho Agents"
   },
   "license": "MIT",
-  "skills": "./skills",
   "mcpServers": "./.mcp.json"
 }

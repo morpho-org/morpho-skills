@@ -1,31 +1,211 @@
 # Read Command Response Schemas
 
-All read commands return JSON to stdout with a `tool` and `timestamp` field.
+## Reading conventions
 
-## query-vaults
+All Morpho tool responses follow these invariants. Learn them once; they apply to every tool.
+
+1. **No envelope noise.** No `tool` or `timestamp` fields.
+2. **Chain and userAddress are hoisted.** When constant across a payload they appear once at the root; nested items don't repeat them.
+3. **`TokenAmount` is `{ symbol, value }`.** `value` is the decimal-applied human string (e.g. `"1000.50"` for 1000.50 USDC). There is no `decimals` field. Never multiply or divide — the value is already in the form you quote to the user.
+4. **Every rate, ratio, APY, APR, fee, LTV, and utilization is a percent string with `Pct` suffix.** `"3.12"` means 3.12%. `"86"` means 86%. Never a fraction. The only exception is `healthFactor`, which is a ratio (`<1` means liquidatable).
+5. **USD fields are scalar dollar strings with `Usd` suffix.** `suppliedUsd: "1234.56"` means $1,234.56. Absent when the API has no price feed.
+6. **One `warnings` array per response, always at the root.** Check it before acting on the response.
+7. **Single-item reads return the item directly.** `morpho_get_market` returns a `MarketDetail`, not `{ market: ... }`. `morpho_get_vault` returns a `VaultDetail` directly.
+8. **List reads return `{ chain, <items>, pagination? }`.** If `pagination` is absent, you have everything.
+
+---
+
+## `morpho_health_check`
+
+Input: _(no parameters)_
+
+Output:
+```json
+{ "status": "healthy" }
+```
+
+- `status` — `"healthy"` | `"unhealthy"`
+
+## `morpho_get_supported_chains`
+
+Input: _(no parameters)_
+
+Output (bare array):
+```json
+[
+  {
+    "slug": "base",
+    "name": "Base",
+    "chainId": "8453",
+    "explorerUrl": "https://basescan.org",
+    "isTestnet": false
+  },
+  {
+    "slug": "ethereum",
+    "name": "Ethereum",
+    "chainId": "1",
+    "explorerUrl": "https://etherscan.io",
+    "isTestnet": false
+  }
+]
+```
+
+## `morpho_get_market`
+
+**Options:** `--chain` (required), `--id` (required)
+
+Output (a `MarketDetail`, returned directly):
+```json
+{
+  "id": "0x...",
+  "chain": "base",
+  "loanAsset": { "address": "0x...", "symbol": "USDC" },
+  "collateralAsset": { "address": "0x...", "symbol": "WETH" },
+  "lltvPct": "86",
+  "borrowApyPct": "3.12",
+  "supplyApyPct": "2.10",
+  "utilizationPct": "75",
+  "totalSupply":    { "symbol": "USDC", "value": "5000000" },
+  "totalBorrow":    { "symbol": "USDC", "value": "3500000" },
+  "totalCollateral": { "symbol": "WETH", "value": "1500" },
+  "totalLiquidity": { "symbol": "USDC", "value": "1500000" },
+  "supplyAssetsUsd": "5000000.00",
+  "borrowAssetsUsd": "3500000.00",
+  "collateralAssetsUsd": "4200000.00",
+  "liquidityAssetsUsd": "1500000.00",
+  "rewards": [
+    {
+      "asset": { "address": "0x...", "symbol": "MORPHO" },
+      "supplyAprPct": "1.20",
+      "borrowAprPct": "0.50"
+    }
+  ]
+}
+```
+
+- `lltvPct` — loan-to-value limit as percent string: `"86"` = 86%
+- `utilizationPct` — market utilization as percent string: `"75"` = 75%
+- `totalSupply`, `totalBorrow`, `totalLiquidity` — `TokenAmount` in loan-asset units
+- `totalCollateral` — `TokenAmount` in collateral-asset units
+- USD fields (`supplyAssetsUsd`, etc.) — absent when the API has no price feed
+- `rewards` — optional array; each item has `supplyAprPct` (and optionally `borrowAprPct`)
+- Throws `NOT_FOUND` error if market ID does not exist
+
+## `morpho_query_markets`
+
+**Options:** `--chain` (required), `--loan-asset` (required), `--collateral-asset` (optional), `--sort-by` (`supplyApy`, `borrowApy`, `netSupplyApy`, `netBorrowApy`, `supplyAssetsUsd`, `borrowAssetsUsd`, `totalLiquidityUsd`; default: `supplyAssetsUsd`), `--sort-direction` (`asc`, `desc`; default: `desc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `supplyApy`, `borrowApy`, `totalSupply`, `totalBorrow`, `totalCollateral`, `totalLiquidity`, `supplyAssetsUsd`, `borrowAssetsUsd`, `collateralAssetsUsd`, `liquidityAssetsUsd`)
+
+Output (`{ chain, markets, pagination? }`):
+```json
+{
+  "chain": "base",
+  "markets": [
+    {
+      "id": "0x...",
+      "loanAsset": { "address": "0x...", "symbol": "USDC" },
+      "collateralAsset": { "address": "0x...", "symbol": "WETH" },
+      "lltvPct": "86",
+      "borrowApyPct": "3.12",
+      "supplyApyPct": "2.10",
+      "utilizationPct": "75",
+      "totalSupply":    { "symbol": "USDC", "value": "5000000" },
+      "totalBorrow":    { "symbol": "USDC", "value": "3500000" },
+      "totalCollateral": { "symbol": "WETH", "value": "1500" },
+      "totalLiquidity": { "symbol": "USDC", "value": "1500000" },
+      "supplyAssetsUsd": "5000000.00",
+      "borrowAssetsUsd": "3500000.00",
+      "collateralAssetsUsd": "4200000.00",
+      "liquidityAssetsUsd": "1500000.00",
+      "rewards": []
+    }
+  ],
+  "pagination": { "total": 200, "limit": 8, "skip": 0 }
+}
+```
+
+- Items are `MarketDetail` without the `chain` field (hoisted to root)
+- `pagination` is absent when you have all results
+- `--fields` controls which optional fields are returned; omit to get all
+
+## `morpho_get_vault`
+
+**Options:** `--chain` (required), `--address` (required)
+
+Output (a `VaultDetail`, returned directly):
+```json
+{
+  "address": "0x...",
+  "chain": "base",
+  "name": "Steakhouse USDC",
+  "version": "v1",
+  "asset": { "address": "0x...", "symbol": "USDC" },
+  "curator": "Steakhouse",
+  "apyPct": "5.34",
+  "feePct": "10",
+  "tvl": { "symbol": "USDC", "value": "125000000" },
+  "tvlUsd": "125000000.00",
+  "rewards": [
+    {
+      "asset": { "address": "0x...", "symbol": "MORPHO" },
+      "supplyAprPct": "1.20"
+    }
+  ],
+  "allocations": [
+    {
+      "kind": "market",
+      "marketId": "0x...",
+      "loanAsset": { "address": "0x...", "symbol": "USDC" },
+      "collateralAsset": { "address": "0x...", "symbol": "WETH" },
+      "supply": { "symbol": "USDC", "value": "50000000" },
+      "supplyUsd": "50000000.00"
+    }
+  ]
+}
+```
+
+For v2 vaults, `allocations` entries use `kind: "adapter"` instead:
+```json
+{
+  "allocations": [
+    {
+      "kind": "adapter",
+      "adapterAddress": "0x...",
+      "supply": { "symbol": "USDC", "value": "50000000" },
+      "supplyUsd": "50000000.00"
+    }
+  ]
+}
+```
+
+- `version` — `"v1"` (MetaMorpho) or `"v2"` (new vault contract). Always present
+- `type` — `"MorphoVault"` or `"FeeWrapper"` (v2 only; absent for v1)
+- `tvl` — `TokenAmount` in vault asset units
+- `feePct` — for v1 this is the performance fee; for v2 it is `performanceFee + managementFee`
+- `allocations` — optional; `kind: "market"` for v1 allocations, `kind: "adapter"` for v2
+- `supplyUsd` on allocations — absent when the API has no price feed
+- Throws `NOT_FOUND` error if vault address does not exist
+
+## `morpho_query_vaults`
 
 **Options:** `--chain` (required), `--asset-symbol`, `--asset-address`, `--sort` (`apy_desc`, `apy_asc`, `tvl_desc`, `tvl_asc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `address`, `name`, `symbol`, `apyPct`, `tvl`, `tvlUsd`, `feePct`)
 
+Output (`{ chain, vaults, pagination? }`):
 ```json
 {
+  "chain": "base",
   "vaults": [
     {
       "address": "0x...",
       "name": "Steakhouse USDC",
-      "chain": "base",
-      "asset": {
-        "address": "0x...",
-        "symbol": "USDC",
-        "decimals": 6,
-        "chain": "base"
-      },
+      "version": "v1",
+      "asset": { "address": "0x...", "symbol": "USDC" },
       "apyPct": "5.34",
-      "tvl": "125000000000",
+      "tvl": { "symbol": "USDC", "value": "125000000" },
       "tvlUsd": "125000000.00",
       "feePct": "10",
       "rewards": [
         {
-          "asset": { "address": "0x...", "symbol": "MORPHO", "decimals": 18, "chain": "base" },
+          "asset": { "address": "0x...", "symbol": "MORPHO" },
           "supplyAprPct": "1.20"
         }
       ],
@@ -33,324 +213,104 @@ All read commands return JSON to stdout with a `tool` and `timestamp` field.
       "type": "MorphoVault"
     }
   ],
-  "chain": "base",
-  "count": 12,
-  "pagination": { "total": 50, "limit": 12, "skip": 0 },
-  "tool": "morpho_query_vaults",
-  "timestamp": "2026-03-17T00:00:00.000Z"
+  "pagination": { "total": 50, "limit": 12, "skip": 0 }
 }
 ```
 
-- `apyPct` — percentage string (e.g., `"5.34"` = 5.34%)
-- `feePct` — total fee as percentage (e.g., `"10"` = 10%). For v1 this is the performance fee; for v2 it is `performanceFee + managementFee`
-- `tvl` — raw integer string, divide by `10^asset.decimals`
-- `rewards` — optional array of reward token incentives with APR percentages
-- `version` — `"v1"` or `"v2"`. V1 = MetaMorpho vaults, V2 = newer vault contracts. Always present
-- `type` — `"MorphoVault"` or `"FeeWrapper"` (v2 only, absent for v1). FeeWrapper adds a fee layer on top of another vault
+- Items are `VaultDetail` without the `chain` field (hoisted to root)
 - Results include both v1 and v2 vaults merged and sorted together
+- `pagination` is absent when you have all results
 - `--fields` controls which optional fields are returned; omit to get all
 - `--sort` and `--skip` enable server-side sorting and pagination
 
-## get-vault
+## `morpho_get_positions`
 
-**Options:** `--chain` (required), `--address` (required)
+**Options:** `--chain` (required), `--user-address` (required)
 
+Returns all Morpho positions for a user on a chain. Zero-balance positions are filtered out. No pagination — the full portfolio is returned in one call.
+
+Output (`{ chain, userAddress, totals, vaultPositions, marketPositions }`):
 ```json
 {
-  "vault": {
-    "address": "0x...",
-    "name": "Steakhouse USDC",
-    "chain": "base",
-    "asset": {
-      "address": "0x...",
-      "symbol": "USDC",
-      "decimals": 6,
-      "chain": "base"
-    },
-    "curator": "string (optional)",
-    "allocator": "string (optional)",
-    "apyPct": "5.34",
-    "tvl": "125000000000",
-    "tvlUsd": "125000000.00",
-    "feePct": "10",
-    "rewards": [
-      {
-        "asset": { "address": "0x...", "symbol": "MORPHO", "decimals": 18, "chain": "base" },
-        "supplyAprPct": "1.20"
-      }
-    ],
-    "allocations": [
-      {
-        "market": {
-          "uniqueKey": "0x...",
-          "loanAsset": { "address": "0x...", "symbol": "USDC" },
-          "collateralAsset": { "address": "0x...", "symbol": "WETH" }
-        },
-        "supplyAssets": "50000000000",
-        "supplyAssetsUsd": "50000.00"
-      }
-    ],
-    "version": "v1",
-    "type": "MorphoVault"
+  "chain": "base",
+  "userAddress": "0x...",
+  "totals": {
+    "vaultCount": 2,
+    "marketCount": 1,
+    "suppliedUsd": "15007.52",
+    "borrowedUsd": "500.50",
+    "collateralUsd": "4200.00",
+    "netWorthUsd": "18707.02"
   },
-  "chain": "base",
-  "tool": "morpho_get_vault",
-  "timestamp": "2026-03-17T00:00:00.000Z"
-}
-```
-
-- Throws `NOT_FOUND` error if vault address does not exist on either v1 or v2
-- The tool automatically tries both v1 and v2 APIs — no version parameter needed
-- `version` — `"v1"` or `"v2"`. Always present
-- `type` — `"MorphoVault"` or `"FeeWrapper"` (v2 only, absent for v1)
-- `allocations` — per-market breakdown of vault's deployed capital (optional, may be absent). For v2 vaults, adapter addresses are used as `uniqueKey` identifiers
-- `allocations[].market.loanAsset` / `collateralAsset` — may be null or absent (always absent for v2 adapters)
-- `allocations[].supplyAssetsUsd` — optional, may be absent
-
-## query-markets
-
-**Options:** `--chain` (required), `--loan-asset` (required), `--collateral-asset` (required), `--sort-by` (`supplyApy`, `borrowApy`, `netSupplyApy`, `netBorrowApy`, `supplyAssetsUsd`, `borrowAssetsUsd`, `totalLiquidityUsd`; default: `supplyAssetsUsd`), `--sort-direction` (`asc`, `desc`; default: `desc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `supplyApy`, `borrowApy`, `totalSupply`, `totalBorrow`, `totalCollateral`, `totalLiquidity`, `supplyAssetsUsd`, `borrowAssetsUsd`, `collateralAssetsUsd`, `liquidityAssetsUsd`)
-
-```json
-{
-  "markets": [
+  "vaultPositions": [
     {
-      "id": "0x...",
-      "chain": "base",
-      "loanAsset": {
-        "address": "0x...",
-        "symbol": "USDC",
-        "decimals": 6,
-        "chain": "base"
-      },
-      "collateralAsset": {
-        "address": "0x...",
-        "symbol": "WETH",
-        "decimals": 18,
-        "chain": "base"
-      },
-      "lltv": "0.86",
-      "borrowApyPct": "3.12",
-      "supplyApyPct": "2.10",
-      "totalSupply": "5000000",
-      "totalBorrow": "3500000",
-      "totalCollateral": "1500",
-      "totalLiquidity": "1500000",
-      "utilization": "0.7000",
-      "supplyAssetsUsd": "5000000.00",
-      "borrowAssetsUsd": "3500000.00",
-      "collateralAssetsUsd": "4200000.00",
-      "liquidityAssetsUsd": "1500000.00",
-      "rewards": [
-        {
-          "asset": { "address": "0x...", "symbol": "MORPHO", "decimals": 18, "chain": "base" },
-          "supplyAprPct": "1.20",
-          "borrowAprPct": "0.50"
-        }
-      ]
-    }
-  ],
-  "chain": "base",
-  "count": 8,
-  "pagination": { "total": 200, "limit": 8, "skip": 0 },
-  "tool": "morpho_query_markets",
-  "timestamp": "2026-03-17T00:00:00.000Z"
-}
-```
-
-- `lltv` — denominated decimal string (e.g., `"0.86"` = 86%)
-- `borrowApyPct`, `supplyApyPct` — percentage values (e.g., `"3.12"` = 3.12%)
-- `totalSupply`, `totalBorrow` — formatted decimal strings in loan asset units
-- `totalCollateral` — formatted decimal string in collateral asset units (not loan asset)
-- `totalLiquidity` — formatted decimal string in loan asset units (supply - borrow)
-- `utilization` — decimal string with 4 decimal places (e.g., `"0.7000"` = 70%). Auto-computed when `totalSupply` and `totalBorrow` are present; not a `--fields` choice
-- `collateralAssetsUsd`, `liquidityAssetsUsd` — USD-denominated string values
-- `rewards` — optional array of reward token incentives with supply and borrow APR percentages
-- `--fields` controls which optional fields are returned; omit to get all
-- `--sort-by` and `--sort-direction` enable server-side sorting
-
-## get-market
-
-**Options:** `--chain` (required), `--id` (required)
-
-```json
-{
-  "market": {
-    "id": "0x...",
-    "chain": "base",
-    "loanAsset": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base" },
-    "collateralAsset": { "address": "0x...", "symbol": "WETH", "decimals": 18, "chain": "base" },
-    "lltv": "0.86",
-    "borrowApyPct": "3.12",
-    "supplyApyPct": "2.10",
-    "totalSupply": "5000000",
-    "totalBorrow": "3500000",
-    "totalCollateral": "1500",
-    "totalLiquidity": "1500000",
-    "utilization": "0.7000",
-    "supplyAssetsUsd": "5000000.00",
-    "borrowAssetsUsd": "3500000.00",
-    "collateralAssetsUsd": "4200000.00",
-    "liquidityAssetsUsd": "1500000.00",
-    "rewards": [
-      {
-        "asset": { "address": "0x...", "symbol": "MORPHO", "decimals": 18, "chain": "base" },
-        "supplyAprPct": "1.20",
-        "borrowAprPct": "0.50"
-      }
-    ]
-  },
-  "chain": "base",
-  "tool": "morpho_get_market",
-  "timestamp": "2026-03-17T00:00:00.000Z"
-}
-```
-
-- Same fields as `query-markets` items — all total/USD fields are formatted decimal strings via `formatUnits`
-- Throws `NOT_FOUND` error if market ID does not exist
-
-## get-positions
-
-**Options:** `--chain` (required), `--user-address` (required), `--vault-address` (optional), `--market-id` (optional)
-
-```json
-{
-  "positions": [
-    {
-      "userAddress": "0x...",
-      "chain": "base",
       "vault": {
         "address": "0x...",
         "name": "Steakhouse USDC",
-        "chain": "base",
-        "asset": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base" }
+        "asset": { "address": "0x...", "symbol": "USDC" },
+        "version": "v1"
       },
-      "suppliedAmount": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base", "value": "10000" },
-      "borrowedAmount": null,
-      "collateralAmount": null,
-      "shares": "9876543210"
+      "supplied": { "symbol": "USDC", "value": "10000" },
+      "suppliedUsd": "10005.42"
     },
     {
-      "userAddress": "0x...",
-      "chain": "base",
-      "market": {
-        "id": "0x...",
-        "chain": "base",
-        "loanAsset": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base" },
-        "collateralAsset": { "address": "0x...", "symbol": "WETH", "decimals": 18, "chain": "base" },
-        "lltv": "0.86"
+      "vault": {
+        "address": "0x...",
+        "name": "Gauntlet v2",
+        "asset": { "address": "0x...", "symbol": "USDC" },
+        "version": "v2"
       },
-      "suppliedAmount": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base", "value": "0" },
-      "borrowedAmount": { "address": "0x...", "symbol": "USDC", "decimals": 6, "chain": "base", "value": "500" },
-      "collateralAmount": { "address": "0x...", "symbol": "WETH", "decimals": 18, "chain": "base", "value": "1" }
+      "supplied": { "symbol": "USDC", "value": "5000" },
+      "suppliedUsd": "5002.10"
     }
   ],
-  "chain": "base",
-  "count": 2,
-  "userAddress": "0x...",
-  "tool": "morpho_get_positions",
-  "timestamp": "2026-03-17T00:00:00.000Z"
+  "marketPositions": [
+    {
+      "market": {
+        "id": "0x8793cf...",
+        "loanAsset": { "address": "0x...", "symbol": "USDC" },
+        "collateralAsset": { "address": "0x...", "symbol": "WETH" },
+        "lltvPct": "86"
+      },
+      "supplied": { "symbol": "USDC", "value": "0" },
+      "borrowed": { "symbol": "USDC", "value": "500" },
+      "collateral": { "symbol": "WETH", "value": "1" },
+      "borrowedUsd": "500.50",
+      "collateralUsd": "4200.00",
+      "healthFactor": "2.34"
+    }
+  ]
 }
 ```
 
-- Vault positions have `vault` field, market positions have `market` field
-- `suppliedAmount.value`, `borrowedAmount.value`, `collateralAmount.value` — formatted decimal strings (human-readable, e.g., `"500"` = 500 USDC, `"1"` = 1 WETH)
-- `shares` — vault share count (raw integer string)
+- `chain` and `userAddress` are at the root; nested vault/market objects omit them
+- `vault.version` on each vault position is `"v1"` or `"v2"`. Filter client-side if needed
+- `totals` — always has `vaultCount` and `marketCount`. The four USD fields are omitted when any nonzero contributor lacks a price feed. `netWorthUsd = suppliedUsd + collateralUsd - borrowedUsd`
+- `suppliedUsd` / `borrowedUsd` / `collateralUsd` on positions — absent when no price feed
+- `healthFactor` on market positions — omitted when there is no borrow; `< 1.0` is liquidatable
+- `supplied`, `borrowed`, `collateral` on market positions — always present, default `"0"`
+- Both arrays are always present; empty when no positions
 
-## get-position
-
-**Options:** `--chain` (required), `--user-address` (required), `--vault-address` (optional), `--market-id` (optional)
-
-```json
-{
-  "position": { ... },
-  "chain": "base",
-  "tool": "morpho_get_position",
-  "timestamp": "2026-03-17T00:00:00.000Z"
-}
-```
-
-- Same position shape as `get-positions` items
-- Throws `NOT_FOUND` error if no position exists
-
-## get-token-balance
+## `morpho_get_token_balance`
 
 **Options:** `--chain` (required), `--user-address` (required), `--token-address` (required)
 
+Output:
 ```json
 {
   "chain": "base",
   "userAddress": "0x...",
-  "asset": {
-    "address": "0x...",
-    "symbol": "USDC",
-    "decimals": 6,
-    "chain": "base"
-  },
-  "balance": "1000000000",
-  "erc20Allowances": {
-    "morpho": "0",
-    "bundler": "0",
-    "permit2": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-  },
-  "permit2BundlerAllowance": {
-    "amount": "0",
-    "expiration": "0",
-    "nonce": "0"
-  },
-  "erc2612Nonce": 0,
-  "canTransfer": true,
-  "tool": "morpho_get_token_balance",
-  "timestamp": "2026-03-17T00:00:00.000Z"
+  "asset": { "address": "0x...", "symbol": "USDC" },
+  "balance": { "symbol": "USDC", "value": "1000.00" },
+  "morphoAllowance": { "symbol": "USDC", "value": "0" },
+  "bundlerAllowance": { "symbol": "USDC", "value": "0" },
+  "permit2Allowance": { "symbol": "USDC", "value": "115792089237316195423570985008687907853269984665640564039457584007913129639935" },
+  "needsApprovalForMorpho": true,
+  "needsApprovalForBundler": true
 }
 ```
 
-- `balance` — raw integer string, divide by `10^asset.decimals`
-- `erc20Allowances` — raw integer strings for each spender (Morpho core, Bundler, Permit2)
-- `permit2BundlerAllowance` — Permit2 sub-allowance for the Bundler contract
-  - `amount` — raw integer allowance
-  - `expiration` — Unix timestamp string
-  - `nonce` — permit nonce string
-- `erc2612Nonce` — current ERC-2612 permit nonce (integer)
-- `canTransfer` — whether the user can transfer this token (not paused/blocklisted)
-
-## health-check
-
-```json
-{
-  "status": "healthy",
-  "timestamp": "2026-03-17T00:00:00.000Z",
-  "version": "0.1.0",
-  "environment": "development",
-  "tool": "morpho_health_check",
-  "services": {
-    "api": "operational",
-    "chains": {
-      "base": "operational",
-      "ethereum": "operational"
-    }
-  }
-}
-```
-
-- `status` — `"healthy"` | `"degraded"` | `"unhealthy"`
-- `environment` — runtime environment (e.g., `"development"`, `"production"`)
-- `services.api` / `services.chains.*` — `"operational"` | `"degraded"` | `"down"` | `"error"`
-
-## get-supported-chains
-
-```json
-{
-  "chains": [
-    {
-      "slug": "base",
-      "name": "Base",
-      "chainId": "8453",
-      "explorerUrl": "https://basescan.org",
-      "isTestnet": false
-    }
-  ],
-  "tool": "morpho_get_supported_chains",
-  "timestamp": "2026-03-17T00:00:00.000Z"
-}
-```
+- `balance`, `morphoAllowance`, `bundlerAllowance`, `permit2Allowance` — all `TokenAmount` (`{ symbol, value }`). Values are already decimal-applied — do not divide again
+- `needsApprovalForMorpho` — true when the user needs to approve Morpho Blue to spend this token
+- `needsApprovalForBundler` — true when the user needs to approve the Morpho Bundler
+- No raw integer strings, no decimals field — all amounts are human-readable
