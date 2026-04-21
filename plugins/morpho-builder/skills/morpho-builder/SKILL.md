@@ -1,6 +1,6 @@
 ---
 name: morpho-builder
-description: Use when building applications, bots, or integrations that interact with the Morpho lending protocol — scaffolding deposit apps, risk monitors, portfolio dashboards, or any Morpho protocol integration
+description: Use when building applications, bots, SDKs, or integrations against the Morpho lending protocol — deposits, borrows, repays, withdrawals, vault v1/v2 integrations, V1→V2 migration flows, risk monitors, portfolio dashboards. Steers toward `@morpho-org/consumer-sdk` (`MorphoClient`) for user-facing transactions and flags uncovered flows (curator ops, market creation, liquidations, flashloans, rewards) that need lower-level SDKs. Invoke whenever a user mentions Morpho, MetaMorpho, Morpho Blue, or any on-chain integration touching these contracts — even if they don't name consumer-sdk explicitly.
 ---
 
 # Morpho Builder Skill
