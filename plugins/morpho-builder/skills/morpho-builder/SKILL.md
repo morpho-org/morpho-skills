@@ -84,22 +84,7 @@ All packages are published under `@morpho-org` on npm.
 
 High-level abstraction. Default entry point for user-facing flows.
 
-**Construction** — two equivalent forms:
-
-```ts
-import { MorphoClient, morphoViemExtension } from "@morpho-org/consumer-sdk";
-import { createPublicClient, http } from "viem";
-import { mainnet } from "viem/chains";
-
-const publicClient = createPublicClient({ chain: mainnet, transport: http() });
-
-// Option A: direct client
-const morpho = new MorphoClient(publicClient);
-
-// Option B: viem extension
-const client = publicClient.extend(morphoViemExtension());
-// then: client.morpho.vaultV2(addr, chainId), etc.
-```
+**Construction** — two equivalent forms: `new MorphoClient(publicClient)` returns a direct client, or `publicClient.extend(morphoViemExtension())` attaches the API to a viem public client under `.morpho`.
 
 **Entity factories** — all require a `chainId` (`1` for Ethereum, `8453` for Base):
 
@@ -127,27 +112,6 @@ const client = publicClient.extend(morphoViemExtension());
 4. Resolve requirements: `const reqs = await getRequirements()` — returns ERC-20 approvals, EIP-2612 permits, Permit2 data, and/or `morpho.setAuthorization(GA1, true)` steps as needed.
 5. Sign permits / send approval txs as dictated by the requirements.
 6. Build and send: `const tx = buildTx(requirementSignatures)` → `{ to, value, data, action }` → sign and broadcast.
-
-**Minimal vault v2 deposit example:**
-
-```ts
-const morpho = new MorphoClient(publicClient);
-const vault = morpho.vaultV2(vaultAddress, 1);
-const accrualVault = await vault.getData();
-
-const { buildTx, getRequirements } = await vault.deposit({
-  amount,          // bigint in raw units (use parseUnits with asset.decimals)
-  userAddress,
-  accrualVault,
-});
-
-const requirements = await getRequirements();
-// fulfill each requirement — sign permits, send approval txs as needed
-const signatures = await signPermits(requirements);
-
-const tx = buildTx(signatures);
-// forward tx to user wallet / useSendTransaction / walletClient.sendTransaction
-```
 
 **Notes:**
 
