@@ -284,7 +284,10 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 ## Testing
 
+[Detailed reference](references/testing-guide.md)
+
 - **`@morpho-org/test`** — Vitest/Anvil fixtures for Morpho-specific test setup.
+- See the [testing guide](references/testing-guide.md) for a full catalog of test cases covering vaults, markets, input validation, health factors, token approvals, signature security, and bad debt. Implementations should include these checks in their test suites.
 
 ## Best Practices
 
@@ -310,3 +313,4 @@ After finishing code or a plan, review it against these Morpho-specific checks b
 6. **Token Approvals** — USDT resets allowance to 0 first; DAI uses `approve()` not `permit()` (consumer-sdk handles both automatically via its requirements flow; hand-rolled integrations must implement these) ([reference](references/common-pitfalls.md))
 7. **Vault Governance** — UI surfaces role holders; trust assumptions documented ([reference](references/common-pitfalls.md))
 8. **General Safety** — no hardcoded addresses; chain ID parameterized; decimals read not assumed; write ops simulate before execute; health factor validated; ABIs from `@morpho-org/blue-sdk-viem`
+9. **Test Coverage** — implementation includes tests for relevant cases from the [testing guide](references/testing-guide.md); edge cases (dead deposits, USDT approvals, health factor boundaries, full withdrawals via `redeem()`) are covered
