@@ -1,13 +1,6 @@
 ---
 name: morpho-cli
-description: >
-  Interact with the Morpho lending protocol using the CLI. Use this skill when the user asks to:
-  query vault APYs, TVL, or allocation strategies ("What's the best USDC vault on Base?");
-  query market rates, utilization, or LLTV ("Show me ETH/USDC markets on Ethereum");
-  check user positions, balances, or health ("What are my Morpho positions?");
-  deposit into or withdraw from a vault ("Deposit 1000 USDC into Steakhouse vault");
-  supply collateral, borrow, or repay on a market ("Borrow 5000 USDC against my WETH");
-  prepare or simulate any Morpho transaction.
+description: Drive the Morpho lending protocol from the terminal via `npx @morpho-org/cli` — queries vaults/markets/positions and prepares unsigned Morpho transactions with built-in simulation on Ethereum and Base. Invoke whenever the user asks to explore Morpho vault APYs / TVL / allocations ("best USDC vault on Base"), compare Morpho Blue markets ("ETH/USDC markets on mainnet"), inspect positions or health factor ("what are my Morpho positions"), or prepare any Morpho operation — deposit, withdraw, supply, borrow, repay, supply/withdraw collateral — even when the user doesn't explicitly name the CLI. If the user is writing application code that integrates Morpho, prefer the morpho-builder skill instead.
 ---
 
 # morpho-cli
@@ -62,7 +55,14 @@ npx @morpho-org/cli get-supported-chains
 Every write operation follows two steps. Simulation runs automatically inside `prepare-*`.
 
 1. **Prepare** — run a `prepare-*` command. The CLI handles token decimals, allowances, approvals, and simulation automatically. Returns a flat `PreparedOperation` with the fields you need at the root: `operation`, `summary`, `requirements` (informational — approval txs are already in `transactions`), `transactions` (the unsigned payloads to sign), `simulated`, `simulationOk`, `totalGasUsed`, `outcome`, `warnings`. Pass `--no-simulate` to skip simulation (in which case `simulationOk`, `totalGasUsed`, and most of `outcome` will be absent).
-2. **Present** — show `summary`, the `transactions` list, the key `outcome` fields (shares/assets received for vaults; health factor, utilization, max borrowable for markets), and any `warnings` in tabular format. If `simulationOk` is `false`, inspect `revertReason` before presenting.
+2. **Present** — show `summary`, the `transactions` list, the key `outcome` fields (see table below), and any `warnings` in tabular format. If `simulationOk` is `false`, inspect `revertReason` before presenting.
+
+The `outcome` block is discriminated by operation type:
+
+| Operation | `outcome` shape | Key fields to surface |
+|-----------|-----------------|------------------------|
+| `deposit`, `withdraw` (vaults) | `outcome.vault` | `sharesReceived`, `assetsReceived`, `positionAssets`, `positionShares` |
+| `supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral` (markets) | `outcome.market` | `healthFactor`, `isHealthy`, `maxBorrowable`, `utilizationBeforePct` → `utilizationAfterPct`, `borrowApyBeforePct` → `borrowApyAfterPct`, plus post-operation `supplied` / `borrowed` / `collateral` (raw integer strings — divide by 10^decimals) |
 
 Use `simulate-transactions` separately only for re-simulating with different parameters or simulating arbitrary transactions. Its top-level success field is `allSucceeded` (not `simulationOk`) — see [references/write.md](references/write.md).
 
@@ -78,10 +78,13 @@ Use `simulate-transactions` separately only for re-simulating with different par
 
 ## Partial Withdrawal
 
-If `prepare-withdraw --amount max` returns a liquidity warning:
-1. Parse the safe amount from `summary`, apply ~1% buffer (`parsedAmount * 0.99`)
-2. Re-call `prepare-withdraw` with the buffered amount, then simulate
-3. Tell the user: remaining locked assets free up as borrowers repay
+When `prepare-withdraw --amount max` cannot withdraw the full balance, the CLI returns a `PreparedOperation` whose `warnings[]` calls out the liquidity shortfall. The response is still valid — it represents the largest withdrawable amount right now.
+
+1. **Surface the warning** to the user verbatim — do not silently accept a smaller withdrawal.
+2. **Offer two paths**:
+   - Accept the partial amount the CLI prepared (inspect `outcome.vault.assetsReceived` for the concrete figure, optionally re-run `prepare-withdraw` with `--amount <value>` using ~99% of that figure as a safety buffer against interest accrual between prepare and execute).
+   - Wait for more liquidity — locked assets unlock as underlying-market borrowers repay or the curator reallocates.
+3. **Never invent an amount** by parsing the `summary` string — it is a human sentence, not a machine-readable field.
 
 ## Safety Rules
 
@@ -103,8 +106,8 @@ When a `npx @morpho-org/cli` command fails, **stop and report the error to the u
 
 - Forgetting `--chain` — every command requires it, there is no default
 - Using chain IDs (`1`, `8453`) instead of names (`ethereum`, `base`)
-- Displaying raw amounts without dividing by `10^decimals` — `"2000000000"` USDC is `2000`, not 2 billion
-- Assuming 18 decimals — USDC/USDT have 6
+- Dividing `TokenAmount.value` by `10^decimals` — `TokenAmount` values are already decimal-applied (a USDC value of `"1000"` means $1,000, not 1,000 micro-USDC). `*Pct` fields are already percent-scaled; `*Usd` fields are already in dollars. The only raw integer strings are inside `outcome.market.{supplied,borrowed,collateral}` and `outcome.vault.{sharesReceived,assetsReceived,positionShares}` — those do need `/10^decimals` for display.
+- Assuming 18 decimals — USDC/USDT have 6, WBTC/cbBTC have 8. Read decimals from response metadata; never assume.
 - Passing raw units as `--amount` — CLI expects human-readable (`1000` not `1000000000`)
 - Using `--no-simulate` without reason — simulation is on by default; only skip when debugging or for speed
 - Ignoring `simulationOk === false` on `prepare-*` (or `allSucceeded === false` on `simulate-transactions`) — diagnose before presenting
