@@ -24,8 +24,10 @@ Supported chains: `base`, `ethereum`. Every command requires `--chain`.
 
 ## Response Schemas
 
-- **[Read commands](references/read.md)** — exact JSON shapes for query-vaults, get-vault, query-markets, get-market, get-positions, get-position
-- **[Write commands](references/write.md)** — exact JSON shapes for prepare-\*, simulate-transactions
+- **[Read commands](references/read.md)** — exact JSON shapes for query-vaults, get-vault, query-markets, get-market, get-positions, get-token-balance, health-check, get-supported-chains
+- **[Write commands](references/write.md)** — exact JSON shapes for prepare-\* and simulate-transactions
+
+> Schemas are catalogued under MCP tool names (e.g. `morpho_query_vaults`, `morpho_prepare_deposit`) because the CLI and Morpho's MCP server return the same JSON. Map mechanically: `morpho_<verb>_<subject>` in the reference ↔ `npx @morpho-org/cli <verb>-<subject>` command. Response shapes are identical; only the invocation surface differs.
 
 ## Quick Reference
 
@@ -35,8 +37,8 @@ npx @morpho-org/cli query-vaults    --chain base [--asset-symbol USDC] [--asset-
 npx @morpho-org/cli get-vault       --chain base --address 0x...
 npx @morpho-org/cli query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
 npx @morpho-org/cli get-market      --chain base --id 0x...
-npx @morpho-org/cli get-positions   --chain base --user-address 0x... [--vault-address 0x...] [--market-id 0x...]
-npx @morpho-org/cli get-position    --chain base --user-address 0x... [--vault-address 0x...]
+npx @morpho-org/cli get-positions   --chain base --user-address 0x...
+npx @morpho-org/cli get-token-balance --chain base --user-address 0x... --token-address 0x...
 
 # Write — prepare unsigned transactions (simulation runs by default; add --no-simulate to skip)
 npx @morpho-org/cli prepare-deposit              --chain base --vault-address 0x... --user-address 0x... --amount 1000
@@ -59,10 +61,10 @@ npx @morpho-org/cli get-supported-chains
 
 Every write operation follows two steps. Simulation runs automatically inside `prepare-*`.
 
-1. **Prepare** — run a `prepare-*` command. The CLI handles token decimals, allowances, approvals, and simulation automatically. Returns `{operation, simulation}` where `operation` has transactions/summary/warnings/preview and `simulation` has execution results, gas, and post-state analysis. Use `--no-simulate` to skip simulation.
-2. **Present** — show the summary, list of unsigned transactions, simulation results, and any warnings (low health factor, partial liquidity) in tabular format. If `simulation.allSucceeded` is false — diagnose before presenting.
+1. **Prepare** — run a `prepare-*` command. The CLI handles token decimals, allowances, approvals, and simulation automatically. Returns a flat `PreparedOperation` with the fields you need at the root: `operation`, `summary`, `requirements` (informational — approval txs are already in `transactions`), `transactions` (the unsigned payloads to sign), `simulated`, `simulationOk`, `totalGasUsed`, `outcome`, `warnings`. Pass `--no-simulate` to skip simulation (in which case `simulationOk`, `totalGasUsed`, and most of `outcome` will be absent).
+2. **Present** — show `summary`, the `transactions` list, the key `outcome` fields (shares/assets received for vaults; health factor, utilization, max borrowable for markets), and any `warnings` in tabular format. If `simulationOk` is `false`, inspect `revertReason` before presenting.
 
-Use `simulate-transactions` separately only for re-simulating with different parameters or simulating arbitrary transactions.
+Use `simulate-transactions` separately only for re-simulating with different parameters or simulating arbitrary transactions. Its top-level success field is `allSucceeded` (not `simulationOk`) — see [references/write.md](references/write.md).
 
 
 ## Simulation Failures
@@ -83,7 +85,7 @@ If `prepare-withdraw --amount max` returns a liquidity warning:
 
 ## Safety Rules
 
-1. **Check simulation before presenting** — simulation runs by default; check `simulation.allSucceeded` before presenting
+1. **Check simulation before presenting** — simulation runs by default; check `simulationOk` (for `prepare-*`) or `allSucceeded` (for `simulate-transactions`) before presenting
 2. **Never sign or broadcast** — unsigned payloads only
 3. **Watch health factor** for borrows — warn if below 1.1
 4. **Communicate liquidity constraints** clearly for partial withdrawals
@@ -105,4 +107,4 @@ When a `npx @morpho-org/cli` command fails, **stop and report the error to the u
 - Assuming 18 decimals — USDC/USDT have 6
 - Passing raw units as `--amount` — CLI expects human-readable (`1000` not `1000000000`)
 - Using `--no-simulate` without reason — simulation is on by default; only skip when debugging or for speed
-- Ignoring `simulation.allSucceeded === false` — diagnose before presenting
+- Ignoring `simulationOk === false` on `prepare-*` (or `allSucceeded === false` on `simulate-transactions`) — diagnose before presenting

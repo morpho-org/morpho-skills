@@ -1,0 +1,33 @@
+{
+  "skill_name": "morpho-cli",
+  "evals": [
+    {
+      "id": 1,
+      "name": "best-usdc-vault-base",
+      "prompt": "A user on our platform is asking: 'What's the highest APY USDC vault on Base right now? Show me the top 3 with their TVL.' You don't need to actually run the command (assume you have no internet). Instead, write a short action plan that shows: (1) the exact `npx @morpho-org/cli` command you would run, with every flag, (2) the key fields you'd pull out of the JSON response to answer the user, (3) any unit/formatting conversions you'd apply before presenting, and (4) a mocked example of how you'd present the final answer to the user. Keep the plan concise and concrete.",
+      "expected_output": "Command uses `query-vaults` (not `get-vaults`), includes `--chain base`, filters by `--asset-symbol USDC`, sorts by apy_desc, limits to 3. Identifies `apyPct`, `tvl.value`, and optionally `tvlUsd` as the fields to extract. States that `apyPct` is already percent-suffixed (e.g. '5.34' means 5.34%) and `tvl.value` is already decimal-applied (do NOT divide by 10^decimals). The mock presentation shows APY with a % sign and TVL in human-readable form.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "check-user-positions",
+      "prompt": "A user asks: 'Can you tell me what Morpho positions 0x1234567890abcdef1234567890abcdef12345678 has on Base?' Assume no internet. Write a short action plan with: (1) the exact `npx @morpho-org/cli` command, (2) which top-level fields you'd surface from the response, (3) how you'd handle the case where the user has both vault deposits and market positions (including a borrow), (4) what specifically triggers a health-factor warning, and (5) a mocked example presentation.",
+      "expected_output": "Command uses `get-positions` (plural) with `--chain base --user-address 0x1234...`. Names `totals` (with `netWorthUsd`, `suppliedUsd`, `borrowedUsd`, `collateralUsd`), `vaultPositions`, and `marketPositions` as the three top-level things to surface. Says `healthFactor` on each market position is a ratio (<1 liquidatable). Warns when `healthFactor < 1.1`. Does NOT suggest using `--vault-address` or `--market-id` filter flags on `get-positions` (those are not supported on the CLI per the reference schema).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "prepare-deposit-into-vault",
+      "prompt": "A user says: 'I want to deposit 500 USDC into the Steakhouse USDC vault on Base from 0x1234567890abcdef1234567890abcdef12345678. Prepare the transaction for me.' Assume no internet. Write a short action plan with: (1) the full sequence of `npx @morpho-org/cli` commands (including any discovery step), (2) exactly what `--amount` value you'd pass, (3) the response fields you'd extract, (4) what you'd tell the user about signing, and (5) a mocked example presentation.",
+      "expected_output": "Plan first discovers the Steakhouse vault address via `query-vaults --chain base --asset-symbol USDC` (or `get-vault --chain base --address 0x...`), then calls `prepare-deposit --chain base --vault-address <addr> --user-address 0x1234... --amount 500`. Passes `500` as the amount (NOT `500000000` or `500 * 10^6`) — the CLI takes human-readable amounts. Does NOT pass `--no-simulate`. Extracts `summary`, `transactions`, `simulationOk`, `outcome.vault.sharesReceived`, `outcome.vault.positionAssets`, and `warnings`. Explicitly tells the user the CLI returns unsigned transactions; the user must sign externally and the agent does not sign or broadcast.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "prepare-borrow-with-health-check",
+      "prompt": "A user says: 'I have WETH supplied as collateral on a Morpho Blue market on Base (market id 0xabc000000000000000000000000000000000000000000000000000000000000a). From address 0x1234567890abcdef1234567890abcdef12345678, I want to borrow 2000 USDC. Prepare it and tell me if my position will be safe.' Assume no internet. Write a short action plan with: (1) the exact `npx @morpho-org/cli` command, (2) which response fields answer the 'is it safe?' question, (3) the threshold at which you'd warn or refuse, and (4) a mocked example presentation that shows before/after rates.",
+      "expected_output": "Command uses `prepare-borrow --chain base --market-id 0xabc... --user-address 0x1234... --borrow-amount 2000` (note the `--borrow-amount` flag, not `--amount`). Extracts `outcome.market.healthFactor`, `outcome.market.isHealthy`, and optionally `maxBorrowable`. Warns when healthFactor < 1.1, refuses or strongly flags when < 1.0. Presents `borrowApyBeforePct` vs `borrowApyAfterPct` and `utilizationBeforePct` vs `utilizationAfterPct`. Does NOT pass `--no-simulate`.",
+      "files": []
+    }
+  ]
+}

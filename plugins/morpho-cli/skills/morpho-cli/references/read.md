@@ -203,14 +203,13 @@ Output (`{ chain, vaults, pagination? }`):
       "tvl": { "symbol": "USDC", "value": "125000000" },
       "tvlUsd": "125000000.00",
       "feePct": "10",
+      "type": "MorphoVault",
       "rewards": [
         {
           "asset": { "address": "0x...", "symbol": "MORPHO" },
           "supplyAprPct": "1.20"
         }
-      ],
-      "version": "v1",
-      "type": "MorphoVault"
+      ]
     }
   ],
   "pagination": { "total": 50, "limit": 12, "skip": 0 }
