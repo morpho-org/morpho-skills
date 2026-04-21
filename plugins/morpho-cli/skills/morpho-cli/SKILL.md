@@ -20,8 +20,6 @@ Supported chains: `base`, `ethereum`. Every command requires `--chain`.
 - **[Read commands](references/read.md)** — exact JSON shapes for query-vaults, get-vault, query-markets, get-market, get-positions, get-token-balance, health-check, get-supported-chains
 - **[Write commands](references/write.md)** — exact JSON shapes for prepare-\* and simulate-transactions
 
-> Schemas are catalogued under MCP tool names (e.g. `morpho_query_vaults`, `morpho_prepare_deposit`) because the CLI and Morpho's MCP server return the same JSON. Map mechanically: `morpho_<verb>_<subject>` in the reference ↔ `npx @morpho-org/cli <verb>-<subject>` command. Response shapes are identical; only the invocation surface differs.
-
 ## Quick Reference
 
 ```bash

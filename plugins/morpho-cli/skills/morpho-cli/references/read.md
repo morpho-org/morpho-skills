@@ -10,14 +10,14 @@ All Morpho tool responses follow these invariants. Learn them once; they apply t
 4. **Every rate, ratio, APY, APR, fee, LTV, and utilization is a percent string with `Pct` suffix.** `"3.12"` means 3.12%. `"86"` means 86%. Never a fraction. The only exception is `healthFactor`, which is a ratio (`<1` means liquidatable).
 5. **USD fields are scalar dollar strings with `Usd` suffix.** `suppliedUsd: "1234.56"` means $1,234.56. Absent when the API has no price feed.
 6. **One `warnings` array per response, always at the root.** Check it before acting on the response.
-7. **Single-item reads return the item directly.** `morpho_get_market` returns a `MarketDetail`, not `{ market: ... }`. `morpho_get_vault` returns a `VaultDetail` directly.
+7. **Single-item reads return the item directly.** `get-market` returns a `MarketDetail`, not `{ market: ... }`. `get-vault` returns a `VaultDetail` directly.
 8. **List reads return `{ chain, <items>, pagination? }`.** If `pagination` is absent, you have everything.
 
 ---
 
-## `morpho_health_check`
+## `health-check`
 
-Input: _(no parameters)_
+**Options:** _(none)_
 
 Output:
 ```json
@@ -26,9 +26,9 @@ Output:
 
 - `status` — `"healthy"` | `"unhealthy"`
 
-## `morpho_get_supported_chains`
+## `get-supported-chains`
 
-Input: _(no parameters)_
+**Options:** _(none)_
 
 Output (bare array):
 ```json
@@ -50,7 +50,7 @@ Output (bare array):
 ]
 ```
 
-## `morpho_get_market`
+## `get-market`
 
 **Options:** `--chain` (required), `--id` (required)
 
@@ -91,7 +91,7 @@ Output (a `MarketDetail`, returned directly):
 - `rewards` — optional array; each item has `supplyAprPct` (and optionally `borrowAprPct`)
 - Throws `NOT_FOUND` error if market ID does not exist
 
-## `morpho_query_markets`
+## `query-markets`
 
 **Options:** `--chain` (required), `--loan-asset` (required), `--collateral-asset` (optional), `--sort-by` (`supplyApy`, `borrowApy`, `netSupplyApy`, `netBorrowApy`, `supplyAssetsUsd`, `borrowAssetsUsd`, `totalLiquidityUsd`; default: `supplyAssetsUsd`), `--sort-direction` (`asc`, `desc`; default: `desc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `supplyApy`, `borrowApy`, `totalSupply`, `totalBorrow`, `totalCollateral`, `totalLiquidity`, `supplyAssetsUsd`, `borrowAssetsUsd`, `collateralAssetsUsd`, `liquidityAssetsUsd`)
 
@@ -127,7 +127,7 @@ Output (`{ chain, markets, pagination? }`):
 - `pagination` is absent when you have all results
 - `--fields` controls which optional fields are returned; omit to get all
 
-## `morpho_get_vault`
+## `get-vault`
 
 **Options:** `--chain` (required), `--address` (required)
 
@@ -185,7 +185,7 @@ For v2 vaults, `allocations` entries use `kind: "adapter"` instead:
 - `supplyUsd` on allocations — absent when the API has no price feed
 - Throws `NOT_FOUND` error if vault address does not exist
 
-## `morpho_query_vaults`
+## `query-vaults`
 
 **Options:** `--chain` (required), `--asset-symbol`, `--asset-address`, `--sort` (`apy_desc`, `apy_asc`, `tvl_desc`, `tvl_asc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `address`, `name`, `symbol`, `apyPct`, `tvl`, `tvlUsd`, `feePct`)
 
@@ -222,7 +222,7 @@ Output (`{ chain, vaults, pagination? }`):
 - `--fields` controls which optional fields are returned; omit to get all
 - `--sort` and `--skip` enable server-side sorting and pagination
 
-## `morpho_get_positions`
+## `get-positions`
 
 **Options:** `--chain` (required), `--user-address` (required)
 
@@ -290,7 +290,7 @@ Output (`{ chain, userAddress, totals, vaultPositions, marketPositions }`):
 - `supplied`, `borrowed`, `collateral` on market positions — always present, default `"0"`
 - Both arrays are always present; empty when no positions
 
-## `morpho_get_token_balance`
+## `get-token-balance`
 
 **Options:** `--chain` (required), `--user-address` (required), `--token-address` (required)
 
