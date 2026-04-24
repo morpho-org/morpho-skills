@@ -2,7 +2,7 @@
 
 ## Write response shape
 
-All `morpho_prepare_*` tools return a `PreparedOperation` directly (no wrapper envelope). Simulation runs by default inside `prepare-*`; pass `--no-simulate` to skip.
+All `prepare-*` commands return a `PreparedOperation` directly (no wrapper envelope). Simulation runs by default; pass `--no-simulate` to skip.
 
 ```json
 {
@@ -95,133 +95,69 @@ Either `vault` or `market` (or both) may be present depending on operation type.
 
 ---
 
-## `morpho_prepare_deposit`
+## `prepare-deposit`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "vaultAddress": "0x...",
-  "userAddress": "0x...",
-  "amount": "1000"
-}
-```
+**Options:** `--chain` (required), `--vault-address` (required), `--user-address` (required), `--amount` (required; human-readable, e.g. `1000`), `--no-simulate` (optional)
 
 Returns a `PreparedOperation` with `operation: "deposit"`. The `outcome.vault` field is populated.
 
 ---
 
-## `morpho_prepare_withdraw`
+## `prepare-withdraw`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "vaultAddress": "0x...",
-  "userAddress": "0x...",
-  "amount": "1000"
-}
-```
+**Options:** `--chain` (required), `--vault-address` (required), `--user-address` (required), `--amount` (required; human-readable, or `max` for the full position), `--no-simulate` (optional)
 
-Use `"amount": "max"` to withdraw the full position. The `outcome.vault` field is populated, including `assetsReceived`.
+The `outcome.vault` field is populated, including `assetsReceived`.
 
-If `prepare-withdraw --amount max` returns a liquidity warning, parse the safe amount from `summary`, apply ~1% buffer, and re-call with the buffered amount.
+If `--amount max` cannot withdraw the full balance, the returned `PreparedOperation` represents the largest withdrawable amount right now; `warnings[]` calls out the liquidity shortfall. Surface the warning verbatim — do not parse `summary`. The user can accept the partial amount (optionally re-run with `--amount <value>` at ~99% of `outcome.vault.assetsReceived` as an interest-accrual buffer) or wait for more liquidity.
 
 ---
 
-## `morpho_prepare_supply`
+## `prepare-supply`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "marketId": "0x...",
-  "userAddress": "0x...",
-  "amount": "5000"
-}
-```
+**Options:** `--chain` (required), `--market-id` (required), `--user-address` (required), `--amount` (required; human-readable), `--no-simulate` (optional)
 
 Returns a `PreparedOperation` with `operation: "supply"`. The `outcome.market` field is populated.
 
 ---
 
-## `morpho_prepare_borrow`
+## `prepare-borrow`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "marketId": "0x...",
-  "userAddress": "0x...",
-  "borrowAmount": "1"
-}
-```
+**Options:** `--chain` (required), `--market-id` (required), `--user-address` (required), `--borrow-amount` (required; human-readable, note the flag is `--borrow-amount`, not `--amount`), `--no-simulate` (optional)
 
 Returns a `PreparedOperation` with `operation: "borrow"`. The `outcome.market` field is populated, including `healthFactor`.
 
 ---
 
-## `morpho_prepare_repay`
+## `prepare-repay`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "marketId": "0x...",
-  "userAddress": "0x...",
-  "amount": "500"
-}
-```
+**Options:** `--chain` (required), `--market-id` (required), `--user-address` (required), `--amount` (required; human-readable, or `max` to repay the full debt), `--no-simulate` (optional)
 
-Use `"amount": "max"` to repay the full debt. Returns a `PreparedOperation` with `operation: "repay"`.
+Returns a `PreparedOperation` with `operation: "repay"`.
 
 ---
 
-## `morpho_prepare_supply_collateral`
+## `prepare-supply-collateral`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "marketId": "0x...",
-  "userAddress": "0x...",
-  "amount": "1"
-}
-```
+**Options:** `--chain` (required), `--market-id` (required), `--user-address` (required), `--amount` (required; human-readable, in collateral-asset units), `--no-simulate` (optional)
 
 Returns a `PreparedOperation` with `operation: "supply_collateral"`. The `outcome.market` field is populated.
 
 ---
 
-## `morpho_prepare_withdraw_collateral`
+## `prepare-withdraw-collateral`
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "marketId": "0x...",
-  "userAddress": "0x...",
-  "amount": "0.5"
-}
-```
+**Options:** `--chain` (required), `--market-id` (required), `--user-address` (required), `--amount` (required; human-readable, or `max` to withdraw all collateral), `--no-simulate` (optional)
 
-Use `"amount": "max"` to withdraw all collateral. Returns a `PreparedOperation` with `operation: "withdraw_collateral"`.
+Returns a `PreparedOperation` with `operation: "withdraw_collateral"`.
 
 ---
 
-## `morpho_simulate_transactions`
+## `simulate-transactions`
 
 Used for standalone re-simulation or simulating arbitrary transactions. Pass the `simulationPlan` from a `PreparedOperation` as `--analysis-context` for Morpho-aware post-state analysis.
 
-**Input:**
-```json
-{
-  "chain": "base",
-  "from": "0x...",
-  "transactions": "[{\"to\":\"0x...\",\"data\":\"0x...\",\"value\":\"0\"}]",
-  "analysisContext": "<simulationPlan JSON string>"
-}
-```
+**Options:** `--chain` (required), `--from` (required; sender address), `--transactions` (required; JSON string, an array of `{to, data, value}` objects), `--analysis-context` (optional; `simulationPlan` JSON string from a `PreparedOperation` for Morpho-aware post-state)
 
 **Output:**
 ```json
