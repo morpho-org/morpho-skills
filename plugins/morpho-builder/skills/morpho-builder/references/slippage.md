@@ -1,5 +1,7 @@
 # Slippage and Share/Asset Conversion
 
+> **Using `@morpho-org/morpho-sdk`?** `maxSharePrice` / `minSharePrice` bounds are computed from on-chain state and applied automatically — default tolerance 3 bps, capped at 10%, overridable per action. The manual preview + tolerance patterns below apply only when dropping to `blue-sdk-viem` / `bundler-sdk-viem` directly for flows morpho-sdk doesn't expose. The protocol mechanics on this page are still relevant context in both cases.
+
 ## Background
 
 MetaMorpho vaults are ERC-4626 compliant — deposits and withdrawals convert between underlying assets and vault shares at a dynamic exchange rate. This rate changes as interest accrues, new deposits arrive, or withdrawals occur. Between the moment a user previews a transaction and when it executes on-chain, the rate can shift, resulting in more or fewer shares than expected.
