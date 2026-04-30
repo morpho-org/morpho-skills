@@ -1,6 +1,6 @@
 ---
 name: morpho-builder
-description: Use when building applications, bots, SDKs, or integrations against the Morpho lending protocol — deposits, borrows, repays, withdrawals, vault v1/v2 integrations, V1→V2 migration flows, risk monitors, portfolio dashboards. Steers toward `@morpho-org/consumer-sdk` (`MorphoClient`) for user-facing transactions and flags uncovered flows (curator ops, market creation, liquidations, flashloans, rewards) that need lower-level SDKs. Invoke whenever a user mentions Morpho, MetaMorpho, Morpho Blue, or any on-chain integration touching these contracts — even if they don't name consumer-sdk explicitly.
+description: Use when building applications, bots, SDKs, or integrations against the Morpho lending protocol — deposits, borrows, repays, withdrawals, vault v1/v2 integrations, V1→V2 migration flows, risk monitors, portfolio dashboards. Steers toward `@morpho-org/morpho-sdk` (`MorphoClient`) for user-facing transactions and flags uncovered flows (curator ops, market creation, liquidations, flashloans, rewards) that need lower-level SDKs. Invoke whenever a user mentions Morpho, MetaMorpho, Morpho Blue, or any on-chain integration touching these contracts — even if they don't name morpho-sdk explicitly.
 ---
 
 # Morpho Builder Skill
@@ -41,9 +41,9 @@ Reference guide for building applications that integrate with the Morpho lending
 
 ## SDK Selection
 
-**Default to `@morpho-org/consumer-sdk` for user-facing flows.** It is the high-level abstraction layer that wraps `blue-sdk`, `blue-sdk-viem`, `bundler-sdk-viem`, and `simulation-sdk`, and handles bundler-vs-direct routing, slippage bounds, LLTV-buffer health checks on borrows, ERC-20 approvals / EIP-2612 permits / Permit2 / Morpho `setAuthorization` requirements, and native-token wrapping — all internally. Hand-rolling these from the lower-level SDKs is error-prone and duplicates logic consumer-sdk already gets right.
+**Default to `@morpho-org/morpho-sdk` for user-facing flows.** It is the high-level abstraction layer that wraps `blue-sdk`, `blue-sdk-viem`, `bundler-sdk-viem`, and `simulation-sdk`, and handles bundler-vs-direct routing, slippage bounds, LLTV-buffer health checks on borrows, ERC-20 approvals / EIP-2612 permits / Permit2 / Morpho `setAuthorization` requirements, and native-token wrapping — all internally. Hand-rolling these from the lower-level SDKs is error-prone and duplicates logic morpho-sdk already gets right.
 
-**Use consumer-sdk for:** vault deposits / withdrawals / redeems (V1 and V2), VaultV2 force-withdraw / force-redeem, V1→V2 migration, Morpho Blue `supplyCollateral`, `borrow` (with optional PublicAllocator reallocations), atomic `supplyCollateralBorrow`, `repay` (by assets or shares), `withdrawCollateral`, atomic `repayWithdrawCollateral`, and per-entity reads (`getData`, `getMarketData`, `getPositionData`).
+**Use morpho-sdk for:** vault deposits / withdrawals / redeems (V1 and V2), VaultV2 force-withdraw / force-redeem, V1→V2 migration, Morpho Blue `supplyCollateral`, `borrow` (with optional PublicAllocator reallocations), atomic `supplyCollateralBorrow`, `repay` (by assets or shares), `withdrawCollateral`, atomic `repayWithdrawCollateral`, and per-entity reads (`getData`, `getMarketData`, `getPositionData`).
 
 **Drop to lower-level SDKs only for:**
 
@@ -51,9 +51,9 @@ Reference guide for building applications that integrate with the Morpho lending
 - Morpho Blue market **creation**
 - **Liquidations**, **flashloans**, **pre-liquidation**, **rewards claiming**
 - Custom bundler compositions beyond the actions listed above
-- Portfolio-wide aggregation across many markets / vaults (consumer-sdk exposes per-entity reads only — use `blue-sdk-viem` fetch helpers or the GraphQL API)
+- Portfolio-wide aggregation across many markets / vaults (morpho-sdk exposes per-entity reads only — use `blue-sdk-viem` fetch helpers or the GraphQL API)
 
-**React / wagmi apps:** there is no `@morpho-org/consumer-sdk-wagmi` package. Use `@morpho-org/blue-sdk-wagmi` hooks for reads, instantiate `MorphoClient` against the wagmi public client for writes, and pass the `buildTx` output to wagmi's `useSendTransaction`.
+**React / wagmi apps:** there is no `@morpho-org/morpho-sdk-wagmi` package. Use `@morpho-org/blue-sdk-wagmi` hooks for reads, instantiate `MorphoClient` against the wagmi public client for writes, and pass the `buildTx` output to wagmi's `useSendTransaction`.
 
 ## SDK Registry
 
@@ -61,13 +61,13 @@ All packages are published under `@morpho-org` on npm.
 
 | Package | Purpose |
 |---------|---------|
-| `@morpho-org/consumer-sdk` | **Start here.** High-level abstraction wrapping the four SDKs below. Builds user-facing transactions (deposit, borrow, repay, withdraw, migrate) with slippage, approvals, permits, and bundler routing handled internally |
-| `@morpho-org/blue-sdk` | Core types, entity classes (`Market`, `Vault`, `VaultV2`, `Position`, `MarketParams`), and constants. _Used internally by consumer-sdk; use directly only for type imports or uncovered flows_ |
-| `@morpho-org/blue-sdk-viem` | Viem augmentation — ABIs, fetch helpers (`fetchMarket`, `fetchVault`, `fetchVaultV2`, `fetchPosition`). _Used internally by consumer-sdk; use directly for ABIs, multi-entity reads, or uncovered write flows_ |
-| `@morpho-org/bundler-sdk-viem` | Multi-step transaction bundling (approvals, transfers, Morpho ops in one tx). _Used internally by consumer-sdk; use directly only for custom compositions beyond consumer-sdk's action set_ |
-| `@morpho-org/simulation-sdk` | Framework-agnostic simulation of Morpho operations. _Used internally by consumer-sdk; use directly only for standalone what-if simulations_ |
+| `@morpho-org/morpho-sdk` | **Start here.** High-level abstraction wrapping the four SDKs below. Builds user-facing transactions (deposit, borrow, repay, withdraw, migrate) with slippage, approvals, permits, and bundler routing handled internally |
+| `@morpho-org/blue-sdk` | Core types, entity classes (`Market`, `Vault`, `VaultV2`, `Position`, `MarketParams`), and constants. _Used internally by morpho-sdk; use directly only for type imports or uncovered flows_ |
+| `@morpho-org/blue-sdk-viem` | Viem augmentation — ABIs, fetch helpers (`fetchMarket`, `fetchVault`, `fetchVaultV2`, `fetchPosition`). _Used internally by morpho-sdk; use directly for ABIs, multi-entity reads, or uncovered write flows_ |
+| `@morpho-org/bundler-sdk-viem` | Multi-step transaction bundling (approvals, transfers, Morpho ops in one tx). _Used internally by morpho-sdk; use directly only for custom compositions beyond morpho-sdk's action set_ |
+| `@morpho-org/simulation-sdk` | Framework-agnostic simulation of Morpho operations. _Used internally by morpho-sdk; use directly only for standalone what-if simulations_ |
 | `@morpho-org/blue-sdk-ethers` | Ethers augmentation — same fetch helpers as viem, for Ethers-based projects |
-| `@morpho-org/blue-sdk-wagmi` | React hooks (`useMarket`, `useVault`, `usePosition`, etc.) wrapping core SDK. Requires wagmi v2. Pair with consumer-sdk for writes |
+| `@morpho-org/blue-sdk-wagmi` | React hooks (`useMarket`, `useVault`, `usePosition`, etc.) wrapping core SDK. Requires wagmi v2. Pair with morpho-sdk for writes |
 | `@morpho-org/blue-api-sdk` | GraphQL SDK with typed queries for the Morpho API |
 | `@morpho-org/simulation-sdk-wagmi` | React hooks for client-side simulation (`useSimulationState`) |
 | `@morpho-org/liquidity-sdk-viem` | Liquidity monitoring and bot infrastructure |
@@ -80,7 +80,7 @@ All packages are published under `@morpho-org` on npm.
 
 ## SDK Details
 
-### `@morpho-org/consumer-sdk`
+### `@morpho-org/morpho-sdk`
 
 High-level abstraction. Default entry point for user-facing flows.
 
@@ -115,11 +115,11 @@ High-level abstraction. Default entry point for user-facing flows.
 
 **Notes:**
 
-- **Slippage** — consumer-sdk computes `maxSharePrice` / `minSharePrice` bounds from on-chain state automatically. Default tolerance is 3 bps, capped at 10%. Override via the action's slippage option when tighter/looser bounds are needed.
+- **Slippage** — morpho-sdk computes `maxSharePrice` / `minSharePrice` bounds from on-chain state automatically. Default tolerance is 3 bps, capped at 10%. Override via the action's slippage option when tighter/looser bounds are needed.
 - **Borrow health** — `borrow` and `supplyCollateralBorrow` apply an LLTV buffer automatically using the position snapshot you pass in. Always fetch a fresh `positionData` immediately before calling borrow actions.
 - **Native ETH** — pass a `nativeAmount` to deposit/borrow actions for atomic wrap-and-supply in a single transaction.
 - **Analytics** — an optional `metadata` field on every action tags the transaction for attribution.
-- **No wagmi wrapper** — consumer-sdk is viem-only. In React, construct `MorphoClient` against the wagmi public client (`usePublicClient()`) and feed `buildTx` output into `useSendTransaction`.
+- **No wagmi wrapper** — morpho-sdk is viem-only. In React, construct `MorphoClient` against the wagmi public client (`usePublicClient()`) and feed `buildTx` output into `useSendTransaction`.
 
 ### `@morpho-org/blue-sdk`
 
@@ -192,9 +192,9 @@ Paginate with `first` and `skip`. Iterate until `items.length < first`.
 
 ## Integration Approaches
 
-- **Backend / scripts / bots (viem)** — default to `MorphoClient(publicClient)` from `@morpho-org/consumer-sdk`. Use `@morpho-org/blue-sdk-viem` fetch helpers + ABIs directly only for reads across many entities or for actions consumer-sdk doesn't expose.
-- **Frontend (React + wagmi)** — use `@morpho-org/blue-sdk-wagmi` hooks (`useVault`, `usePosition`, etc.) for reactive reads. For writes, construct `MorphoClient` against `usePublicClient()`, build the transaction with consumer-sdk, and submit via wagmi's `useSendTransaction`. There is no `@morpho-org/consumer-sdk-wagmi`.
-- **Advanced (curator ops, market creation, liquidations, flashloans, rewards)** — consumer-sdk does not cover these. Use `@morpho-org/blue-sdk-viem` ABIs together with the targeted sub-SDKs: `@morpho-org/liquidation-sdk-viem`, `@morpho-org/liquidity-sdk-viem`, or `@morpho-org/migration-sdk-viem`.
+- **Backend / scripts / bots (viem)** — default to `MorphoClient(publicClient)` from `@morpho-org/morpho-sdk`. Use `@morpho-org/blue-sdk-viem` fetch helpers + ABIs directly only for reads across many entities or for actions morpho-sdk doesn't expose.
+- **Frontend (React + wagmi)** — use `@morpho-org/blue-sdk-wagmi` hooks (`useVault`, `usePosition`, etc.) for reactive reads. For writes, construct `MorphoClient` against `usePublicClient()`, build the transaction with morpho-sdk, and submit via wagmi's `useSendTransaction`. There is no `@morpho-org/morpho-sdk-wagmi`.
+- **Advanced (curator ops, market creation, liquidations, flashloans, rewards)** — morpho-sdk does not cover these. Use `@morpho-org/blue-sdk-viem` ABIs together with the targeted sub-SDKs: `@morpho-org/liquidation-sdk-viem`, `@morpho-org/liquidity-sdk-viem`, or `@morpho-org/migration-sdk-viem`.
 
 ## Protocol Mechanics
 
@@ -238,7 +238,7 @@ Morpho's approved IRM uses a two-pronged mechanism:
 
 The exchange rate between assets and shares can shift between transaction preparation and on-chain execution. With a proper dead deposit this is a UX concern, not a security vulnerability, but integrations should still protect users.
 
-**Defensive pattern:** When using `@morpho-org/consumer-sdk`, slippage bounds (`maxSharePrice` / `minSharePrice`, default 3 bps, capped at 10%) are computed and applied automatically — no manual preview+tolerance wiring is needed. Only when dropping to `blue-sdk-viem` / `bundler-sdk-viem` directly should you hand-roll the pattern: call `previewDeposit()` to estimate shares, apply a tolerance floor (e.g., 1%), and verify the actual result meets the minimum.
+**Defensive pattern:** When using `@morpho-org/morpho-sdk`, slippage bounds (`maxSharePrice` / `minSharePrice`, default 3 bps, capped at 10%) are computed and applied automatically — no manual preview+tolerance wiring is needed. Only when dropping to `blue-sdk-viem` / `bundler-sdk-viem` directly should you hand-roll the pattern: call `previewDeposit()` to estimate shares, apply a tolerance floor (e.g., 1%), and verify the actual result meets the minimum.
 
 **Full withdrawals**: Use `redeem()`, not `withdraw()` — avoids leaving dust behind.
 
@@ -291,7 +291,7 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 ## Best Practices
 
-**Prefer `@morpho-org/consumer-sdk` for user-facing flows**: `MorphoClient` centralizes slippage bounds, approvals / permits / Permit2 / GA1 authorization, LLTV-buffer health checks on borrow, and bundler routing. Only hand-roll these via `@morpho-org/blue-sdk-viem` + `@morpho-org/bundler-sdk-viem` when consumer-sdk does not expose the action (curator ops, market creation, liquidations, flashloans, rewards, custom bundler compositions). See *SDK Selection* above for the full coverage list.
+**Prefer `@morpho-org/morpho-sdk` for user-facing flows**: `MorphoClient` centralizes slippage bounds, approvals / permits / Permit2 / GA1 authorization, LLTV-buffer health checks on borrow, and bundler routing. Only hand-roll these via `@morpho-org/blue-sdk-viem` + `@morpho-org/bundler-sdk-viem` when morpho-sdk does not expose the action (curator ops, market creation, liquidations, flashloans, rewards, custom bundler compositions). See *SDK Selection* above for the full coverage list.
 
 **Prefer vault v2 for new deployments**: When creating new vaults, prefer vault v2 over MetaMorpho (v1). When interacting with existing vaults, match the ABI to the on-chain contract — `vaultV2Abi` for v2, `metaMorphoAbi` for v1. They are not interchangeable.
 
@@ -305,12 +305,12 @@ The exchange rate between assets and shares can shift between transaction prepar
 
 After finishing code or a plan, review it against these Morpho-specific checks before presenting the result. For each, mark CRITICAL (fund loss), WARNING (broken UX), or N/A.
 
-1. **SDK Choice** — standard user-facing flows (deposit, borrow, repay, withdraw, migrate, supply/withdraw collateral) use `@morpho-org/consumer-sdk` (`MorphoClient`) rather than hand-rolled `blue-sdk-viem` + `bundler-sdk-viem` + `simulation-sdk` compositions. CRITICAL if the hand-rolled version skips a safeguard consumer-sdk would have applied (slippage bound, LLTV buffer on borrow, USDT allowance reset, GA1 authorization); WARNING if it is merely redundant re-implementation of covered flows.
+1. **SDK Choice** — standard user-facing flows (deposit, borrow, repay, withdraw, migrate, supply/withdraw collateral) use `@morpho-org/morpho-sdk` (`MorphoClient`) rather than hand-rolled `blue-sdk-viem` + `bundler-sdk-viem` + `simulation-sdk` compositions. CRITICAL if the hand-rolled version skips a safeguard morpho-sdk would have applied (slippage bound, LLTV buffer on borrow, USDT allowance reset, GA1 authorization); WARNING if it is merely redundant re-implementation of covered flows.
 2. **Dead Deposit Protection** — vault/market creation includes dead deposit to `0xdead` as the first tx; correct formula per version ([reference](references/dead-deposits.md))
-3. **Slippage Protection** — consumer-sdk handles tolerance automatically; when using lower-level SDKs directly, deposits/withdrawals use preview functions + tolerance check; full exits use `redeem()` not `withdraw()`; no reliance on Vault V2 `max*` functions ([reference](references/slippage.md))
+3. **Slippage Protection** — morpho-sdk handles tolerance automatically; when using lower-level SDKs directly, deposits/withdrawals use preview functions + tolerance check; full exits use `redeem()` not `withdraw()`; no reliance on Vault V2 `max*` functions ([reference](references/slippage.md))
 4. **IRM Awareness** — new markets seeded promptly; no sustained 100% utilization; APY formulas correct ([reference](references/adaptive-curve-irm.md))
 5. **Bad Debt Safety** — no V1.0 vault as collateral; no ERC4626 vault as loan asset; dashboards surface `lostAssets` ([reference](references/bad-debt.md))
-6. **Token Approvals** — USDT resets allowance to 0 first; DAI uses `approve()` not `permit()` (consumer-sdk handles both automatically via its requirements flow; hand-rolled integrations must implement these) ([reference](references/common-pitfalls.md))
+6. **Token Approvals** — USDT resets allowance to 0 first; DAI uses `approve()` not `permit()` (morpho-sdk handles both automatically via its requirements flow; hand-rolled integrations must implement these) ([reference](references/common-pitfalls.md))
 7. **Vault Governance** — UI surfaces role holders; trust assumptions documented ([reference](references/common-pitfalls.md))
 8. **General Safety** — no hardcoded addresses; chain ID parameterized; decimals read not assumed; write ops simulate before execute; health factor validated; ABIs from `@morpho-org/blue-sdk-viem`
 9. **Test Coverage** — implementation includes tests for relevant cases from the [testing guide](references/testing-guide.md); edge cases (dead deposits, USDT approvals, health factor boundaries, full withdrawals via `redeem()`) are covered
