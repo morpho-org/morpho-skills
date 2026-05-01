@@ -30,9 +30,16 @@ Output:
 
 **Options:** _(none)_
 
-Output (bare array):
+Output (bare array — one entry per registered chain):
 ```json
 [
+  {
+    "slug": "ethereum",
+    "name": "Ethereum",
+    "chainId": "1",
+    "explorerUrl": "https://etherscan.io",
+    "isTestnet": false
+  },
   {
     "slug": "base",
     "name": "Base",
@@ -41,14 +48,16 @@ Output (bare array):
     "isTestnet": false
   },
   {
-    "slug": "ethereum",
-    "name": "Ethereum",
-    "chainId": "1",
-    "explorerUrl": "https://etherscan.io",
+    "slug": "arbitrum",
+    "name": "Arbitrum One",
+    "chainId": "42161",
+    "explorerUrl": "https://arbiscan.io",
     "isTestnet": false
   }
 ]
 ```
+
+All 11 registered slugs: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `unichain`, `worldchain`, `katana`, `hyperevm`, `monad`, `stable`. The shape above applies to every entry in the array.
 
 ## `get-market`
 
@@ -93,7 +102,9 @@ Output (a `MarketDetail`, returned directly):
 
 ## `query-markets`
 
-**Options:** `--chain` (required), `--loan-asset` (required), `--collateral-asset` (optional), `--sort-by` (`supplyApy`, `borrowApy`, `netSupplyApy`, `netBorrowApy`, `supplyAssetsUsd`, `borrowAssetsUsd`, `totalLiquidityUsd`; default: `supplyAssetsUsd`), `--sort-direction` (`asc`, `desc`; default: `desc`), `--limit` (1–100, default 100), `--skip` (offset), `--fields` (comma-separated: `supplyApy`, `borrowApy`, `totalSupply`, `totalBorrow`, `totalCollateral`, `totalLiquidity`, `supplyAssetsUsd`, `borrowAssetsUsd`, `collateralAssetsUsd`, `liquidityAssetsUsd`)
+**Options:** `--chain` (required), `--loan-asset` (optional), `--collateral-asset` (optional), `--sort-by` (`supplyApy`, `borrowApy`, `netSupplyApy`, `netBorrowApy`, `supplyAssetsUsd`, `borrowAssetsUsd`, `totalLiquidityUsd`; default: `supplyAssetsUsd`), `--sort-direction` (`asc`, `desc`; default: `desc`), `--limit` (1–100, default **10** — kept small because unfiltered market counts grow into the hundreds), `--skip` (offset), `--fields` (comma-separated: `supplyApy`, `borrowApy`, `totalSupply`, `totalBorrow`, `totalCollateral`, `totalLiquidity`, `supplyAssetsUsd`, `borrowAssetsUsd`, `collateralAssetsUsd`, `liquidityAssetsUsd`)
+
+Naive listings (no `--loan-asset` / `--collateral-asset`) return the top 10 markets sorted by `supplyAssetsUsd desc`. Use `--limit` / `--skip` with the returned `pagination` metadata (always present when more results exist) to page through.
 
 Output (`{ chain, markets, pagination? }`):
 ```json
