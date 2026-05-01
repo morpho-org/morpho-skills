@@ -1,6 +1,6 @@
 ---
 name: morpho-cli
-description: Drive the Morpho lending protocol from the terminal via `npx @morpho-org/cli@latest` — queries vaults/markets/positions and prepares unsigned Morpho transactions with built-in simulation on Ethereum and Base. Invoke whenever the user asks to explore Morpho vault APYs / TVL / allocations ("best USDC vault on Base"), compare Morpho Blue markets ("ETH/USDC markets on mainnet"), inspect positions or health factor ("what are my Morpho positions"), or prepare any Morpho operation — deposit, withdraw, supply, borrow, repay, supply/withdraw collateral — even when the user doesn't explicitly name the CLI. If the user is writing application code that integrates Morpho, prefer the morpho-builder skill instead.
+description: Drive the Morpho lending protocol from the terminal via `npx @morpho-org/cli@latest` — queries vaults/markets/positions and prepares unsigned Morpho transactions with built-in simulation across all supported chains (Ethereum, Base, Arbitrum, Optimism, Polygon, Unichain, World Chain, Katana, HyperEVM, Monad, Stable). Invoke whenever the user asks to explore Morpho vault APYs / TVL / allocations ("best USDC vault on Base"), compare Morpho Blue markets ("ETH/USDC markets on Arbitrum"), inspect positions or health factor ("what are my Morpho positions"), or prepare any Morpho operation — deposit, withdraw, supply, borrow, repay, supply/withdraw collateral — even when the user doesn't explicitly name the CLI. If the user is writing application code that integrates Morpho, prefer the morpho-builder skill instead.
 ---
 
 # morpho-cli
@@ -13,7 +13,7 @@ Query Morpho protocol data and build unsigned transactions. All commands output 
 npx @morpho-org/cli@latest <command> [options]
 ```
 
-Supported chains: `base`, `ethereum`. Every command requires `--chain`.
+Supported chains: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `unichain`, `worldchain`, `katana`, `hyperevm`, `monad`, `stable`. Every command requires `--chain`.
 
 ## Response Schemas
 
@@ -26,7 +26,7 @@ Supported chains: `base`, `ethereum`. Every command requires `--chain`.
 # Read — query protocol state
 npx @morpho-org/cli@latest query-vaults    --chain base [--asset-symbol USDC] [--asset-address 0x...] [--sort apy_desc|apy_asc|tvl_desc|tvl_asc] [--limit 5] [--skip 0] [--fields address,name,symbol,apyPct,tvl,tvlUsd,feePct]
 npx @morpho-org/cli@latest get-vault       --chain base --address 0x...
-npx @morpho-org/cli@latest query-markets   --chain base --loan-asset 0x... --collateral-asset 0x... [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
+npx @morpho-org/cli@latest query-markets   --chain base [--loan-asset 0x...] [--collateral-asset 0x...] [--sort-by supplyApy|borrowApy|netSupplyApy|netBorrowApy|supplyAssetsUsd|borrowAssetsUsd|totalLiquidityUsd] [--sort-direction asc|desc] [--limit 10] [--skip 0] [--fields supplyApy,borrowApy,totalSupply,totalBorrow,totalCollateral,totalLiquidity,supplyAssetsUsd,borrowAssetsUsd,collateralAssetsUsd,liquidityAssetsUsd]
 npx @morpho-org/cli@latest get-market      --chain base --id 0x...
 npx @morpho-org/cli@latest get-positions   --chain base --user-address 0x...
 npx @morpho-org/cli@latest get-token-balance --chain base --user-address 0x... --token-address 0x...
