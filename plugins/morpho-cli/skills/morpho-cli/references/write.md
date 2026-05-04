@@ -2,7 +2,7 @@
 
 ## Write response shape
 
-All `morpho_prepare_*` tools return a `PreparedOperation` directly (no wrapper envelope). Every prepare call dry-runs the resulting bundle through `@morpho-org/evm-simulation`; the verified token transfers ship inline in the optional `simulation` block. When the simulation reverts, is screened against a sanctioned address, or detects bundler retention, the field is omitted and the failure surfaces as an `error`-level entry in `warnings` — agents must HALT on those.
+All `prepare-*` commands return a `PreparedOperation` directly (no wrapper envelope). Every prepare call dry-runs the resulting bundle through `@morpho-org/evm-simulation`; the verified token transfers ship inline in the optional `simulation` block. When the simulation reverts, is screened against a sanctioned address, or detects bundler retention, the field is omitted and the failure surfaces as an `error`-level entry in `warnings` — agents must HALT on those.
 
 The `chain` field accepts any registered slug: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `unichain`, `worldchain`, `katana`, `hyperevm`, `monad`, `stable`. Examples below use `"base"` but the shape is identical across all chains.
 
