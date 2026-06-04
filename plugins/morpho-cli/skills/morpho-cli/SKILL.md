@@ -17,8 +17,8 @@ Supported chains: `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `unicha
 
 ## Response Schemas
 
-- **[Read commands](references/read.md)** — exact JSON shapes for query-vaults, get-vault, query-markets, get-market, get-positions, get-token-balance, health-check, get-supported-chains
-- **[Write commands](references/write.md)** — exact JSON shapes for prepare-\* and simulate-transactions
+- **[Read commands](references/read.md)** — exact JSON shapes for all read tools; includes reading conventions that apply to every response
+- **[Write commands](references/write.md)** — `PreparedOperation` shape, `outcome` sub-schema, and per-tool input shapes for prepare-\*
 
 ## Quick Reference
 
@@ -31,7 +31,7 @@ npx @morpho-org/cli@latest get-market      --chain base --id 0x...
 npx @morpho-org/cli@latest get-positions   --chain base --user-address 0x...
 npx @morpho-org/cli@latest get-token-balance --chain base --user-address 0x... --token-address 0x...
 
-# Write — prepare unsigned transactions (simulation runs by default; add --no-simulate to skip)
+# Write — prepare unsigned transactions (simulation runs automatically via @morpho-org/evm-simulation)
 npx @morpho-org/cli@latest prepare-deposit              --chain base --vault-address 0x... --user-address 0x... --amount 1000
 npx @morpho-org/cli@latest prepare-withdraw             --chain base --vault-address 0x... --user-address 0x... --amount max
 npx @morpho-org/cli@latest prepare-supply               --chain base --market-id 0x... --user-address 0x... --amount 5000
@@ -40,8 +40,6 @@ npx @morpho-org/cli@latest prepare-repay                --chain base --market-id
 npx @morpho-org/cli@latest prepare-supply-collateral    --chain base --market-id 0x... --user-address 0x... --amount 5000
 npx @morpho-org/cli@latest prepare-withdraw-collateral  --chain base --market-id 0x... --user-address 0x... --amount max
 
-# Simulate — standalone re-simulation or arbitrary transaction simulation
-npx @morpho-org/cli@latest simulate-transactions --chain base --from 0x... --transactions '<JSON>' --analysis-context '<JSON>'
 
 # Utility
 npx @morpho-org/cli@latest health-check
@@ -52,18 +50,16 @@ npx @morpho-org/cli@latest get-supported-chains
 
 Every write operation follows two steps. Simulation runs automatically inside `prepare-*`.
 
-1. **Prepare** — run a `prepare-*` command. The CLI handles token decimals, allowances, approvals, and simulation automatically. Returns a flat `PreparedOperation` with the fields you need at the root: `operation`, `summary`, `requirements` (informational — approval txs are already in `transactions`), `transactions` (the unsigned payloads to sign), `simulated`, `simulationOk`, `totalGasUsed`, `outcome`, `warnings`. Pass `--no-simulate` to skip simulation (in which case `simulationOk`, `totalGasUsed`, and most of `outcome` will be absent).
-2. **Present** — show `summary`, the `transactions` list, the key `outcome` fields (see table below), and any `warnings` in tabular format. If `simulationOk` is `false`, inspect `revertReason` before presenting.
+1. **Prepare** — run a `prepare-*` command. The CLI handles token decimals, allowances, approvals, and simulation automatically. Returns a `PreparedOperation` with `transactions`, `summary`, `warnings`, `outcome` (post-state preview), and an optional `simulation` block.
+2. **Verify simulation:** the response's optional `simulation.transfers` lists the actual transfers an EVM simulation observed. When Tenderly is configured (MCP path with `TENDERLY_*` env vars set) and ran successfully, `simulation.assetChanges[]` is also present — each entry carries `{ type, from, to, amount, rawAmount, dollarValue, tokenInfo: { address, symbol, decimals, name } }`. Use `assetChanges` (when present) for richer human-readable summaries; `transfers` is the canonical agent-side check. Absence of `simulation` plus an `error`-level warning (`SIMULATION_REVERTED`, `BUNDLER_RETAINS_FUNDS`, `SANCTIONED_ADDRESS`) means the bundle is known-bad — do not present transactions for signing.
+3. **Present** — show the summary, list of unsigned transactions, outcome, and any warnings (low health factor, partial liquidity) in tabular format.
 
-The `outcome` block is discriminated by operation type:
+Simulation runs inline as part of every `prepare-*` call — there is no separate simulation command.
 
 | Operation | `outcome` shape | Key fields to surface |
 |-----------|-----------------|------------------------|
 | `deposit`, `withdraw` (vaults) | `outcome.vault` | `sharesReceived`, `assetsReceived`, `positionAssets`, `positionShares` |
 | `supply`, `borrow`, `repay`, `supply_collateral`, `withdraw_collateral` (markets) | `outcome.market` | `healthFactor`, `isHealthy`, `maxBorrowable`, `utilizationBeforePct` → `utilizationAfterPct`, `borrowApyBeforePct` → `borrowApyAfterPct`, plus post-operation `supplied` / `borrowed` / `collateral` (raw integer strings — divide by 10^decimals) |
-
-Use `simulate-transactions` separately only for re-simulating with different parameters or simulating arbitrary transactions. Its top-level success field is `allSucceeded` (not `simulationOk`) — see [references/write.md](references/write.md).
-
 
 ## Simulation Failures
 
@@ -86,7 +82,7 @@ When `prepare-withdraw --amount max` cannot withdraw the full balance, the CLI r
 
 ## Safety Rules
 
-1. **Check simulation before presenting** — simulation runs by default; check `simulationOk` (for `prepare-*`) or `allSucceeded` (for `simulate-transactions`) before presenting
+1. **Check simulation before presenting** — check for `simulation.transfers` in the response; if absent and `warnings` contains an `error`-level entry, halt and diagnose before presenting
 2. **Never sign or broadcast** — unsigned payloads only
 3. **Watch health factor** for borrows — warn if below 1.1
 4. **Communicate liquidity constraints** clearly for partial withdrawals
@@ -107,5 +103,5 @@ When a `npx @morpho-org/cli@latest` command fails, **stop and report the error t
 - Dividing `TokenAmount.value` by `10^decimals` — `TokenAmount` values are already decimal-applied (a USDC value of `"1000"` means $1,000, not 1,000 micro-USDC). `*Pct` fields are already percent-scaled; `*Usd` fields are already in dollars. The only raw integer strings are inside `outcome.market.{supplied,borrowed,collateral}` and `outcome.vault.{sharesReceived,assetsReceived,positionShares}` — those do need `/10^decimals` for display.
 - Assuming 18 decimals — USDC/USDT have 6, WBTC/cbBTC have 8. Read decimals from response metadata; never assume.
 - Passing raw units as `--amount` — CLI expects human-readable (`1000` not `1000000000`)
-- Using `--no-simulate` without reason — simulation is on by default; only skip when debugging or for speed
-- Ignoring `simulationOk === false` on `prepare-*` (or `allSucceeded === false` on `simulate-transactions`) — diagnose before presenting
+- Ignoring absent `simulation` field plus an `error`-level warning — diagnose before presenting
+- Re-computing amounts from `TokenAmount.value` — the value is already decimal-applied; quote it directly to the user
