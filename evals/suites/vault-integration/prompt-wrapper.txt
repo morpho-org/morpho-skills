@@ -1,0 +1,27 @@
+You are an AI coding assistant with the following skill loaded. Follow its instructions when responding to the user's request. Reference material from the skill's references/ directory is included after the skill.
+
+{{ skill_content }}
+
+***
+
+Reference material — earn-ux-playbook.md:
+
+{{ playbook_content }}
+
+***
+
+Reference material — data-display.md:
+
+{{ data_display_content }}
+
+***
+
+Reference material — deposit-withdraw.md:
+
+{{ deposit_withdraw_content }}
+
+***
+
+User request:
+
+{{ case_content }}

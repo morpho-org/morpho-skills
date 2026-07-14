@@ -1,0 +1,34 @@
+# Technical Correctness Rubric for vault-integration
+
+Evaluate whether the generated code correctly wires a Morpho Vault integration. Mark elements N/A when the request doesn't exercise them; score over applicable elements.
+
+## Required Elements
+
+1. **Vault discovery**
+   - Vaults discovered via the Morpho GraphQL API (https://api.morpho.org/graphql) or SDK — no hardcoded/invented vault addresses
+   - Query filters by chain (chainId_in) and asset; prefers listed vaults (the field is `listed`, not `whitelisted`)
+   - Displayed vault facts (name, curator, APY, TVL) are sourced from the query results — hardcoded values fail this element even when plausible-looking
+
+2. **Transaction path**
+   - User-facing deposits/withdrawals built with @morpho-org/morpho-sdk (MorphoClient) or morpho-cli prepare-*. A "prepared flow" means BOTH a requirements/approvals step (getRequirements or equivalent) AND a preview/simulation before sending — a raw approve+deposit writeContract pair fails this element even if the approval gating is competent
+
+3. **Amount handling**
+   - Token decimals read from API/contract and converted with parseUnits/formatUnits — never assumed 18 (USDC is 6)
+   - APY decimal fields interpreted correctly (0.05 = 5%, not 0.05%)
+   - When APY components are displayed: headline is netApy (never apy + rewards, which double-counts and ignores fees), and where rewards exist the schema's reward fields (allRewards on V1) are actually queried — omitting rewards entirely to avoid naming fields does not satisfy a rewards-display requirement
+
+4. **Exit correctness**
+   - Full exits use redeem with the share balance, not withdraw with a computed asset amount
+   - Withdrawal liquidity constraint acknowledged (UI copy, revert handling, or liquidity check)
+
+5. **Safety**
+   - Transactions simulated/validated before signing or sending
+   - No Vault V2 maxDeposit/maxWithdraw/maxRedeem reliance for capacity checks
+
+## Scoring Guide
+
+Score = (applicable elements fully satisfied) / (applicable elements). Partial credit within an element: 0.5.
+
+## Instructions
+
+List each element with its verdict (satisfied / partial / missing / N/A) and cite the evidence, then give the final score.

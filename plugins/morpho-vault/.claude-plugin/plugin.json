@@ -1,0 +1,9 @@
+{
+  "name": "morpho-vault",
+  "version": "0.1.0",
+  "description": "[Experimental] Integration skill for building Morpho Vault earn features — deposit flows, APY display, vault transparency, brand attribution, and disclosures that match Morpho's Integrator Blueprint",
+  "author": {
+    "name": "Morpho Agents"
+  },
+  "license": "MIT"
+}

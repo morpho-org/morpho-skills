@@ -1,0 +1,35 @@
+# Blueprint Compliance Rubric for vault-integration
+
+Evaluate whether the generated output follows Morpho's Integrator Blueprint for user-facing earn features. Only score elements that apply to the request (e.g., a backend-only script has no badge surface — mark inapplicable elements N/A and score over the applicable ones).
+
+## Required Elements
+
+1. **Vocabulary**
+   - User-facing copy says "Earn" or "DeFi yield" — not "staking" or "investment" (mentioning the banned words while explaining what was corrected is fine; using them as product copy is not)
+   - Yield framed as "variable" or "indicative" — never "guaranteed" or "risk-free"
+   - Vaults referred to as Morpho Vaults / Morpho Vault smart contracts — not "funds" or "proprietary strategies"
+
+2. **APY composition**
+   - APY split into base/native rate vs rewards, not one blended number, whenever rewards exist
+   - Each component's payout token is named (base rate in the deposit asset; rewards by token)
+   - Net APY (after fees) used for the headline figure
+
+3. **Vault transparency**
+   - Vault name visible in the flow (not a generic "Earn USDC" label) AND sourced from API data, not hardcoded
+   - Curator named on product-detail or review surface, sourced from API data (state.curators)
+   - TVL and/or underlying exposure reachable
+
+4. **Attribution & disclosure**
+   - "Powered by Morpho" badge (official web component or badge) on Morpho-functionality screens
+   - First interaction gated behind an acknowledgment notice linking the integrator's Terms and Morpho's Disclaimer (morpho.org/disclaimers)
+
+5. **Honest liquidity framing**
+   - Withdrawals described as "no lock-ups, subject to available liquidity" — not "instant" or unconditional
+
+## Scoring Guide
+
+Score = (applicable elements fully satisfied) / (applicable elements). Partial credit within an element: 0.5 if some but not all bullets are satisfied.
+
+## Instructions
+
+List each element with its verdict (satisfied / partial / missing / N/A) and cite the evidence from the output, then give the final score.

@@ -1,0 +1,79 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: 'vault-integration Skill Evaluation'
+
+prompts:
+  - file://prompt-wrapper.txt
+
+providers:
+  - id: anthropic:claude-sonnet-5
+    config:
+      temperature: 0
+      max_tokens: 16384 # full earn-tab implementations are long
+
+defaultTest:
+  options:
+    timeout: 180000
+  vars:
+    skill_content: file://../../../plugins/morpho-vault/skills/vault-integration/SKILL.md
+    playbook_content: file://../../../plugins/morpho-vault/skills/vault-integration/references/earn-ux-playbook.md
+    data_display_content: file://../../../plugins/morpho-vault/skills/vault-integration/references/data-display.md
+    deposit_withdraw_content: file://../../../plugins/morpho-vault/skills/vault-integration/references/deposit-withdraw.md
+  assert:
+    # Applied to every case
+    - type: llm-rubric
+      value: file://rubrics/blueprint-compliance.txt
+      threshold: 0.85
+    - type: llm-rubric
+      value: file://rubrics/technical-correctness.txt
+      threshold: 0.8
+
+tests:
+  - description: react-earn-tab
+    vars:
+      case_content: file://cases/react-earn-tab.md
+    assert:
+      # Official badge embed and disclosure link must appear verbatim
+      - type: contains
+        value: 'powered-by-morpho'
+      - type: contains
+        value: 'morpho.org/disclaimers'
+      # Real data source, not mocked constants
+      - type: contains
+        value: 'api.morpho.org/graphql'
+      # Rewards must actually be queried — omitting them dodges the APY-split
+      # requirement (grader finding, iteration 1)
+      - type: contains
+        value: 'allRewards'
+      # Vocabulary anti-patterns are checked by the blueprint rubric, not
+      # not-contains — the model may legitimately mention "staking" when
+      # explaining what to avoid.
+
+  - description: backend-deposit-bot
+    vars:
+      case_content: file://cases/backend-deposit-bot.md
+    assert:
+      - type: contains
+        value: 'api.morpho.org/graphql'
+      # Full exit must use redeem
+      - type: contains
+        value: 'redeem'
+      # USDC decimals must not be assumed
+      - type: contains
+        value: 'decimals'
+      # SDK-driven flow
+      - type: contains
+        value: '@morpho-org/morpho-sdk'
+
+  - description: apy-copy-review
+    vars:
+      case_content: file://cases/apy-copy-review.md
+    assert:
+      # Rewards component must name the token
+      - type: contains
+        value: 'MORPHO'
+      # Corrected copy must carry variable/indicative framing
+      - type: regex
+        value: '[Vv]ariable|[Ii]ndicative'
+      # Liquidity caveat must replace "instantly"
+      - type: regex
+        value: '[Ll]iquidity'

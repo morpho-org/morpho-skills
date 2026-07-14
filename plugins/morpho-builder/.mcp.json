@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "morpho": {
-      "type": "http",
-      "url": "https://mcp.morpho.org"
-    }
-  }
-}

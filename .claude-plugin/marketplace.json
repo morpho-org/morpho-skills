@@ -35,16 +35,16 @@
       "category": "defi"
     },
     {
-      "name": "morpho-builder",
-      "source": "./plugins/morpho-builder",
-      "description": "[Experimental] Builder skill for code-generation agents building Morpho integrations — deposit apps, dashboards, bots",
+      "name": "morpho-vault",
+      "source": "./plugins/morpho-vault",
+      "description": "[Experimental] Integration skill for building Morpho Vault earn features — deposit flows, APY display, vault transparency, brand attribution, and disclosures per Morpho's Integrator Blueprint",
       "version": "0.1.0",
       "author": {
         "name": "Morpho Agents"
       },
       "repository": "https://github.com/morpho-org/morpho-skills",
       "license": "MIT",
-      "keywords": ["morpho", "defi", "lending", "sdk", "builder"],
+      "keywords": ["morpho", "defi", "lending", "vaults", "earn", "integration"],
       "category": "defi"
     }
   ]
