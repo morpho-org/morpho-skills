@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morpho Earn Integration"
+  short_description: "Build Morpho Earn product flows"
+  default_prompt: "Use $earn-integration to build a Morpho Earn flow for this app."

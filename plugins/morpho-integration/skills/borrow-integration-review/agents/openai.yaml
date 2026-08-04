@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morpho Borrow Review"
+  short_description: "Review a Morpho Borrow integration"
+  default_prompt: "Use $borrow-integration-review to audit this Morpho borrow flow before launch."

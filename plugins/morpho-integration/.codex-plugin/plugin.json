@@ -1,0 +1,25 @@
+{
+  "name": "morpho-integration",
+  "version": "0.1.0",
+  "description": "Build and review Morpho Earn and Borrow integrations against the Morpho Integrator UX Playbook.",
+  "author": {
+    "name": "Morpho Agents"
+  },
+  "repository": "https://github.com/morpho-org/morpho-skills",
+  "license": "MIT",
+  "keywords": ["morpho", "defi", "lending", "earn", "borrow", "integration"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Morpho Integration",
+    "shortDescription": "Build and review Morpho product flows",
+    "longDescription": "Build or audit Morpho Earn, variable-rate Borrow, and fixed-rate Borrow product flows using the Morpho Integrator UX Playbook.",
+    "developerName": "Morpho Agents",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Build a Morpho Earn flow for this app.",
+      "Review this Morpho borrow integration before launch.",
+      "Check this product copy against the Morpho playbook."
+    ]
+  }
+}

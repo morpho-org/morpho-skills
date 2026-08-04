@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morpho Borrow Integration"
+  short_description: "Build Morpho Borrow product flows"
+  default_prompt: "Use $borrow-integration to build a Morpho borrow flow for this app."

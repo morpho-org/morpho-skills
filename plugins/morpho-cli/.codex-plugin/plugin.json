@@ -1,0 +1,25 @@
+{
+  "name": "morpho-cli",
+  "version": "0.1.0",
+  "description": "Drive the Morpho lending protocol from the terminal to query live data and prepare unsigned transactions.",
+  "author": {
+    "name": "Morpho Agents"
+  },
+  "repository": "https://github.com/morpho-org/morpho-skills",
+  "license": "MIT",
+  "keywords": ["morpho", "defi", "lending", "cli"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Morpho CLI",
+    "shortDescription": "Query Morpho and prepare transactions",
+    "longDescription": "Query Morpho vaults, markets, and positions from Codex, then prepare and simulate unsigned protocol transactions.",
+    "developerName": "Morpho Agents",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Use Morpho CLI to compare the best USDC vaults on Base.",
+      "Show my Morpho positions and health factors.",
+      "Prepare and simulate an unsigned Morpho transaction."
+    ]
+  }
+}
