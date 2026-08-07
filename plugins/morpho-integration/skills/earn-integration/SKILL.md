@@ -13,7 +13,7 @@ Every recommendation serves one of three goals: **compliant** (honest expectatio
 
 1. **Start from the foundations.** Read [docs/foundations.md](../../docs/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [docs/glossary.md](../../docs/glossary.md); they are worded to keep the legal and technical reality intact.
 2. **Build the flow.** Cover the standard surfaces: entry/home → vault detail → amount input → review → confirm → post-deposit position. Apply the foundations and the Earn guidance below to each surface as you go.
-3. **Verify as you build.** The plugin ships seven compliance agents, one per foundation. Spawn the relevant one when you finish a surface (e.g. `morpho-integration:vocabulary-compliance` after writing copy, `morpho-integration:rate-transparency-compliance` after the APY display), telling it the product is Earn (Vaults). Each reports verdicts back to you.
+3. **Verify as you build.** The plugin ships seven compliance agents, one per foundation. Spawn the relevant one when you finish a surface (e.g. `morpho-integration:vocabulary-compliance` after writing copy, `morpho-integration:rate-transparency-compliance` after the APY display), telling it the product is Earn (Vaults). Each reports verdicts back to you. Additionally, whenever a surface **computes** numbers — share/asset conversions, APY, est. yield previews, amount formatting — spawn `morpho-integration:math-correctness` on the code paths: it checks the math against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
 4. **Review before shipping.** Run the `earn-integration-review` skill for the full orchestrated pass — every check, the red flags, and the launch self-review.
 
 ## Non-negotiables to build in from the start
@@ -40,6 +40,8 @@ The product-specific moves beyond the critical items:
 ## Data
 
 Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or morpho-mcp — never hardcoded or invented. If you can't source a number, leave it out.
+
+Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The `morpho-integration:math-correctness` agent carries the full quantity-to-SDK-function map.
 
 ## Reference library
 
