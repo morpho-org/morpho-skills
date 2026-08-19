@@ -13,7 +13,7 @@ Every recommendation serves one of three goals: **compliant** (honest expectatio
 
 1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
 2. **Build the flow.** Cover the standard surfaces: entry/home → vault detail → amount input → review → confirm → post-deposit position. Apply the foundations and the Earn guidance below to each surface as you go.
-3. **Verify as you build.** Delegate a read-only check of the relevant foundation when you finish a surface (for example, vocabulary after writing copy or rate transparency after the APY display). Give the checker the artifact paths, identify the product as Earn (Vaults), and have it use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). When the host exposes the plugin's named compliance agents, use them; otherwise a general-purpose subagent is sufficient.
+3. **Verify as you build.** Delegate a read-only check of the relevant foundation when you finish a surface (for example, vocabulary after writing copy or rate transparency after the APY display). Give the checker the artifact paths, identify the product as Earn (Vaults), and have it use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). When the host exposes the plugin's named compliance agents, use them; otherwise a general-purpose subagent is sufficient. Additionally, whenever a surface **computes** numbers — share/asset conversions, APY, estimated yield previews, amount formatting — delegate a read-only math check of the code paths. Use `morpho-integration:math-correctness` in Claude Code or `morpho_math_correctness` when the Codex project agent is available; otherwise have a general-purpose subagent follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). It checks the math against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
 4. **Review before shipping.** Run the `earn-integration-review` skill for the full orchestrated pass — every check, the whole-flow pass, and the launch self-review.
 
 ## Non-negotiables to build in from the start
@@ -40,6 +40,8 @@ The product-specific moves beyond the critical items:
 ## Data
 
 Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or morpho-mcp — never hardcoded or invented. If you can't source a number, leave it out.
+
+Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The `morpho-integration:math-correctness` agent carries the full quantity-to-SDK-function map.
 
 ## Reference library
 
