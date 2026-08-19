@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morpho CLI"
+  short_description: "Query Morpho and prepare transactions"
+  default_prompt: "Use $morpho-cli to compare Morpho opportunities or prepare an unsigned transaction."

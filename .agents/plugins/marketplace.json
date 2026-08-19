@@ -1,0 +1,44 @@
+{
+  "name": "morpho-agent",
+  "interface": {
+    "displayName": "Morpho Agents"
+  },
+  "plugins": [
+    {
+      "name": "morpho-mcp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/morpho-mcp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "morpho-cli",
+      "source": {
+        "source": "local",
+        "path": "./plugins/morpho-cli"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "morpho-integration",
+      "source": {
+        "source": "local",
+        "path": "./plugins/morpho-integration"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

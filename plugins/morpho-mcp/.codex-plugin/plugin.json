@@ -1,0 +1,30 @@
+{
+  "name": "morpho-mcp",
+  "version": "0.1.0",
+  "description": "Connect Codex to live Morpho protocol data and unsigned transaction preparation tools.",
+  "author": {
+    "name": "Morpho Agents"
+  },
+  "repository": "https://github.com/morpho-org/morpho-skills",
+  "license": "MIT",
+  "keywords": ["morpho", "defi", "lending", "mcp"],
+  "mcpServers": {
+    "morpho": {
+      "type": "http",
+      "url": "https://mcp.morpho.org"
+    }
+  },
+  "interface": {
+    "displayName": "Morpho MCP",
+    "shortDescription": "Connect Codex to the Morpho protocol",
+    "longDescription": "Query Morpho vaults, markets, and positions, prepare unsigned transactions, and simulate outcomes on supported chains.",
+    "developerName": "Morpho Agents",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Find the best Morpho vault opportunities for USDC.",
+      "Show this wallet's Morpho positions.",
+      "Prepare and simulate a Morpho transaction."
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morpho Earn Review"
+  short_description: "Review a Morpho Earn integration"
+  default_prompt: "Use $earn-integration-review to audit this Morpho Earn flow before launch."
