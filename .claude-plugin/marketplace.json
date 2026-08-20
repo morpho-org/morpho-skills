@@ -22,8 +22,8 @@
       "category": "defi"
     },
     {
-      "name": "morpho-integration",
-      "source": "./plugins/morpho-integration",
+      "name": "morpho-builder",
+      "source": "./plugins/morpho-builder",
       "description": "Skills and compliance agents for building and reviewing Morpho integrations — Earn (Vaults), variable-rate borrow (Blue), and fixed-rate borrow (Midnight) — driven by the Morpho Integrator UX Playbook",
       "version": "0.1.0",
       "author": {

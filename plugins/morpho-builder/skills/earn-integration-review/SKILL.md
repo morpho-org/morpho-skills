@@ -13,13 +13,13 @@ An orchestrated review of an Earn integration against the Morpho Integrator UX P
 
 1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, and transaction logic), screenshots, or a written flow description. Collect the concrete artifact paths — the agents need them.
 2. **Spawn all seven compliance agents in one message** so they run in parallel. Each gets: the artifact paths/context, the product ("Earn on Morpho Vaults"), and the instruction to run its checks and report verdicts.
-   - `morpho-integration:vocabulary-compliance` — product vocabulary
-   - `morpho-integration:attribution-compliance` — Powered by Morpho badge
-   - `morpho-integration:disclosure-compliance` — disclosure gate
-   - `morpho-integration:rate-transparency-compliance` — rate labelling, APY split, fee separation
-   - `morpho-integration:conversion-compliance` — one-signature deposit, live preview, input affordances, benefits messaging
-   - `morpho-integration:clarity-safety-compliance` — recap order, tooltips, warnings, vault transparency (name, curator, collateral, TVL/liquidity)
-   - `morpho-integration:discoverability-compliance` — value prop, nudges, integrated position
+   - `morpho-builder:vocabulary-compliance` — product vocabulary
+   - `morpho-builder:attribution-compliance` — Powered by Morpho badge
+   - `morpho-builder:disclosure-compliance` — disclosure gate
+   - `morpho-builder:rate-transparency-compliance` — rate labelling, APY split, fee separation
+   - `morpho-builder:conversion-compliance` — one-signature deposit, live preview, input affordances, benefits messaging
+   - `morpho-builder:clarity-safety-compliance` — recap order, tooltips, warnings, vault transparency (name, curator, collateral, TVL/liquidity)
+   - `morpho-builder:discoverability-compliance` — value prop, nudges, integrated position
 3. **While agents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
    - More than one signature for a single deposit.
    - The headline rate is below the fold or smaller than secondary details.
