@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered products. This plugin turns the Morpho Integrator UX Playbook into implementation guidance and compliance review workflows for Earn and Borrow integrations.
+For teams building or reviewing Morpho-powered products. This plugin provides Morpho integration best practices across UI/UX, live data, official SDK usage, protocol math, transaction flows, disclosures, attribution, and pre-launch review.
 
 | Product | Build skill | Review skill |
 | --- | --- | --- |
 | Earn (Vaults) | `earn-integration` | `earn-integration-review` |
 | Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` | `borrow-integration-review` |
 
-Build skills use the playbook's shared foundations as their base with product-specific guidance folded into each SKILL.md. Review skills orchestrate seven per-foundation compliance agents and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Shared references (foundations, glossary, rubrics) live once in the plugin's `docs/`.
+Each build skill combines shared integration best practices with product-specific guidance. Review skills orchestrate seven specialized compliance agents and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Shared references (foundations, glossary, rubrics) live once in the plugin's `docs/`.
 
 ### morpho-agent
 
