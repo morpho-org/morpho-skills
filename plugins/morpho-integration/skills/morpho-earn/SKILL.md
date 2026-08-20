@@ -1,9 +1,9 @@
 ---
-name: earn-integration
+name: morpho-earn
 description: Build Earn features on Morpho Vaults the way Morpho's integrator playbook recommends — deposit/withdraw flows, APY display and base/rewards splits, vault transparency (name, curator, collateral, TVL), Powered by Morpho attribution, and the disclosure gate. Use whenever a user is building, designing, reviewing copy for, or wiring up any yield, earn, or savings product on Morpho vaults — even if they never say "playbook", "compliance", or "vault" explicitly.
 ---
 
-# Earn Integration (Vaults)
+# Morpho Earn (Vaults)
 
 Guidance for building end-user **Earn** products on Morpho Vaults, distilled from Morpho's Integrator UX Playbook and Earn blueprint. The recommendations are not gates — they're what has worked across live integrations. Items marked critical matter most for user trust and compliance and are the ones Morpho would push on in a design review.
 

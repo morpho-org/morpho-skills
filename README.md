@@ -8,8 +8,8 @@
 
 | Product | Build skill | Review skill |
 | --- | --- | --- |
-| Earn (Vaults) | `earn-integration` | `earn-integration-review` |
-| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` | `borrow-integration-review` |
+| Earn (Vaults) | `morpho-earn` | `earn-integration-review` |
+| Borrow — variable (Blue) & fixed (Midnight) | `morpho-borrow` | `borrow-integration-review` |
 
 Build skills use the playbook's shared foundations as their base with product-specific guidance folded into each SKILL.md. Review skills orchestrate seven per-foundation compliance agents and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Shared references (foundations, glossary, rubrics) live once in the plugin's `docs/`.
 

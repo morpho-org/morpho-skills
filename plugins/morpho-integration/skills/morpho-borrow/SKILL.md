@@ -1,9 +1,9 @@
 ---
-name: borrow-integration
+name: morpho-borrow
 description: Build borrow-against-collateral features on Morpho — variable rate (Blue) and fixed rate (Midnight) — the way Morpho's integrator playbook recommends — borrow flows, live health/LTV/liquidation display, rate labelling, origination-fee separation, orderbook quotes with live requoting, maturity obligations, and the disclosure gate. Use whenever a user is building, designing, or writing copy for any borrowing, loan, credit, leverage, or term-loan product on Morpho — even if they never say "playbook", "compliance", "Blue", or "Midnight" explicitly.
 ---
 
-# Borrow Integration (Blue & Midnight)
+# Morpho Borrow (Blue & Midnight)
 
 Guidance for building end-user **borrow** products on Morpho, distilled from Morpho's Integrator UX Playbook. Two rate types exist, and much of the UX work is keeping them distinct:
 
