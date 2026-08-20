@@ -13,13 +13,13 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
 
 1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the agents need both.
 2. **Spawn all seven compliance agents in one message** so they run in parallel. Each gets: the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to run its checks and report verdicts.
-   - `morpho-integration:vocabulary-compliance` — product vocabulary
-   - `morpho-integration:attribution-compliance` — Powered by Morpho badge
-   - `morpho-integration:disclosure-compliance` — disclosure gate
-   - `morpho-integration:rate-transparency-compliance` — rate labelling and fixed/variable distinction, fee separation, orderbook quoting
-   - `morpho-integration:conversion-compliance` — bundled borrow, live preview, input affordances, manage flows
-   - `morpho-integration:clarity-safety-compliance` — recap order, tooltips, warnings, live health/LTV/liquidation, market transparency, safe default LTV, maturity display and obligation, required collateral
-   - `morpho-integration:discoverability-compliance` — value prop, nudges, integrated position
+   - `morpho-builder:vocabulary-compliance` — product vocabulary
+   - `morpho-builder:attribution-compliance` — Powered by Morpho badge
+   - `morpho-builder:disclosure-compliance` — disclosure gate
+   - `morpho-builder:rate-transparency-compliance` — rate labelling and fixed/variable distinction, fee separation, orderbook quoting
+   - `morpho-builder:conversion-compliance` — bundled borrow, live preview, input affordances, manage flows
+   - `morpho-builder:clarity-safety-compliance` — recap order, tooltips, warnings, live health/LTV/liquidation, market transparency, safe default LTV, maturity display and obligation, required collateral
+   - `morpho-builder:discoverability-compliance` — value prop, nudges, integrated position
 3. **While agents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
    - More than one signature for a single borrow.
    - The headline rate is below the fold or smaller than secondary details.

@@ -1,0 +1,9 @@
+{
+  "name": "morpho-builder",
+  "version": "0.1.0",
+  "description": "Best-practice skills and review agents for Earn and Borrow integrations across UI/UX, official Morpho SDK usage, protocol math, live data, transactions, disclosures, and attribution",
+  "author": {
+    "name": "Morpho Agents"
+  },
+  "license": "MIT"
+}
