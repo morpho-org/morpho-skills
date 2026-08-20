@@ -9,9 +9,9 @@
   },
   "plugins": [
     {
-      "name": "morpho-mcp",
-      "source": "./plugins/morpho-mcp",
-      "description": "MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
+      "name": "morpho-agent",
+      "source": "./plugins/morpho-agent",
+      "description": "Agent plugin with the Morpho MCP server — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
       "version": "0.1.0",
       "author": {
         "name": "Morpho Agents"

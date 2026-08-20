@@ -2,7 +2,7 @@
 
 ## Overview
 
-**morpho-mcp** — A remote MCP server for the Morpho lending protocol. Query vaults, markets, and user positions, prepare transactions, and simulate outcomes on Ethereum and Base from any MCP-compatible client.
+**morpho-agent** — A Claude plugin that includes the remote Morpho MCP server. Query vaults, markets, and user positions, prepare transactions, and simulate outcomes on Ethereum and Base.
 
 **morpho-builder** — Skills and compliance agents for building and reviewing Morpho-powered products, driven by the Morpho Integrator UX Playbook. One skill pair per product:
 
@@ -21,8 +21,8 @@ Build skills use the playbook's shared foundations as their base with product-sp
 # Add the Morpho marketplace
 /plugin marketplace add morpho-org/morpho-skills
 
-# Install the morpho-mcp plugin
-/plugin install morpho-mcp@morpho-skills
+# Install the agent plugin with the Morpho MCP server
+/plugin install morpho-agent@morpho-skills
 
 # Install the builder plugin
 /plugin install morpho-builder@morpho-skills

@@ -39,7 +39,7 @@ The product-specific moves beyond the critical items:
 
 ## Data
 
-Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or morpho-mcp — never hardcoded or invented. If you can't source a number, leave it out.
+Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or the morpho-agent MCP server — never hardcoded or invented. If you can't source a number, leave it out.
 
 Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The `morpho-builder:math-correctness` agent carries the full quantity-to-SDK-function map.
 
