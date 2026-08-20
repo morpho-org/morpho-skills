@@ -1,10 +1,6 @@
 # Morpho Skills
 
-> **Experimental** — This project is under active development (pre-v1.0). Tool schemas, command syntax, and behavior may change without notice. The underlying MCP server and CLI are also experimental.
-
 ## Overview
-
-**morpho-cli** — A conversational skill that lets Claude query the Morpho lending protocol and prepare unsigned transactions directly from the CLI. Ask about vault APYs, market rates, user positions, or build deposit/withdraw/borrow operations on Ethereum and Base.
 
 **morpho-mcp** — A remote MCP server for the Morpho lending protocol. Query vaults, markets, and user positions, prepare transactions, and simulate outcomes on Ethereum and Base from any MCP-compatible client.
 
@@ -25,14 +21,11 @@ Build skills use the playbook's shared foundations as their base with product-sp
 # Add the Morpho marketplace
 /plugin marketplace add morpho-org/morpho-skills
 
-# Install the morpho-cli plugin
-/plugin install morpho-cli@morpho-agent
-
 # Install the morpho-mcp plugin
-/plugin install morpho-mcp@morpho-agent
+/plugin install morpho-mcp@morpho-skills
 
 # Install the integration plugin
-/plugin install morpho-integration@morpho-agent
+/plugin install morpho-integration@morpho-skills
 ```
 
 ### Other Agents

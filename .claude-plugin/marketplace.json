@@ -1,5 +1,5 @@
 {
-  "name": "morpho-agent",
+  "name": "morpho-skills",
   "owner": {
     "name": "Morpho Agents"
   },
@@ -11,7 +11,7 @@
     {
       "name": "morpho-mcp",
       "source": "./plugins/morpho-mcp",
-      "description": "[Experimental] MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
+      "description": "MCP server for the Morpho lending protocol — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
       "version": "0.1.0",
       "author": {
         "name": "Morpho Agents"
@@ -19,19 +19,6 @@
       "repository": "https://github.com/morpho-org/morpho-skills",
       "license": "MIT",
       "keywords": ["morpho", "defi", "lending", "mcp"],
-      "category": "defi"
-    },
-    {
-      "name": "morpho-cli",
-      "source": "./plugins/morpho-cli",
-      "description": "[Experimental] CLI skill for querying Morpho protocol data and building unsigned transactions — vault APYs, market rates, user positions, deposits, withdrawals, and borrows",
-      "version": "0.1.0",
-      "author": {
-        "name": "Morpho Agents"
-      },
-      "repository": "https://github.com/morpho-org/morpho-skills",
-      "license": "MIT",
-      "keywords": ["morpho", "defi", "lending", "cli"],
       "category": "defi"
     },
     {
