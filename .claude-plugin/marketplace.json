@@ -9,19 +9,6 @@
   },
   "plugins": [
     {
-      "name": "morpho-agent",
-      "source": "./plugins/morpho-agent",
-      "description": "Agent plugin with the Morpho MCP server — query vaults/markets, prepare transactions, and simulate outcomes on Ethereum and Base",
-      "version": "0.1.0",
-      "author": {
-        "name": "Morpho Agents"
-      },
-      "repository": "https://github.com/morpho-org/morpho-skills",
-      "license": "MIT",
-      "keywords": ["morpho", "defi", "lending", "mcp"],
-      "category": "defi"
-    },
-    {
       "name": "morpho-builder",
       "source": "./plugins/morpho-builder",
       "description": "Best-practice skills and review agents for Earn and Borrow integrations across UI/UX, official Morpho SDK usage, protocol math, live data, transactions, disclosures, and attribution",

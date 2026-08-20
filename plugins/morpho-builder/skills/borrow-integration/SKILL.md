@@ -47,6 +47,6 @@ These are the critical items — retrofitting them is much more expensive than b
 
 ## Data
 
-Every displayed market fact (borrow APR, LLTV, oracle, liquidity, health) must be sourced live — Morpho GraphQL API, morpho-cli, or the morpho-agent MCP server — never hardcoded or invented. Fixed-rate quotes, maturities, and required collateral must come from the live orderbook: a stale quote presented as current is the fixed-rate equivalent of a fake APY. If you can't source a number, leave it out.
+Every displayed market fact (borrow APR, LLTV, oracle, liquidity, health) must be sourced live — Morpho GraphQL API, morpho-cli, or the Morpho MCP server — never hardcoded or invented. Fixed-rate quotes, maturities, and required collateral must come from the live orderbook: a stale quote presented as current is the fixed-rate equivalent of a fake APY. If you can't source a number, leave it out.
 
 Every **computed** number must come from the official SDK math, in bigint fixed-point with explicit rounding — never hand-rolled float arithmetic. Debt, LTV, health factor, liquidation price, and max borrow: `AccrualPosition` / `MarketUtils` from `@morpho-org/blue-sdk` (accrue interest before reading debt; compute full repay in shares, not an asset snapshot). Rates: `MarketUtils.rateToApy` / `AdaptiveCurveIrmLib` for post-trade projections. Midnight tick ↔ price ↔ APR and take amounts: `TickLib` / `TakeAmountsLib` from `@morpho-org/midnight-sdk`. The `morpho-builder:math-correctness` agent carries the full quantity-to-SDK-function map.
