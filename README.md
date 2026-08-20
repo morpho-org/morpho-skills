@@ -28,10 +28,12 @@ Build skills use the playbook's shared foundations as their base with product-sp
 /plugin install morpho-builder@morpho-skills
 ```
 
+The `morpho-agent` plugin bundles the Morpho MCP configuration, so no separate MCP setup is required in Claude Code.
+
 ### Other Agents
 
 ```bash
 npx skills add morpho-org/morpho-skills
 ```
 
-Add MCP with the following URL: `https://mcp.morpho.org`
+The standalone skills command installs every skill in this repository, but it does not install Claude plugin configuration. Configure the Morpho MCP server separately with `https://mcp.morpho.org` when your agent supports MCP.
