@@ -1,9 +1,0 @@
-{
-  "name": "morpho-integration",
-  "version": "0.1.0",
-  "description": "Skills and compliance agents for building and reviewing Morpho integrations — Earn (Vaults), variable-rate borrow (Blue), and fixed-rate borrow (Midnight) — driven by the Morpho Integrator UX Playbook",
-  "author": {
-    "name": "Morpho Agents"
-  },
-  "license": "MIT"
-}
