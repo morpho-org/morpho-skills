@@ -1,26 +1,24 @@
----
-name: borrow-integration-review
-description: Orchestrated compliance review of a Morpho borrow integration — variable rate (Blue), fixed rate (Midnight), or both — against Morpho's integrator playbook — spawns one compliance agent per playbook foundation, aggregates verdicts into the rubric checklist, then checks flow red flags. Use whenever a user asks to review, audit, QA, or pre-launch-check a Morpho borrow/loan/leverage/term-loan integration, its screens, or its copy — even if they just say "check my borrow flow".
----
+# Full Borrow Integration Review (Blue & Midnight)
 
-# Borrow Integration Review (Blue & Midnight)
+An orchestrated review of a borrow integration against the Morpho Integrator UX Playbook. You are the **orchestrator**: the per-foundation compliance checkers do the check-level work — each checker carries its own checks and fail signals — and report back; you aggregate their verdicts into the rubric checklist, judge red flags, and deliver one report.
 
-An orchestrated review of a borrow integration against the Morpho Integrator UX Playbook. You are the **orchestrator**: the per-foundation compliance agents do the check-level work — each agent carries its own checks and fail signals — and report back; you aggregate their verdicts into the rubric checklist, judge red flags, and deliver one report.
-
-**Baseline checklist:** [docs/rubrics.md](../../docs/rubrics.md) — read it first. For borrow, the applicable rows are the **Shared** table plus the **Variable Rate Borrow** and/or **Fixed Rate Borrow** tables, depending on which rate types the integration offers. Every applicable row appears in the final report, cited by its criterion (e.g. "fails Origination fee shown as your fee, separate").
+**Baseline checklist:** [rubrics.md](rubrics.md) — read it first. For borrow, the applicable rows are the **Shared** table plus the **Variable Rate Borrow** and/or **Fixed Rate Borrow** tables, depending on which rate types the integration offers. Every applicable row appears in the final report, cited by its criterion (e.g. "fails Origination fee shown as your fee, separate").
 
 ## Procedure
 
-1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the agents need both.
-2. **Spawn all seven compliance agents in one message** so they run in parallel. Each gets: the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to run its checks and report verdicts.
-   - `morpho-builder:vocabulary-compliance` — product vocabulary
-   - `morpho-builder:attribution-compliance` — Powered by Morpho badge
-   - `morpho-builder:disclosure-compliance` — disclosure gate
-   - `morpho-builder:rate-transparency-compliance` — rate labelling and fixed/variable distinction, fee separation, orderbook quoting
-   - `morpho-builder:conversion-compliance` — bundled borrow, live preview, input affordances, manage flows
-   - `morpho-builder:clarity-safety-compliance` — recap order, tooltips, warnings, live health/LTV/liquidation, market transparency, safe default LTV, maturity display and obligation, required collateral
-   - `morpho-builder:discoverability-compliance` — value prop, nudges, integrated position
-3. **While agents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
+1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the checkers need both.
+2. **Delegate all seven compliance checks in parallel.** Spawn one subagent per checker file below. Give each subagent the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to read its assigned checker file completely, review only that foundation, make no edits, and return the report format required by the file. Start all independent checks before waiting for results. If the host cannot run subagents, follow the same seven checker files sequentially yourself; do not skip a foundation.
+
+   | Foundation | Checker prompt |
+   | --- | --- |
+   | Product vocabulary | [vocabulary-compliance.md](checkers/vocabulary-compliance.md) |
+   | Powered by Morpho | [attribution-compliance.md](checkers/attribution-compliance.md) |
+   | Disclosure gate | [disclosure-compliance.md](checkers/disclosure-compliance.md) |
+   | Rate transparency | [rate-transparency-compliance.md](checkers/rate-transparency-compliance.md) |
+   | Conversion mechanics | [conversion-compliance.md](checkers/conversion-compliance.md) |
+   | Clarity & safety | [clarity-safety-compliance.md](checkers/clarity-safety-compliance.md) |
+   | Discoverability | [discoverability-compliance.md](checkers/discoverability-compliance.md) |
+3. **While subagents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
    - More than one signature for a single borrow.
    - The headline rate is below the fold or smaller than secondary details.
    - No live preview of the outcome or health as the user types.
@@ -30,7 +28,7 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
    - Protocol jargon (LLTV, shares, IRM, orderbook mechanics, oracle scaling) in the primary flow instead of behind a tooltip or advanced reveal.
    - An eligible-asset prompt that doesn't lead to a CTA.
    - More than a tap or two to learn what market the user is borrowing from.
-4. **Aggregate.** Match each agent's named checks to the rubric rows in [docs/rubrics.md](../../docs/rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no agent could assess is UNVERIFIED, never guessed. If an agent contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
+4. **Aggregate.** Match each checker's named checks to the rubric rows in [rubrics.md](rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no checker could assess is UNVERIFIED, never guessed. If a checker contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
 5. **Report** in this exact structure — every Shared row plus the Variable and/or Fixed rows for the rate types offered appears once, split into the playbook's three goals using the rubric's Goal column (Compliance → **Compliant**; Conversion → **Converts, grows TVL**; Clarity and Discoverability → **Smooth & discoverable**), keeping rubric order within each group:
 
 ```

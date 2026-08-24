@@ -1,6 +1,6 @@
 ---
 name: earn-integration
-description: Build Earn features on Morpho Vaults the way Morpho's integrator playbook recommends — deposit/withdraw flows, APY display and base/rewards splits, vault transparency (name, curator, collateral, TVL), Powered by Morpho attribution, and the disclosure gate. Use whenever a user is building, designing, reviewing copy for, or wiring up any yield, earn, or savings product on Morpho vaults — even if they never say "playbook", "compliance", or "vault" explicitly.
+description: Build or review Earn features on Morpho Vaults using Morpho's integrator playbook — deposit/withdraw flows, APY transparency, vault details, protocol math, attribution, disclosures, and orchestrated compliance review. Use for implementation, design, copy, audits, QA, or pre-launch checks of any Morpho-powered yield, earn, or savings product, even when the request does not mention the playbook, compliance, or vaults explicitly.
 ---
 
 # Earn Integration (Vaults)
@@ -9,12 +9,17 @@ Guidance for building end-user **Earn** products on Morpho Vaults, distilled fro
 
 Every recommendation serves one of three goals: **compliant** (honest expectations, correct attribution), **converts** (visitor → depositor, TVL grows), **smooth & discoverable** (users understand every step).
 
-## How to work
+## Choose a mode
 
-1. **Start from the foundations.** Read [docs/foundations.md](../../docs/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [docs/glossary.md](../../docs/glossary.md); they are worded to keep the legal and technical reality intact.
+- **Build or update:** follow the implementation guidance below and verify relevant surfaces as you work.
+- **Review, audit, QA, or pre-launch check:** read and follow [references/review.md](references/review.md) completely. It defines the parallel checker workflow, rubric aggregation, red-flag pass, and required report. Review only unless the user also asks for fixes.
+
+## Build or update
+
+1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
 2. **Build the flow.** Cover the standard surfaces: entry/home → vault detail → amount input → review → confirm → post-deposit position. Apply the foundations and the Earn guidance below to each surface as you go.
-3. **Verify as you build.** The plugin ships seven compliance agents, one per foundation. Spawn the relevant one when you finish a surface (e.g. `morpho-builder:vocabulary-compliance` after writing copy, `morpho-builder:rate-transparency-compliance` after the APY display), telling it the product is Earn (Vaults). Each reports verdicts back to you. Additionally, whenever a surface **computes** numbers — share/asset conversions, APY, est. yield previews, amount formatting — spawn `morpho-builder:math-correctness` on the code paths: it checks the math against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
-4. **Review before shipping.** Run the `earn-integration-review` skill for the full orchestrated pass — every check, the red flags, and the launch self-review.
+3. **Verify as you build.** When subagents are available, delegate a read-only check of the relevant foundation after finishing a surface (for example, vocabulary after writing copy or rate transparency after the APY display). Give the subagent the artifact paths, identify the product as Earn (Vaults), and instruct it to use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). Whenever a surface **computes** numbers — share/asset conversions, APY, estimated yield previews, amount formatting — delegate a separate read-only math check and instruct that subagent to read and follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). If the host cannot run subagents, perform the same checks yourself. The math checker validates the code against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
+4. **Review before shipping.** When a full or pre-launch review is requested, switch to the bundled [review workflow](references/review.md) for every compliance check, the red-flag pass, and the launch self-review.
 
 ## Non-negotiables to build in from the start
 
@@ -41,7 +46,7 @@ The product-specific moves beyond the critical items:
 
 Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or the Morpho MCP server — never hardcoded or invented. If you can't source a number, leave it out.
 
-Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The `morpho-builder:math-correctness` agent carries the full quantity-to-SDK-function map.
+Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The bundled [math-correctness checker](references/checkers/math-correctness.md) carries the full quantity-to-SDK-function map.
 
 ## Reference library
 
@@ -54,6 +59,6 @@ Official Morpho resources to link or embed — use these, don't rebuild or inven
 | Build docs | Developer-facing build guide + attribution | docs.morpho.org/build |
 | Morpho disclaimers | Public legal position — link this from the disclosure notice | morpho.org/disclaimers |
 | Vault pages | Full advanced vault data to link from product detail | app.morpho.org |
-| Morpho Glossary & Language Guidelines | Approved terminology, entity/role definitions, legal framing | [docs/glossary.md](../../docs/glossary.md) (bundled) |
+| Morpho Glossary & Language Guidelines | Approved terminology, entity/role definitions, legal framing | [references/glossary.md](references/glossary.md) (bundled) |
 
 Morpho offers partner design reviews — if a recommendation doesn't fit the integrator's context, suggest raising it with their Morpho contact rather than silently diverging.

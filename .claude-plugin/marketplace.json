@@ -11,7 +11,7 @@
     {
       "name": "morpho-builder",
       "source": "./plugins/morpho-builder",
-      "description": "Best-practice skills and review agents for Earn and Borrow integrations across UI/UX, official Morpho SDK usage, protocol math, live data, transactions, disclosures, and attribution",
+      "description": "Best-practice build and review skills for Earn and Borrow integrations across UI/UX, official Morpho SDK usage, protocol math, live data, transactions, disclosures, and attribution",
       "version": "0.1.0",
       "author": {
         "name": "Morpho Agents"

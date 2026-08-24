@@ -6,12 +6,12 @@
 
 For teams building or reviewing Morpho-powered products. This plugin provides Morpho integration best practices across UI/UX, live data, official SDK usage, protocol math, transaction flows, disclosures, attribution, and pre-launch review.
 
-| Product | Build skill | Review skill |
-| --- | --- | --- |
-| Earn (Vaults) | `earn-integration` | `earn-integration-review` |
-| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` | `borrow-integration-review` |
+| Product | Skill |
+| --- | --- |
+| Earn (Vaults) | `earn-integration` |
+| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` |
 
-Each build skill combines shared integration best practices with product-specific guidance. Review skills orchestrate seven specialized compliance agents and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Shared references (foundations, glossary, rubrics) live once in the plugin's `docs/`.
+Each skill has two modes: build or update the integration, and run a full review. Review mode orchestrates seven specialized compliance checks, reports against the rubric checklist, and performs the red-flag pass and launch self-review. Every checker is a host-neutral prompt under the same skill's `references/` directory, so the complete workflow installs as one package through the Claude Code plugin or Agent Skills.
 
 ## Quickstart
 
@@ -25,8 +25,16 @@ Each build skill combines shared integration best practices with product-specifi
 /plugin install morpho-builder@morpho-skills
 ```
 
-### Other Agents
+The Claude Code plugin installs the same self-contained skills and checker prompts used by Agent Skills hosts.
+
+### Agent Skills
 
 ```bash
 npx skills add morpho-org/morpho-skills
 ```
+
+`npx skills` detects supported hosts and installs the two standalone skills. Each installed skill includes its build guidance, full review workflow, and checker prompts. In review mode, the skill instructs the main agent to spawn one subagent per checker when delegation is available, or run the same checks sequentially when it is not.
+
+## Development
+
+After changing the builder plugin's canonical `docs/`, run `sh scripts/sync-builder-skill-resources.sh`. The synchronized copies keep each standalone skill self-contained for Claude Code and `npx skills` installs. Checker prompts are maintained directly under each skill's `references/checkers/` directory.
