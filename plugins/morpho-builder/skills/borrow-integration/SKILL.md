@@ -1,6 +1,6 @@
 ---
 name: borrow-integration
-description: Build borrow-against-collateral features on Morpho — variable rate (Blue) and fixed rate (Midnight) — the way Morpho's integrator playbook recommends — borrow flows, live health/LTV/liquidation display, rate labelling, origination-fee separation, orderbook quotes with live requoting, maturity obligations, and the disclosure gate. Use whenever a user is building, designing, or writing copy for any borrowing, loan, credit, leverage, or term-loan product on Morpho — even if they never say "playbook", "compliance", "Blue", or "Midnight" explicitly.
+description: Build or review Morpho borrow-against-collateral features — variable rate (Blue), fixed rate (Midnight), or both — using Morpho's integrator playbook. Covers implementation, design, copy, protocol math, live risk and rate displays, attribution, disclosures, and orchestrated compliance review. Use for building, auditing, QA, or pre-launch checks of Morpho-powered borrowing, loan, credit, leverage, or term-loan products.
 ---
 
 # Borrow Integration (Blue & Midnight)
@@ -12,12 +12,17 @@ Guidance for building end-user **borrow** products on Morpho, distilled from Mor
 
 The recommendations are not gates — they're what has worked across live integrations. Items marked critical matter most for user trust and compliance and are the ones Morpho would push on in a design review. Every recommendation serves one of three goals: **compliant** (honest expectations, correct attribution), **converts** (visitor → borrower, TVL grows), **smooth & discoverable** (users understand every step).
 
-## How to work
+## Choose a mode
+
+- **Build or update:** follow the implementation guidance below and verify relevant surfaces as you work.
+- **Review, audit, QA, or pre-launch check:** read and follow [references/review.md](references/review.md) completely. It defines the parallel checker workflow, rubric aggregation, red-flag pass, and required report. Review only unless the user also asks for fixes.
+
+## Build or update
 
 1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — LLTV, health factor, oracle, liquidation, Fixed Rate Markets, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
 2. **Build the flow.** Cover the standard surfaces: entry/home → market detail → borrow config (collateral + amount; for fixed, amount → quote + required collateral) → review (for fixed, a fresh quote) → confirm → dashboard/manage (for fixed, with maturity state). Apply the foundations and the rate-type guidance below to each surface as you go.
 3. **Verify as you build.** When subagents are available, delegate a read-only check of the relevant foundation after finishing a surface (for example, clarity and safety after borrow config or rate transparency after the rate display). Give the subagent the artifact paths, identify the rate type — variable-rate borrow (Blue), fixed-rate borrow (Midnight), or both — and instruct it to use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). Whenever a surface **computes** numbers — debt from shares, LTV/health/liquidation price, max borrow, APR/APY, repay amounts, tick or quote math — delegate a separate read-only math check and instruct that subagent to read and follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). If the host cannot run subagents, perform the same checks yourself. The math checker validates the code against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`, `@morpho-org/midnight-sdk`) and names the SDK function to replace any hand-rolled arithmetic.
-4. **Review before shipping.** Run the `borrow-integration-review` skill for the full orchestrated pass — every check, the red flags, and the launch self-review.
+4. **Review before shipping.** When a full or pre-launch review is requested, switch to the bundled [review workflow](references/review.md) for every compliance check, the red-flag pass, and the launch self-review.
 
 ## Non-negotiables to build in from the start
 

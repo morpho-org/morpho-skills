@@ -1,6 +1,6 @@
 ---
 name: earn-integration
-description: Build Earn features on Morpho Vaults the way Morpho's integrator playbook recommends — deposit/withdraw flows, APY display and base/rewards splits, vault transparency (name, curator, collateral, TVL), Powered by Morpho attribution, and the disclosure gate. Use whenever a user is building, designing, reviewing copy for, or wiring up any yield, earn, or savings product on Morpho vaults — even if they never say "playbook", "compliance", or "vault" explicitly.
+description: Build or review Earn features on Morpho Vaults using Morpho's integrator playbook — deposit/withdraw flows, APY transparency, vault details, protocol math, attribution, disclosures, and orchestrated compliance review. Use for implementation, design, copy, audits, QA, or pre-launch checks of any Morpho-powered yield, earn, or savings product, even when the request does not mention the playbook, compliance, or vaults explicitly.
 ---
 
 # Earn Integration (Vaults)
@@ -9,12 +9,17 @@ Guidance for building end-user **Earn** products on Morpho Vaults, distilled fro
 
 Every recommendation serves one of three goals: **compliant** (honest expectations, correct attribution), **converts** (visitor → depositor, TVL grows), **smooth & discoverable** (users understand every step).
 
-## How to work
+## Choose a mode
+
+- **Build or update:** follow the implementation guidance below and verify relevant surfaces as you work.
+- **Review, audit, QA, or pre-launch check:** read and follow [references/review.md](references/review.md) completely. It defines the parallel checker workflow, rubric aggregation, red-flag pass, and required report. Review only unless the user also asks for fixes.
+
+## Build or update
 
 1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
 2. **Build the flow.** Cover the standard surfaces: entry/home → vault detail → amount input → review → confirm → post-deposit position. Apply the foundations and the Earn guidance below to each surface as you go.
 3. **Verify as you build.** When subagents are available, delegate a read-only check of the relevant foundation after finishing a surface (for example, vocabulary after writing copy or rate transparency after the APY display). Give the subagent the artifact paths, identify the product as Earn (Vaults), and instruct it to use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). Whenever a surface **computes** numbers — share/asset conversions, APY, estimated yield previews, amount formatting — delegate a separate read-only math check and instruct that subagent to read and follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). If the host cannot run subagents, perform the same checks yourself. The math checker validates the code against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
-4. **Review before shipping.** Run the `earn-integration-review` skill for the full orchestrated pass — every check, the red flags, and the launch self-review.
+4. **Review before shipping.** When a full or pre-launch review is requested, switch to the bundled [review workflow](references/review.md) for every compliance check, the red-flag pass, and the launch self-review.
 
 ## Non-negotiables to build in from the start
 

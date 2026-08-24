@@ -6,12 +6,12 @@
 
 For teams building or reviewing Morpho-powered products. This plugin provides Morpho integration best practices across UI/UX, live data, official SDK usage, protocol math, transaction flows, disclosures, attribution, and pre-launch review.
 
-| Product | Build skill | Review skill |
-| --- | --- | --- |
-| Earn (Vaults) | `earn-integration` | `earn-integration-review` |
-| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` | `borrow-integration-review` |
+| Product | Skill |
+| --- | --- |
+| Earn (Vaults) | `earn-integration` |
+| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` |
 
-Each build skill combines shared integration best practices with product-specific guidance. Review skills orchestrate seven specialized compliance checks and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Every checker is a host-neutral prompt under the skill's `references/` directory, so the same skill package works through the Claude Code plugin or a standalone Agent Skills install.
+Each skill has two modes: build or update the integration, and run a full review. Review mode orchestrates seven specialized compliance checks, reports against the rubric checklist, and performs the red-flag pass and launch self-review. Every checker is a host-neutral prompt under the same skill's `references/` directory, so the complete workflow installs as one package through the Claude Code plugin or Agent Skills.
 
 ## Quickstart
 
@@ -33,7 +33,7 @@ The Claude Code plugin installs the same self-contained skills and checker promp
 npx skills add morpho-org/morpho-skills
 ```
 
-`npx skills` detects supported hosts and installs the four standalone skills. Each installed skill includes its own references and checker prompts. The skill instructs the main agent to spawn one subagent per checker when delegation is available, or run the same checks sequentially when it is not.
+`npx skills` detects supported hosts and installs the two standalone skills. Each installed skill includes its build guidance, full review workflow, and checker prompts. In review mode, the skill instructs the main agent to spawn one subagent per checker when delegation is available, or run the same checks sequentially when it is not.
 
 ## Development
 

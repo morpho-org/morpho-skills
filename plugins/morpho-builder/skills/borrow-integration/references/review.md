@@ -1,13 +1,8 @@
----
-name: borrow-integration-review
-description: Orchestrated compliance review of a Morpho borrow integration — variable rate (Blue), fixed rate (Midnight), or both — against Morpho's integrator playbook — runs one compliance check per playbook foundation, aggregates verdicts into the rubric checklist, then checks flow red flags. Use whenever a user asks to review, audit, QA, or pre-launch-check a Morpho borrow/loan/leverage/term-loan integration, its screens, or its copy — even if they just say "check my borrow flow".
----
-
-# Borrow Integration Review (Blue & Midnight)
+# Full Borrow Integration Review (Blue & Midnight)
 
 An orchestrated review of a borrow integration against the Morpho Integrator UX Playbook. You are the **orchestrator**: the per-foundation compliance checkers do the check-level work — each checker carries its own checks and fail signals — and report back; you aggregate their verdicts into the rubric checklist, judge red flags, and deliver one report.
 
-**Baseline checklist:** [references/rubrics.md](references/rubrics.md) — read it first. For borrow, the applicable rows are the **Shared** table plus the **Variable Rate Borrow** and/or **Fixed Rate Borrow** tables, depending on which rate types the integration offers. Every applicable row appears in the final report, cited by its criterion (e.g. "fails Origination fee shown as your fee, separate").
+**Baseline checklist:** [rubrics.md](rubrics.md) — read it first. For borrow, the applicable rows are the **Shared** table plus the **Variable Rate Borrow** and/or **Fixed Rate Borrow** tables, depending on which rate types the integration offers. Every applicable row appears in the final report, cited by its criterion (e.g. "fails Origination fee shown as your fee, separate").
 
 ## Procedure
 
@@ -16,13 +11,13 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
 
    | Foundation | Checker prompt |
    | --- | --- |
-   | Product vocabulary | [vocabulary-compliance.md](references/checkers/vocabulary-compliance.md) |
-   | Powered by Morpho | [attribution-compliance.md](references/checkers/attribution-compliance.md) |
-   | Disclosure gate | [disclosure-compliance.md](references/checkers/disclosure-compliance.md) |
-   | Rate transparency | [rate-transparency-compliance.md](references/checkers/rate-transparency-compliance.md) |
-   | Conversion mechanics | [conversion-compliance.md](references/checkers/conversion-compliance.md) |
-   | Clarity & safety | [clarity-safety-compliance.md](references/checkers/clarity-safety-compliance.md) |
-   | Discoverability | [discoverability-compliance.md](references/checkers/discoverability-compliance.md) |
+   | Product vocabulary | [vocabulary-compliance.md](checkers/vocabulary-compliance.md) |
+   | Powered by Morpho | [attribution-compliance.md](checkers/attribution-compliance.md) |
+   | Disclosure gate | [disclosure-compliance.md](checkers/disclosure-compliance.md) |
+   | Rate transparency | [rate-transparency-compliance.md](checkers/rate-transparency-compliance.md) |
+   | Conversion mechanics | [conversion-compliance.md](checkers/conversion-compliance.md) |
+   | Clarity & safety | [clarity-safety-compliance.md](checkers/clarity-safety-compliance.md) |
+   | Discoverability | [discoverability-compliance.md](checkers/discoverability-compliance.md) |
 3. **While subagents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
    - More than one signature for a single borrow.
    - The headline rate is below the fold or smaller than secondary details.
@@ -33,7 +28,7 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
    - Protocol jargon (LLTV, shares, IRM, orderbook mechanics, oracle scaling) in the primary flow instead of behind a tooltip or advanced reveal.
    - An eligible-asset prompt that doesn't lead to a CTA.
    - More than a tap or two to learn what market the user is borrowing from.
-4. **Aggregate.** Match each checker's named checks to the rubric rows in [references/rubrics.md](references/rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no checker could assess is UNVERIFIED, never guessed. If a checker contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
+4. **Aggregate.** Match each checker's named checks to the rubric rows in [rubrics.md](rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no checker could assess is UNVERIFIED, never guessed. If a checker contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
 5. **Report** in this exact structure — every Shared row plus the Variable and/or Fixed rows for the rate types offered appears once, split into the playbook's three goals using the rubric's Goal column (Compliance → **Compliant**; Conversion → **Converts, grows TVL**; Clarity and Discoverability → **Smooth & discoverable**), keeping rubric order within each group:
 
 ```
