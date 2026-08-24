@@ -1,64 +1,38 @@
 ---
 name: earn-integration
-description: Build or review Earn features on Morpho Vaults using Morpho's integrator playbook — deposit/withdraw flows, APY transparency, vault details, protocol math, attribution, disclosures, and orchestrated compliance review. Use for implementation, design, copy, audits, QA, or pre-launch checks of any Morpho-powered yield, earn, or savings product, even when the request does not mention the playbook, compliance, or vaults explicitly.
+description: Build or review Morpho Earn integrations that deposit into and exit from Morpho Vault V2. Use for Vault V2 discovery, data, APY and rewards, positions, deposit or withdrawal transactions, illiquid exits, UI copy, QA, and pre-launch review. Treat Vault V1 only as migration or compatibility context.
 ---
 
-# Earn Integration (Vaults)
+# Earn Integration — Vault V2
 
-Guidance for building end-user **Earn** products on Morpho Vaults, distilled from Morpho's Integrator UX Playbook and Earn blueprint. The recommendations are not gates — they're what has worked across live integrations. Items marked critical matter most for user trust and compliance and are the ones Morpho would push on in a design review.
+Build and review Earn products on **Morpho Vault V2**. Do not silently substitute a Vault V1/MetaMorpho flow, a direct Blue supply position, or a generic ERC-4626 recipe.
 
-Every recommendation serves one of three goals: **compliant** (honest expectations, correct attribution), **converts** (visitor → depositor, TVL grows), **smooth & discoverable** (users understand every step).
+Use the authoritative [Morpho documentation index](https://docs.morpho.org/llms.txt), [Morpho SDK documentation](https://docs.morpho.org/developers/sdks/morpho-sdk/), and [Core API reference](https://api.morpho.org/core/docs) for current signatures and schemas. Keep copied examples small; link to the current specification instead of recreating it.
 
 ## Choose a mode
 
-- **Build or update:** follow the implementation guidance below and verify relevant surfaces as you work.
-- **Review, audit, QA, or pre-launch check:** read and follow [references/review.md](references/review.md) completely. It defines the parallel checker workflow, rubric aggregation, red-flag pass, and required report. Review only unless the user also asks for fixes.
+- **Build or update:** read [references/vault-v2.md](references/vault-v2.md) completely, then implement only the surfaces relevant to the request.
+- **Review, audit, QA, or pre-launch:** read [references/review.md](references/review.md) completely. Review only unless the user explicitly asks for fixes.
 
-## Build or update
+## Build workflow
 
-1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — curator, receipt token, TVL, rewards, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
-2. **Build the flow.** Cover the standard surfaces: entry/home → vault detail → amount input → review → confirm → post-deposit position. Apply the foundations and the Earn guidance below to each surface as you go.
-3. **Verify as you build.** When subagents are available, delegate a read-only check of the relevant foundation after finishing a surface (for example, vocabulary after writing copy or rate transparency after the APY display). Give the subagent the artifact paths, identify the product as Earn (Vaults), and instruct it to use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). Whenever a surface **computes** numbers — share/asset conversions, APY, estimated yield previews, amount formatting — delegate a separate read-only math check and instruct that subagent to read and follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). If the host cannot run subagents, perform the same checks yourself. The math checker validates the code against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`) and names the SDK function to replace any hand-rolled arithmetic.
-4. **Review before shipping.** When a full or pre-launch review is requested, switch to the bundled [review workflow](references/review.md) for every compliance check, the red-flag pass, and the launch self-review.
+1. Confirm chain, Vault V2 address, underlying asset, user/account, requested action, and whether the app needs indexed analytics or execution-fresh state.
+2. Discover candidates with the Morpho API; resolve the selected vault to a fresh `client.morpho.vaultV2(address, chainId)` entity before previewing or building a transaction.
+3. Use the primary `@morpho-org/morpho-sdk` action flow: create the action, await and satisfy every `getRequirements()` result, call `buildTx(...)`, simulate the final authorized transaction, then submit and wait for a receipt.
+4. Preserve bigint token units, token-specific decimals, explicit slippage/deadline choices, and the builder/signer invariant. Never hand-build a supported vault or bundler transaction.
+5. Show the vault identity, variable APY breakdown, fees, rewards by token, allocation exposure, available withdrawal paths, risks, and data freshness on the surfaces where each fact changes the user's decision.
+6. Re-fetch critical state immediately before building or submitting. Indexed API data is not transaction state.
 
-## Non-negotiables to build in from the start
+## Product boundaries
 
-These are the critical items — retrofitting them is much more expensive than building them in:
+- Earn defaults to Vault V2. Load Vault V1 material only when the request explicitly involves migration, an existing V1 position, or compatibility.
+- A normal liquid exit uses `withdraw` (exact assets) or `redeem` (exact shares). An illiquid exit may require force deallocation or in-kind redemption; do not describe these as equivalent outcomes.
+- Vault V2's ERC-4626 `maxDeposit`, `maxMint`, `maxWithdraw`, and `maxRedeem` always return zero. Never use them as availability or balance signals.
+- Yield is variable, not guaranteed. Separate native vault APY, underlying-token yield, rewards, performance fees, management fees, and any integrator fee rather than blending unlike components.
+- “Withdraw anytime” must be qualified by available liquidity. For force or in-kind exits, preview and disclose penalties, assets/positions received, and follow-up work.
 
-- **Vocabulary:** "Earn" / "DeFi yield", never *staking*, *investment*, *guaranteed*, or *risk-free*. Yield is **variable**. The vault is a **Morpho Vault smart contract**, not a fund or strategy.
-- **Attribution:** the official **Powered by Morpho** badge (web component `powered-by-morpho` or static asset from brand.morpho.org) on vault detail, review, confirm, and post-deposit surfaces.
-- **Disclosure gate:** before a user's first Morpho interaction, an acknowledgment of the integrator's Terms + Morpho's Disclaimer + the risks. No path around it.
-- **APY honesty:** net APY labelled *variable*, split into base yield + rewards with each token named.
-- **Vault transparency:** vault name visible through the whole flow; curator named; collateral exposure reachable; TVL and withdrawable liquidity honest.
+## Verification while building
 
-## Earn guidance
+Use the applicable checker prompt under [references/checkers/](references/checkers/) after the corresponding surface exists. Run [math-correctness.md](references/checkers/math-correctness.md) whenever code converts shares/assets, computes rate or fee displays, sizes an exit, or formats protocol quantities. A complete review uses all eight checkers through the orchestrator.
 
-The product-specific moves beyond the critical items:
-
-- **APY composition.** The split is the point: **base rate** (borrower-paid, autocompounding, in the deposit asset) + **rewards** (named by token, with claiming schedule). Naming the token each component pays in is the detail that does the most work — a blended figure, however accurate, sets the wrong expectation and is the most common source of support tickets. Nice to have: an autocompounding note on product detail, and the rewards program **end date** if one exists.
-- **Vault transparency.** Curator with logo + website/X link — the curator is a trust signal, treat them as one. Collateral exposure reachable in a tap or two, or link the vault's page on app.morpho.org for full advanced data. TVL helps users calibrate. Nice to have: allocation percentages across underlying markets, and a one-line vault thesis ("Blue-chip markets curated by X") — a lot of work for low effort.
-- **Benefits messaging** on product detail: **no lock-ups** (withdraw anytime, subject to available liquidity in the underlying markets — keep the caveat, dropping it turns a benefit into an overpromise), **autocompounding native yield**, **non-custodial**.
-- **Educational redirection.** At least one outbound path to Morpho docs or an Earn explainer from product detail, with a clear CTA ("Learn more about Morpho") — not a buried footer link. Users who understand what they're depositing into deposit more and churn less.
-- **Deposit flow.** One-signature deposit with a live est. yield/yr preview and balance + MAX + USD value.
-- **Activation.** Pair every eligible-asset or idle-balance prompt with a deposit CTA inside the component itself; show the post-deposit position alongside the user's other balances, not in a separate silo.
-
-## Data
-
-Every displayed vault fact (APY, splits, TVL, liquidity, allocations, curator, collateral) must be sourced live — Morpho GraphQL API, morpho-cli, or the Morpho MCP server — never hardcoded or invented. If you can't source a number, leave it out.
-
-Every **computed** number (share ↔ asset conversions, APY from rates, yield previews, formatted amounts) must come from the official SDK math — `VaultUtils` / `SharesMath` / `MarketUtils.rateToApy` from `@morpho-org/blue-sdk`, `MathLib` and `format` from `@morpho-org/morpho-ts` — in bigint fixed-point with explicit rounding, never hand-rolled float arithmetic. The bundled [math-correctness checker](references/checkers/math-correctness.md) carries the full quantity-to-SDK-function map.
-
-## Reference library
-
-Official Morpho resources to link or embed — use these, don't rebuild or invent equivalents:
-
-| Resource | What it covers | Where |
-| --- | --- | --- |
-| Brand assets | Logo pack, badge variants, clear-space rules | brand.morpho.org |
-| Badge web component | Drop-in `powered-by-morpho` script for web apps | `https://morpho.org/snippet.v1.js` |
-| Build docs | Developer-facing build guide + attribution | docs.morpho.org/build |
-| Morpho disclaimers | Public legal position — link this from the disclosure notice | morpho.org/disclaimers |
-| Vault pages | Full advanced vault data to link from product detail | app.morpho.org |
-| Morpho Glossary & Language Guidelines | Approved terminology, entity/role definitions, legal framing | [references/glossary.md](references/glossary.md) (bundled) |
-
-Morpho offers partner design reviews — if a recommendation doesn't fit the integrator's context, suggest raising it with their Morpho contact rather than silently diverging.
+Do not claim a check passed without artifact evidence. If code, runtime state, or a required screen is unavailable, report `UNVERIFIED` and say what is missing.

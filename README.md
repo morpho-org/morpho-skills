@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered products. This plugin provides Morpho integration best practices across UI/UX, live data, official SDK usage, protocol math, transaction flows, disclosures, attribution, and pre-launch review.
+For teams building or reviewing Morpho-powered Earn and Borrow products. The skills provide product-specific guidance for live data, `@morpho-org/morpho-sdk` transactions, UI/UX, protocol math, disclosures, attribution, and pre-launch review.
 
 | Product | Skill |
 | --- | --- |
-| Earn (Vaults) | `earn-integration` |
-| Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` |
+| Earn — Morpho Vault V2 | `earn-integration` |
+| Borrow — Blue variable rate and/or Midnight fixed rate | `borrow-integration` |
 
-Each skill has two modes: build or update the integration, and run a full review. Review mode orchestrates seven specialized compliance checks, reports against the rubric checklist, and performs the red-flag pass and launch self-review. Every checker is a host-neutral prompt under the same skill's `references/` directory, so the complete workflow installs as one package through the Claude Code plugin or Agent Skills.
+Each skill has build/update and review modes. Earn defaults to Vault V2, including liquid and illiquid exits. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under its skill's `references/checkers/` directory.
 
 ## Quickstart
 
@@ -33,8 +33,20 @@ The Claude Code plugin installs the same self-contained skills and checker promp
 npx skills add morpho-org/morpho-skills
 ```
 
-`npx skills` detects supported hosts and installs the two standalone skills. Each installed skill includes its build guidance, full review workflow, and checker prompts. In review mode, the skill instructs the main agent to spawn one subagent per checker when delegation is available, or run the same checks sequentially when it is not.
+`npx skills` detects supported hosts and installs the two standalone skills. The root entries under `skills/` remain symlinks to the self-contained plugin copies, so both installation paths expose the same entrypoint, product references, review orchestrator, and checker fleet.
 
 ## Development
 
-After changing the builder plugin's canonical `docs/`, run `sh scripts/sync-builder-skill-resources.sh`. The synchronized copies keep each standalone skill self-contained for Claude Code and `npx skills` installs. Checker prompts are maintained directly under each skill's `references/checkers/` directory.
+Product guidance is maintained directly with each public skill:
+
+```text
+plugins/morpho-builder/skills/
+├── earn-integration/
+│   ├── SKILL.md
+│   └── references/{vault-v2.md,review.md,checkers/...}
+└── borrow-integration/
+    ├── SKILL.md
+    └── references/{blue.md,midnight.md,review.md,checkers/...}
+```
+
+Maintain each skill in place and keep Earn and Borrow references product-specific; do not copy generic reference files between them. Validate both skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
