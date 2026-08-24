@@ -11,19 +11,19 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
 
 ## Procedure
 
-1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the agents need both.
-2. **Delegate all seven compliance checks in parallel.** Give every checker the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to review only and report verdicts. Use the named Claude Code agent when it is available; otherwise spawn a general-purpose subagent and tell it to read and follow the bundled checker file. If the host cannot run subagents, run the same seven checker files sequentially yourself; do not skip a foundation.
+1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the checkers need both.
+2. **Delegate all seven compliance checks in parallel.** Spawn one subagent per checker file below. Give each subagent the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to read its assigned checker file completely, review only that foundation, make no edits, and return the report format required by the file. Start all independent checks before waiting for results. If the host cannot run subagents, follow the same seven checker files sequentially yourself; do not skip a foundation.
 
-   | Foundation | Claude Code agent | Bundled checker |
-   | --- | --- | --- |
-   | Product vocabulary | `morpho-builder:vocabulary-compliance` | [vocabulary-compliance.md](references/checkers/vocabulary-compliance.md) |
-   | Powered by Morpho | `morpho-builder:attribution-compliance` | [attribution-compliance.md](references/checkers/attribution-compliance.md) |
-   | Disclosure gate | `morpho-builder:disclosure-compliance` | [disclosure-compliance.md](references/checkers/disclosure-compliance.md) |
-   | Rate transparency | `morpho-builder:rate-transparency-compliance` | [rate-transparency-compliance.md](references/checkers/rate-transparency-compliance.md) |
-   | Conversion mechanics | `morpho-builder:conversion-compliance` | [conversion-compliance.md](references/checkers/conversion-compliance.md) |
-   | Clarity & safety | `morpho-builder:clarity-safety-compliance` | [clarity-safety-compliance.md](references/checkers/clarity-safety-compliance.md) |
-   | Discoverability | `morpho-builder:discoverability-compliance` | [discoverability-compliance.md](references/checkers/discoverability-compliance.md) |
-3. **While agents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
+   | Foundation | Checker prompt |
+   | --- | --- |
+   | Product vocabulary | [vocabulary-compliance.md](references/checkers/vocabulary-compliance.md) |
+   | Powered by Morpho | [attribution-compliance.md](references/checkers/attribution-compliance.md) |
+   | Disclosure gate | [disclosure-compliance.md](references/checkers/disclosure-compliance.md) |
+   | Rate transparency | [rate-transparency-compliance.md](references/checkers/rate-transparency-compliance.md) |
+   | Conversion mechanics | [conversion-compliance.md](references/checkers/conversion-compliance.md) |
+   | Clarity & safety | [clarity-safety-compliance.md](references/checkers/clarity-safety-compliance.md) |
+   | Discoverability | [discoverability-compliance.md](references/checkers/discoverability-compliance.md) |
+3. **While subagents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
    - More than one signature for a single borrow.
    - The headline rate is below the fold or smaller than secondary details.
    - No live preview of the outcome or health as the user types.
@@ -33,7 +33,7 @@ An orchestrated review of a borrow integration against the Morpho Integrator UX 
    - Protocol jargon (LLTV, shares, IRM, orderbook mechanics, oracle scaling) in the primary flow instead of behind a tooltip or advanced reveal.
    - An eligible-asset prompt that doesn't lead to a CTA.
    - More than a tap or two to learn what market the user is borrowing from.
-4. **Aggregate.** Match each agent's named checks to the rubric rows in [references/rubrics.md](references/rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no agent could assess is UNVERIFIED, never guessed. If an agent contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
+4. **Aggregate.** Match each checker's named checks to the rubric rows in [references/rubrics.md](references/rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no checker could assess is UNVERIFIED, never guessed. If a checker contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
 5. **Report** in this exact structure — every Shared row plus the Variable and/or Fixed rows for the rate types offered appears once, split into the playbook's three goals using the rubric's Goal column (Compliance → **Compliant**; Conversion → **Converts, grows TVL**; Clarity and Discoverability → **Smooth & discoverable**), keeping rubric order within each group:
 
 ```

@@ -11,7 +11,7 @@ For teams building or reviewing Morpho-powered products. This plugin provides Mo
 | Earn (Vaults) | `earn-integration` | `earn-integration-review` |
 | Borrow — variable (Blue) & fixed (Midnight) | `borrow-integration` | `borrow-integration-review` |
 
-Each build skill combines shared integration best practices with product-specific guidance. Review skills orchestrate seven specialized compliance checks and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Canonical references and Claude Code agent definitions are synchronized into each skill so standalone Agent Skills installs remain self-contained.
+Each build skill combines shared integration best practices with product-specific guidance. Review skills orchestrate seven specialized compliance checks and report against the rubric checklist in tabular form, plus the red-flag pass and launch self-review. Every checker is a host-neutral prompt under the skill's `references/` directory, so the same skill package works through the Claude Code plugin or a standalone Agent Skills install.
 
 ## Quickstart
 
@@ -25,7 +25,7 @@ Each build skill combines shared integration best practices with product-specifi
 /plugin install morpho-builder@morpho-skills
 ```
 
-The Claude Code plugin includes named compliance agents used by the build and review skills.
+The Claude Code plugin installs the same self-contained skills and checker prompts used by Agent Skills hosts.
 
 ### Agent Skills
 
@@ -33,8 +33,8 @@ The Claude Code plugin includes named compliance agents used by the build and re
 npx skills add morpho-org/morpho-skills
 ```
 
-`npx skills` detects supported agents and installs the four standalone skills. Each installed skill includes its own references and checker prompts, so review workflows can delegate to general-purpose subagents when the host supports them or run the same checks sequentially when it does not.
+`npx skills` detects supported hosts and installs the four standalone skills. Each installed skill includes its own references and checker prompts. The skill instructs the main agent to spawn one subagent per checker when delegation is available, or run the same checks sequentially when it is not.
 
 ## Development
 
-After changing the builder plugin's canonical `docs/` or Claude Code `agents/`, run `sh scripts/sync-builder-skill-resources.sh`. The synchronized copies keep each standalone skill self-contained for `npx skills` installs.
+After changing the builder plugin's canonical `docs/`, run `sh scripts/sync-builder-skill-resources.sh`. The synchronized copies keep each standalone skill self-contained for Claude Code and `npx skills` installs. Checker prompts are maintained directly under each skill's `references/checkers/` directory.
