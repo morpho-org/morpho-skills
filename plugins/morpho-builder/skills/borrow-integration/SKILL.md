@@ -1,57 +1,41 @@
 ---
 name: borrow-integration
-description: Build or review Morpho borrow-against-collateral features — variable rate (Blue), fixed rate (Midnight), or both — using Morpho's integrator playbook. Covers implementation, design, copy, protocol math, live risk and rate displays, attribution, disclosures, and orchestrated compliance review. Use for building, auditing, QA, or pre-launch checks of Morpho-powered borrowing, loan, credit, leverage, or term-loan products.
+description: Build or review Morpho borrowing integrations for Blue variable-rate markets, Midnight fixed-rate fixed-term markets, or both. Use for market discovery, collateralized borrow and repayment transactions, position risk, rates, liquidity, refinancing, Midnight quotes and maturities, UI copy, QA, and pre-launch review. Identify the product before loading implementation guidance.
 ---
 
-# Borrow Integration (Blue & Midnight)
+# Borrow Integration — Blue and Midnight
 
-Guidance for building end-user **borrow** products on Morpho, distilled from Morpho's Integrator UX Playbook. Two rate types exist, and much of the UX work is keeping them distinct:
+Route every request to the product actually being integrated:
 
-- **Variable rate (Blue):** the rate floats with market utilization. The risk story is liquidation: health, LTV, and liquidation price.
-- **Fixed rate (Midnight):** the rate is **orderbook-priced** — the best ask annualized, not a utilization-driven APY. The quote moves with the borrow amount (larger sizes walk the book) and as the book moves; it is non-final until the transaction lands. The loan has a **maturity**: repay by then or the position is liquidated, and early exit still pays full accrued interest unless a secondary market is offered.
+- **Blue:** variable-rate, open-ended borrowing against collateral in isolated Morpho Blue markets.
+- **Midnight:** fixed-rate, fixed-term borrowing through the Base orderbook.
+- **Both:** two distinct products. Load and apply both references, and keep their data, transaction flows, terminology, risks, and review verdicts separate.
 
-The recommendations are not gates — they're what has worked across live integrations. Items marked critical matter most for user trust and compliance and are the ones Morpho would push on in a design review. Every recommendation serves one of three goals: **compliant** (honest expectations, correct attribution), **converts** (visitor → borrower, TVL grows), **smooth & discoverable** (users understand every step).
+If the product is not named, infer it from concrete evidence: utilization/IRM/market params imply Blue; books/bids/offers/units/maturity imply Midnight. If evidence supports neither and the choice changes the implementation, ask which product is intended.
+
+Use the authoritative [Morpho documentation index](https://docs.morpho.org/llms.txt), [Morpho SDK documentation](https://docs.morpho.org/developers/sdks/morpho-sdk/), and [Core API reference](https://api.morpho.org/core/docs) for current signatures and schemas.
 
 ## Choose a mode
 
-- **Build or update:** follow the implementation guidance below and verify relevant surfaces as you work.
-- **Review, audit, QA, or pre-launch check:** read and follow [references/review.md](references/review.md) completely. It defines the parallel checker workflow, rubric aggregation, red-flag pass, and required report. Review only unless the user also asks for fixes.
+- **Build or update:** read [references/blue.md](references/blue.md) for Blue, [references/midnight.md](references/midnight.md) for Midnight, or both when both products are in scope.
+- **Review, audit, QA, or pre-launch:** identify Blue, Midnight, or both, then read [references/review.md](references/review.md) completely. Review only unless the user explicitly asks for fixes.
 
-## Build or update
+## Shared build workflow
 
-1. **Start from the foundations.** Read [references/foundations.md](references/foundations.md) — seven shared foundations (vocabulary, attribution, disclosures, and rate transparency — all critical — plus conversion mechanics, clarity & safety, discoverability). They are the base layer of every screen you build. For any term of art — LLTV, health factor, oracle, liquidation, Fixed Rate Markets, the Morpho entities — use the definitions in [references/glossary.md](references/glossary.md); they are worded to keep the legal and technical reality intact.
-2. **Build the flow.** Cover the standard surfaces: entry/home → market detail → borrow config (collateral + amount; for fixed, amount → quote + required collateral) → review (for fixed, a fresh quote) → confirm → dashboard/manage (for fixed, with maturity state). Apply the foundations and the rate-type guidance below to each surface as you go.
-3. **Verify as you build.** When subagents are available, delegate a read-only check of the relevant foundation after finishing a surface (for example, clarity and safety after borrow config or rate transparency after the rate display). Give the subagent the artifact paths, identify the rate type — variable-rate borrow (Blue), fixed-rate borrow (Midnight), or both — and instruct it to use [references/foundations.md](references/foundations.md) plus the corresponding rows in [references/rubrics.md](references/rubrics.md). Whenever a surface **computes** numbers — debt from shares, LTV/health/liquidation price, max borrow, APR/APY, repay amounts, tick or quote math — delegate a separate read-only math check and instruct that subagent to read and follow [references/checkers/math-correctness.md](references/checkers/math-correctness.md). If the host cannot run subagents, perform the same checks yourself. The math checker validates the code against the official Morpho SDKs (`@morpho-org/blue-sdk`, `@morpho-org/morpho-ts`, `@morpho-org/midnight-sdk`) and names the SDK function to replace any hand-rolled arithmetic.
-4. **Review before shipping.** When a full or pre-launch review is requested, switch to the bundled [review workflow](references/review.md) for every compliance check, the red-flag pass, and the launch self-review.
+1. Establish chain, product, market identity, account, collateral and loan tokens, requested action, and whether the data is for discovery/analytics or transaction execution.
+2. Use the Morpho API for indexed discovery and histories. Before a write, resolve fresh protocol entities through `@morpho-org/morpho-sdk` and, for Midnight execution, fetch a fresh quote plan from the Midnight API.
+3. Use the primary SDK action flow: create the action, await and satisfy all `getRequirements()`, call `buildTx(...)`, simulate the final authorized transaction, submit, and wait for a receipt. Never hand-build a supported protocol, bundler, or router transaction.
+4. Keep raw amounts as bigint token units, use token-specific decimals, and make slippage/deadline choices explicit. Re-fetch state and re-quote immediately before signing or submitting.
+5. Surface post-action debt, collateral, rate/cost, health or maturity, liquidity constraints, fees, and the next maintenance action.
 
-## Non-negotiables to build in from the start
+## Product invariants
 
-These are the critical items — retrofitting them is much more expensive than building them in:
+- **Blue:** label rates variable. Accrue market and position data to a common fresh block; show LTV/LLTV/health and liquidation consequences; repay all debt by shares; use the SDK's atomic collateral+borrow, repay+withdraw, reallocation, and refinance flows where applicable.
+- **Midnight:** Base only. Borrowers take the **bid** side (lenders' buy offers); a quote is an executable fallback window, not a promise of fill. Show fixed rate, price, maturity, units/debt at maturity, collateral health, fees, quote guard, and deadline. Early close depends on secondary liquidity.
+- **Both:** never aggregate fixed and variable rates into one unlabeled figure or issue one combined acceptance verdict. Review Blue and Midnight independently even when they share UI components.
 
-- **Vocabulary:** "borrow against collateral"; the rate type named explicitly — **variable** or **fixed** — next to every rate, carried through every surface; **liquidation** said plainly, never hidden; never *guaranteed* or *risk-free*. If the app offers both rate types, they must be visually distinct — ambiguity between them is a trust failure on its own.
-- **Attribution:** the official **Powered by Morpho** badge (web component `powered-by-morpho` or static asset from brand.morpho.org) on market detail, review, confirm, and dashboard surfaces.
-- **Disclosure gate:** before a user's first Morpho interaction, an acknowledgment of the integrator's Terms + Morpho's Disclaimer + the risks. No path around it.
-- **Rate honesty:** the protocol rate and *your* origination fee shown separately — folding your fee into the protocol rate misattributes cost to Morpho. For fixed rate: the quote shown as orderbook-priced, requoted on input change, re-simulated before signing — never presented as a static number.
-- **Live risk display:** health, LTV, and liquidation price computed and shown as the user types, warned on before confirmation — never discovered after.
-- **Maturity legibility (fixed):** maturity date/countdown, matured state, and the repay-or-liquidation consequence stated where the user will see them.
+## Verification while building
 
-## Variable rate (Blue) guidance
+Use the applicable checker prompt under [references/checkers/](references/checkers/) after the corresponding surface exists. For a mixed integration, instruct every checker to return separate Blue and Midnight sections. Run [math-correctness.md](references/checkers/math-correctness.md) for debt/share conversion, risk math, rates, quote guards, collateral requirements, maturity totals, and numeric formatting.
 
-- **One live view.** Borrow amount, cost (**variable APR**, labelled), and health/LTV/liquidation price all recomputing as the user types — one screen, not a submit-then-discover flow.
-- **Market transparency.** Surface the loan/collateral pair, oracle, and liquidation LTV (LLTV); keep deeper params behind an advanced reveal; display market liquidity.
-- **Safety default.** Guide new borrowers to a **default max-LTV comfortably below the market's LLTV**, with a tooltip explaining why — a borrower opened at the edge is one price tick from liquidation, and a liquidated first-time user never comes back.
-- **Manage flows.** Make repay and add-collateral obvious on the dashboard, and make full repay clear the debt completely — repaying by asset amount instead of shares typically leaves dust debt.
-- **Bundling.** Supply-collateral + borrow in a single signature, approvals collapsed via permit/bundler.
-
-## Fixed rate (Midnight) guidance
-
-- **Maturity display.** A countdown reads better than a date ("Matures in N days"), and the dashboard needs a distinct **matured** state — a countdown that goes negative is a bug users screenshot.
-- **Required collateral.** Infer it from the borrow amount and show it live as the user types — don't make the user compute it.
-- **Early-exit caveat.** The rate is fixed until maturity; early exit still pays full accrued interest unless a secondary market is offered — note it on review.
-- **Borrow flow.** One-signature borrow with balance + MAX + USD value on input, and total cost at maturity previewed live.
-
-## Data
-
-Every displayed market fact (borrow APR, LLTV, oracle, liquidity, health) must be sourced live — Morpho GraphQL API, morpho-cli, or the Morpho MCP server — never hardcoded or invented. Fixed-rate quotes, maturities, and required collateral must come from the live orderbook: a stale quote presented as current is the fixed-rate equivalent of a fake APY. If you can't source a number, leave it out.
-
-Every **computed** number must come from the official SDK math, in bigint fixed-point with explicit rounding — never hand-rolled float arithmetic. Debt, LTV, health factor, liquidation price, and max borrow: `AccrualPosition` / `MarketUtils` from `@morpho-org/blue-sdk` (accrue interest before reading debt; compute full repay in shares, not an asset snapshot). Rates: `MarketUtils.rateToApy` / `AdaptiveCurveIrmLib` for post-trade projections. Midnight tick ↔ price ↔ APR and take amounts: `TickLib` / `TakeAmountsLib` from `@morpho-org/midnight-sdk`. The bundled [math-correctness checker](references/checkers/math-correctness.md) carries the full quantity-to-SDK-function map.
+Do not claim a check passed without artifact evidence. If code, runtime state, API response, or a required screen is unavailable, report `UNVERIFIED` and name the missing evidence.

@@ -1,7 +1,7 @@
 {
   "name": "morpho-builder",
   "version": "0.1.0",
-  "description": "Best-practice build and review skills for Earn and Borrow integrations across UI/UX, official Morpho SDK usage, protocol math, live data, transactions, disclosures, and attribution",
+  "description": "Build and review Morpho Vault V2 Earn, Blue variable-rate borrow, and Midnight fixed-rate borrow integrations with product-specific SDK, data, UX, safety, and checker guidance",
   "author": {
     "name": "Morpho Agents"
   },

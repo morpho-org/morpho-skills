@@ -1,77 +1,137 @@
-# Full Borrow Integration Review (Blue & Midnight)
+# Full Borrow integration review
 
-An orchestrated review of a borrow integration against the Morpho Integrator UX Playbook. You are the **orchestrator**: the per-foundation compliance checkers do the check-level work — each checker carries its own checks and fail signals — and report back; you aggregate their verdicts into the rubric checklist, judge red flags, and deliver one report.
+Use this workflow for an audit, QA pass, pre-launch check, or full review of Morpho borrowing. It is **review-only**: do not edit code, copy, configuration, or external state unless the user separately asks for fixes.
 
-**Baseline checklist:** [rubrics.md](rubrics.md) — read it first. For borrow, the applicable rows are the **Shared** table plus the **Variable Rate Borrow** and/or **Fixed Rate Borrow** tables, depending on which rate types the integration offers. Every applicable row appears in the final report, cited by its criterion (e.g. "fails Origination fee shown as your fee, separate").
+## 1. Identify product scope
 
-## Procedure
+Classify the artifacts before reviewing:
 
-1. **Scope the review.** Identify what's being reviewed: a codebase (find the UI components, copy, quoting and transaction logic), screenshots, or a written flow description. Determine which rate types the integration offers — variable (Blue), fixed (Midnight), or both — and collect the concrete artifact paths; the checkers need both.
-2. **Delegate all seven compliance checks in parallel.** Spawn one subagent per checker file below. Give each subagent the artifact paths/context, the rate type(s) — "variable-rate borrow (Blue)", "fixed-rate borrow (Midnight)", or both — and the instruction to read its assigned checker file completely, review only that foundation, make no edits, and return the report format required by the file. Start all independent checks before waiting for results. If the host cannot run subagents, follow the same seven checker files sequentially yourself; do not skip a foundation.
+- **Blue:** market params/ID, utilization or IRM, variable rates, borrow shares, LLTV-based open-ended position.
+- **Midnight:** Base chain, books/bids/asks/offers, units, fixed rate, deadline, and maturity.
+- **Both:** evidence of both products. Keep all later verdicts and findings separated by product, even for shared components.
 
-   | Foundation | Checker prompt |
-   | --- | --- |
-   | Product vocabulary | [vocabulary-compliance.md](checkers/vocabulary-compliance.md) |
-   | Powered by Morpho | [attribution-compliance.md](checkers/attribution-compliance.md) |
-   | Disclosure gate | [disclosure-compliance.md](checkers/disclosure-compliance.md) |
-   | Rate transparency | [rate-transparency-compliance.md](checkers/rate-transparency-compliance.md) |
-   | Conversion mechanics | [conversion-compliance.md](checkers/conversion-compliance.md) |
-   | Clarity & safety | [clarity-safety-compliance.md](checkers/clarity-safety-compliance.md) |
-   | Discoverability | [discoverability-compliance.md](checkers/discoverability-compliance.md) |
-3. **While subagents run, do the red-flag pass yourself** — holistic judgments that need the whole flow in view, not a single row. Flag the flow as weak if any of these are true:
-   - More than one signature for a single borrow.
-   - The headline rate is below the fold or smaller than secondary details.
-   - No live preview of the outcome or health as the user types.
-   - Risk (LTV, liquidation, low liquidity, maturity) surfaced only after confirmation.
-   - A rate whose fixed-vs-variable nature is ambiguous on any screen.
-   - A fixed-rate quote that doesn't move when the borrow amount changes, or isn't refreshed before signing.
-   - Protocol jargon (LLTV, shares, IRM, orderbook mechanics, oracle scaling) in the primary flow instead of behind a tooltip or advanced reveal.
-   - An eligible-asset prompt that doesn't lead to a CTA.
-   - More than a tap or two to learn what market the user is borrowing from.
-4. **Aggregate.** Match each checker's named checks to the rubric rows in [rubrics.md](rubrics.md) — the names correspond one-to-one. Every applicable row must land a verdict; a row no checker could assess is UNVERIFIED, never guessed. If a checker contradicts your own observation, re-check the evidence — every verdict must be traceable to a file, screenshot, or quoted flow step.
-5. **Report** in this exact structure — every Shared row plus the Variable and/or Fixed rows for the rate types offered appears once, split into the playbook's three goals using the rubric's Goal column (Compliance → **Compliant**; Conversion → **Converts, grows TVL**; Clarity and Discoverability → **Smooth & discoverable**), keeping rubric order within each group:
+Read [blue.md](blue.md) for Blue and [midnight.md](midnight.md) for Midnight. If the artifacts cannot establish the product, stop the acceptance verdict at `UNVERIFIED` and state what is needed.
 
-```
-# Borrow Integration Review
+## Verdict semantics
 
-## Verdict
-<one paragraph: overall state; rate types covered; count of Critical / Recommended / Nice-to-have failures>
+- `PASS`: direct evidence demonstrates the criterion across every applicable supplied surface and state.
+- `FAIL`: direct evidence demonstrates a defect; cite the exact location or reproduction.
+- `UNVERIFIED`: required code, state, screen, or runtime evidence is missing; name it.
+- `N-A`: the criterion genuinely does not apply; explain why.
 
-## Compliant
-| Criterion | Priority | Verdict | Evidence / Fix |
-| --- | --- | --- | --- |
-| Approved vocabulary | Critical | PASS / FAIL / UNVERIFIED / N-A | <evidence for the verdict; for FAIL, the shortest fix> |
-| ... every Compliance-goal row ... | | | |
+Any critical failure makes that **product's** verdict `FAIL`. Otherwise any non-optional `UNVERIFIED` makes that product `UNVERIFIED`. A mixed app has two top-level verdicts; never collapse them into one PASS.
 
-## Converts, grows TVL
-| Criterion | Priority | Verdict | Evidence / Fix |
-| --- | --- | --- | --- |
-| ... every Conversion-goal row ... | | | |
+## 2. Establish evidence
 
-## Smooth & discoverable
-| Criterion | Priority | Verdict | Evidence / Fix |
-| --- | --- | --- | --- |
-| ... every Clarity- and Discoverability-goal row ... | | | |
+Inventory:
 
-## Red flags
-<any triggered flow red flags, with evidence>
+- product routes/screens and copy for discovery, market detail, collateral/amount input, review, confirmation, dashboard, maintenance, and close/exit;
+- API clients, GraphQL documents, quote calls, cache/retry/freshness paths, and onchain fallbacks;
+- SDK setup, entities, action builders, requirement dispatch, simulation, submission, and receipt reconciliation;
+- debt/share/rate/health/price/unit/fee/maturity calculations;
+- tests and runtime evidence for stale state, no liquidity, partial fill, maturity, and transaction failures.
 
-## Launch self-review
-<the checklist below, checked off from the findings>
-```
+Tag each artifact Blue, Midnight, or shared. Shared evidence may be cited in both reviews, but it receives separate applicability and verdict judgments.
 
-Rules: every verdict needs evidence (full file path, screen, or quoted description); a single Critical failure means the integration is not launch-ready — say so plainly in the Verdict paragraph.
+## 3. Run the eight checkers
 
-6. **Launch self-review**, checked off from the findings (skip lines for a rate type the integration doesn't offer):
-   - [ ] Is the language aligned (no staking / investment / guaranteed / risk-free)?
-   - [ ] Is "Powered by Morpho" visible wherever users interact with Morpho functionality?
-   - [ ] Is there a distinct moment where users acknowledge Morpho's disclaimer?
-   - [ ] Is every rate clearly labelled **variable** or **fixed**, and are the two products distinguishable?
-   - [ ] Is the rate transparent about its components, with the integrator's fee separated?
-   - [ ] Can a user name the market they're using without leaving the flow?
-   - [ ] Are health, LTV, and liquidation shown live and before confirmation?
-   - [ ] Fixed: is the maturity and its consequence unmistakable?
-   - [ ] Fixed: is the quote requoted on input change and re-simulated before signature?
-   - [ ] Fixed: is the required collateral computed and shown from the borrow amount?
-   - [ ] Does borrow complete in a single signature where the protocol allows?
-   - [ ] Do eligible-asset prompts actually lead somewhere?
+When delegation is available, run one read-only worker per checker **in parallel**. Give each worker the artifact inventory and scope (`Blue`, `Midnight`, or `Blue and Midnight`). It must read its prompt fully, make no edits, and return separate Blue and Midnight tables when both are present.
+
+1. [vocabulary-compliance.md](checkers/vocabulary-compliance.md)
+2. [attribution-compliance.md](checkers/attribution-compliance.md)
+3. [disclosure-compliance.md](checkers/disclosure-compliance.md)
+4. [rate-transparency-compliance.md](checkers/rate-transparency-compliance.md)
+5. [conversion-compliance.md](checkers/conversion-compliance.md)
+6. [clarity-safety-compliance.md](checkers/clarity-safety-compliance.md)
+7. [discoverability-compliance.md](checkers/discoverability-compliance.md)
+8. [math-correctness.md](checkers/math-correctness.md)
+
+If workers are unavailable, run the prompts sequentially. Never let a Blue result supply a Midnight verdict or vice versa. Downgrade unsupported `PASS`/`FAIL` claims to `UNVERIFIED` until evidence is checked.
+
+## 4. Blue acceptance matrix
+
+Evaluate when Blue is in scope.
+
+| ID | Priority | Blue acceptance criterion |
+| --- | --- | --- |
+| BLU-01 | Critical | Chain + exact five-field market params/ID are verified; pair symbols cannot select the market. |
+| BLU-02 | Critical | Fresh same-block accrued market and position entities drive debt, rate, liquidity, and health before every write. |
+| BLU-03 | Critical | Supported writes use `@morpho-org/morpho-sdk`, complete `getRequirements()`, `buildTx`, final simulation, receipt wait, and fresh reconciliation. |
+| BLU-04 | Critical | Open uses supported collateral+borrow ordering (atomic when intended) and previews post-action variable rate, debt, LTV/LLTV, health, liquidation price, and liquidity. |
+| BLU-05 | Critical | Full repay and full refinance use borrow shares and verify zero residual borrow shares; partial repay is clearly distinct. |
+| BLU-06 | Critical | Repay+withdraw and collateral-only withdrawal use fresh position health and supported SDK actions; unsafe withdrawals are blocked/warned. |
+| BLU-07 | Critical | Variable rate, reward APRs, protocol fees, reallocation fee, and integrator fees are distinct; no fixed-rate or guaranteed language. |
+| BLU-08 | Critical | Liquidation, oracle, collateral-price, variable-rate, market-liquidity, and smart-contract risks are visible and covered by an unavoidable first-use disclosure. |
+| BLU-09 | Critical | Raw token/share/oracle/rate/risk values use bigint, token decimals, current accrual, and protocol-consistent rounding; supported transactions are not hand-built. |
+| BLU-10 | Recommended | Discovery exposes exact market identity, LLTV, oracle/IRM, utilization, available liquidity, warnings, history, and rewards—not rate alone. |
+| BLU-11 | Recommended | Public Allocator reallocation uses SDK planning, discloses source/amount/native fee, and refreshes/simulates ephemeral availability. |
+| BLU-12 | Recommended | Refinance compares source/target market params, rate, LLTV, oracle, liquidity, rewards, fees, and post-state, with explicit consent. |
+| BLU-13 | Recommended | API usage paginates, caches by purpose, honors `429`/`Retry-After`, monitors deprecations, checks freshness, and falls back onchain for critical paths. |
+| BLU-14 | Recommended | Position maintenance and attribution remain discoverable through pending, failure, confirmation, and refreshed portfolio states. |
+
+## 5. Midnight acceptance matrix
+
+Evaluate when Midnight is in scope.
+
+| ID | Priority | Midnight acceptance criterion |
+| --- | --- | --- |
+| MID-01 | Critical | Midnight is restricted to Base (8453); market ID, collateral config/index, account, and maturity are verified. |
+| MID-02 | Critical | Borrow quote uses `/bids/quote`, one target dimension, one explicit price guard, and binds side/market/amount/guard to the action. |
+| MID-03 | Critical | Fallback excess is passed in order to the target-aware SDK bundle; the app does not execute all returned caps or promise a fill. |
+| MID-04 | Critical | Quote requests are race-safe, refreshed on input changes and before signing, use a finite deadline, and never silently widen guard/deadline/max units. |
+| MID-05 | Critical | New open uses supported atomic collateral+borrow when intended, resolves all requirements, builds through `@morpho-org/morpho-sdk`, and simulates exact final state. |
+| MID-06 | Critical | Review shows fixed rate and price, debt units/assets at maturity, settlement/continuous/integrator fees, collateral capacity/health, and liquidation consequence. |
+| MID-07 | Critical | Position accrues to a fresh common block; maturity has explicit pre/at/post states, repayment remains available, and overdue liquidation is stated. |
+| MID-08 | Critical | Early close uses fresh ask-side secondary liquidity, clearly permits partial/no fill, shows realized cost/residual debt, and does not promise exit. |
+| MID-09 | Critical | `400`/`404`/`422`/`429`/`503`, malformed response, stale quote, and simulation failure fail safely without side-switching or fabricated quotes. |
+| MID-10 | Critical | Raw token/unit/price/rate/fee/time values use bigint and protocol rounding; no floating tick math or hand-built supported bundle. |
+| MID-11 | Critical | First-use disclosure covers fixed-term, maturity, orderbook/fill, secondary-liquidity, fee, oracle, collateral, liquidation, and contract risks. |
+| MID-12 | Recommended | Discovery shows markets/books by Base, loan token, maturity, collateral, bid depth, fixed rate/price, fees, and warnings. |
+| MID-13 | Recommended | Cursor pagination, purpose-specific caching, `Retry-After`, indexed-block freshness, and onchain maintenance fallback are implemented. |
+| MID-14 | Recommended | Position, countdown/matured state, repay/add collateral/early-close routes, attribution, and receipt reconciliation remain discoverable. |
+
+For every applicable row record `PASS`, `FAIL`, `UNVERIFIED`, or `N-A`, evidence, impact, and the smallest viable fix. Maintain two tables for mixed apps.
+
+## 6. Red-flag pass
+
+### Blue red flags
+
+- Unaccrued indexed debt/health is used to build or approve a write.
+- Pair symbols select a market without verifying oracle, IRM, and LLTV.
+- Full close repays an asset snapshot and leaves shares/dust.
+- A supported action, reallocation, or refinance is assembled manually.
+- Variable rate is labeled fixed, guaranteed, or blended with rewards/integrator fees.
+- Health/liquidation appears only after confirmation.
+
+### Midnight red flags
+
+- A borrow takes asks instead of bids, or runs off Base.
+- A quote is hardcoded, cached as executable, presented as guaranteed, or all fallback caps are submitted independently.
+- Amount changes do not cancel/refetch the quote; final build has no finite deadline or price/unit guard.
+- Matured UI shows a negative countdown or hides repayment/liquidation consequence.
+- Early close is promised without ask-side liquidity.
+- A `422`, `429`, or `503` automatically widens slippage, raises max units, changes side, or reuses an expired plan.
+
+### Shared red flags
+
+- Supported transaction calldata is hand-built; `buildTx` precedes requirements; no final simulation occurs.
+- Raw protocol quantities use floating-point arithmetic.
+- Attribution/disclosure is bypassable or implies Morpho is lender, counterparty, guarantor, or risk assessor.
+- Secrets, signatures, private keys, API keys, or unnecessary wallet data appear in evidence/logs.
+
+A confirmed red flag is a critical `FAIL` for the affected product. Missing relevant evidence is `UNVERIFIED`, not `PASS`.
+
+## 7. Final report
+
+Return:
+
+1. **Scope classification and evidence limitations.**
+2. **Product verdicts:** Blue and/or Midnight separately, with critical/recommended counts.
+3. **Critical findings by product,** ordered by user-loss/compliance risk.
+4. **Recommended findings by product.**
+5. **Acceptance matrices:** full Blue and/or Midnight table.
+6. **Checker summary:** eight lines per applicable product; retain conflicts and unverified claims.
+7. **Red flags by product.**
+8. **Release recommendation per product** and minimum retest set. For a mixed app, say whether one product can ship independently of the other.
+
+Do not implement fixes in review mode. If fixes are later requested, keep this report as baseline and rerun affected rows plus every prior critical failure for each product.
