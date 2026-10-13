@@ -20,6 +20,20 @@
       "license": "MIT",
       "keywords": ["morpho", "defi", "lending", "earn", "borrow", "integration"],
       "category": "defi"
+    },
+    {
+      "name": "morpho-mcp",
+      "source": "./plugins/morpho-mcp",
+      "description": "Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs, read only.",
+      "version": "0.2.0",
+      "author": {
+        "name": "Morpho Agents"
+      },
+      "repository": "https://github.com/morpho-org/morpho-skills",
+      "license": "MIT",
+      "homepage": "https://docs.morpho.org/developers/agents/mcp/",
+      "keywords": ["morpho", "defi", "lending", "mcp", "vaults", "markets"],
+      "category": "defi"
     }
   ]
 }
