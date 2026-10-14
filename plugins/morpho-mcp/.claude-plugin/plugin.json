@@ -1,0 +1,11 @@
+{
+  "name": "morpho-mcp",
+  "version": "0.2.0",
+  "description": "Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs, read only.",
+  "author": { "name": "Morpho Agents" },
+  "homepage": "https://docs.morpho.org/developers/agents/mcp/",
+  "repository": "https://github.com/morpho-org/morpho-skills",
+  "license": "MIT",
+  "keywords": ["morpho", "defi", "lending", "mcp", "vaults", "markets"],
+  "mcpServers": "./.mcp.json"
+}

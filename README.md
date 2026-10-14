@@ -13,6 +13,10 @@ For teams building or reviewing Morpho-powered Earn and Borrow products. The ski
 
 Each skill has build/update and review modes. Earn defaults to Vault V2, including liquid and illiquid exits. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under its skill's `references/checkers/` directory.
 
+### morpho-mcp
+
+Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs. Read only — the plugin carries only the server connection, no skills.
+
 ## Quickstart
 
 ### Claude Code
@@ -23,9 +27,14 @@ Each skill has build/update and review modes. Earn defaults to Vault V2, includi
 
 # Install the builder plugin
 /plugin install morpho-builder@morpho-skills
+
+# Install the read-only MCP plugin
+/plugin install morpho-mcp@morpho-skills
 ```
 
 The Claude Code plugin installs the same self-contained skills and checker prompts used by Agent Skills hosts.
+
+Any MCP client: point it at `https://mcp.morpho.org/`.
 
 ### Agent Skills
 
