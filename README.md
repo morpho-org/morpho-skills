@@ -15,13 +15,7 @@ Each skill has build/update and review modes. Earn defaults to Vault V2, includi
 
 ### morpho-mcp
 
-Connects to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs. Read only.
-
-| Skill | Use |
-| --- | --- |
-| `morpho-live-data` | Live Vault and Market data, positions and balances |
-| `morpho-docs-answer` | Concepts and integration questions from Morpho docs |
-| `morpho-builder-handoff` | Route product builders to the builder skills |
+Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs. Read only — the plugin carries only the server connection, no skills.
 
 ## Quickstart
 
