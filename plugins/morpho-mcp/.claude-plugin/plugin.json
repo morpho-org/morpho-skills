@@ -1,7 +1,7 @@
 {
   "name": "morpho-mcp",
-  "version": "0.2.1",
-  "description": "Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs, read only.",
+  "version": "0.3.0",
+  "description": "Live Morpho vault, market and docs data, plus unsigned transaction preparation. Never signs or sends.",
   "author": { "name": "Morpho Agents" },
   "homepage": "https://docs.morpho.org/developers/agents/mcp/",
   "repository": "https://github.com/morpho-org/morpho-skills",

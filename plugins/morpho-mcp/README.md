@@ -1,8 +1,8 @@
 # Morpho MCP plugin
 
-Connects your agent to Morpho's hosted MCP server at `https://mcp.morpho.org/`. Your agent can then answer questions about Morpho with live data: Vaults V1 and V2, Markets, Midnight fixed rate books, wallet positions, and a search over the official docs. No API key needed.
+Connects your agent to Morpho's hosted MCP server at `https://mcp.morpho.org/`. Your agent can then answer questions about Morpho with live data (Vaults V1 and V2, Markets, Midnight fixed rate books, wallet positions, and a search over the official docs) and prepare unsigned transactions for your own wallet to sign. It never signs or sends anything. No API key needed.
 
-The plugin only holds the server connection. It ships no skills: the agent picks its tools from the server's own tool descriptions.
+The plugin holds the server connection and one skill, `safe-transactions`, which the agent follows before preparing any transaction (see [Safety](#safety)). For everything else the agent picks its tools from the server's own tool descriptions.
 
 ## Install
 
@@ -32,9 +32,31 @@ The plugin only holds the server connection. It ships no skills: the agent picks
 | Docs | `morpho_doc_search` |
 | Transactions | `morpho_prepare_*` (deposit, withdraw, supply, borrow, repay…) |
 
-Call `discover_tools` to get the full list.
+Your MCP client lists every tool the server offers.
 
-**About transactions:** the `morpho_prepare_*` tools only build *unsigned* transactions. They return calldata for the user to review and sign in their own wallet. The server never asks for keys, never signs and never sends anything onchain.
+## Safety
+
+- **Unsigned only.** The `morpho_prepare_*` tools return unsigned calldata, and sometimes a typed data message (such as a token permit) for your wallet to sign. Your own wallet signs and sends. The server never signs and never sends anything onchain.
+- **No keys, ever.** No tool takes a private key or seed phrase. Never paste one into a chat.
+- **Check before signing.** Check every transaction in your wallet before you sign it: chain, addresses and amounts. Vault and market prepare tools return the result of a simulation run when the calls were built. If it failed, the agent shows why and doesn't present the calls.
+- **Same steps every time.** Before any prepare call, the `safe-transactions` skill has the agent look up the vault or market in the same session (never from memory), read your current position, and state the chain and full addresses. The answer always says nothing was sent.
+- **APY is a snapshot,** not a promise of future returns.
+- **No investment advice.** The agent reports data. Whether to act on it is your decision.
+
+## Data handling
+
+Checked in the server code that runs on mcp.morpho.org today ([`tool-logging.ts`](https://github.com/morpho-org/morpho-apps/blob/656f5cfeddb7c5232334696b71cfcb7acea4c6df/apps/morpho-agent-app/src/mcp/tool-logging.ts), [`betterstack-tool-logger.ts`](https://github.com/morpho-org/morpho-apps/blob/656f5cfeddb7c5232334696b71cfcb7acea4c6df/apps/morpho-agent-app/src/mcp/betterstack-tool-logger.ts), deployed version `656f5cf`). For each tool call the server sends this to Better Stack, when its token is set:
+
+- the tool name, a random call ID, the status (called, completed, failed, timed out) and the duration
+- the error type and message when a call fails
+- the tool's response, cut at 90 KB. Responses can contain public wallet addresses, positions and unsigned calldata.
+- the tool's input, cut at 32 KB, only when a call times out
+
+What it never touches: private keys, seed phrases and wallet signing. No tool accepts them.
+
+The next server release adds two fields to each log line: the client name (the first word of the user agent, such as `cursor`) and a caller ID, which is a SHA-256 hash of the IP address and user agent, or the client ID for OAuth clients. The raw IP address isn't stored in these logs.
+
+Vercel's console logs get a shorter line per call: call ID, tool, status, duration and any error, without the response. This covers the server's tool logs only. Vercel's own request logs and the Morpho API that serves the data keep their own logs.
 
 ## Five things to ask
 
@@ -57,4 +79,4 @@ Call `discover_tools` to get the full list.
 
 ## Layout
 
-One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude) and the logo (`assets/logo.svg`).
+One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`) and the logo (`assets/logo.svg`).
