@@ -65,7 +65,6 @@ The same details go into every marketplace submission (Claude, ChatGPT, Codex, C
 | Server URL | `https://mcp.morpho.org/` (Streamable HTTP, no authentication) |
 | Documentation | https://docs.morpho.org/developers/agents/mcp/ |
 | Privacy policy | https://morpho.org/privacy-policy |
-| Terms of use | https://morpho.org/terms-of-use |
 | Support | https://help.morpho.org |
 | Icon | `assets/logo.svg` (square, 200×200) or `assets/logo.png` (512×512) |
 
