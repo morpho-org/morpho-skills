@@ -15,7 +15,7 @@ Each skill has build/update and review modes. Earn defaults to Vault V2, includi
 
 ### morpho-mcp
 
-Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs. Read only — the plugin carries only the server connection, no skills.
+Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Markets, positions and docs, plus unsigned transaction preparation. It never signs or sends. The plugin carries the server connection and one `safe-transactions` skill that the agent follows before preparing a transaction.
 
 ## Quickstart
 
@@ -28,7 +28,7 @@ Connects the agent to Morpho's hosted MCP server for live Vaults V1 and V2, Mark
 # Install the builder plugin
 /plugin install morpho-builder@morpho-skills
 
-# Install the read-only MCP plugin
+# Install the MCP plugin
 /plugin install morpho-mcp@morpho-skills
 ```
 
