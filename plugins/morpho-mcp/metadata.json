@@ -1,0 +1,13 @@
+{
+  "name": "Morpho MCP",
+  "serverUrl": "https://mcp.morpho.org/",
+  "transport": "streamable-http",
+  "authentication": "none",
+  "documentationUrl": "https://docs.morpho.org/developers/agents/mcp/",
+  "privacyPolicyUrl": "https://morpho.org/privacy-policy",
+  "supportUrl": "https://help.morpho.org",
+  "icons": {
+    "svg": "assets/logo.svg",
+    "png": "assets/logo.png"
+  }
+}

@@ -78,19 +78,6 @@ Vercel's console logs get a shorter line per call: call ID, tool, status, durati
 - APYs are snapshots, not promises.
 - The MCP server is in active development: see [docs.morpho.org/developers/agents/mcp](https://docs.morpho.org/developers/agents/mcp/) for the current status and client setup guides.
 
-## Listing metadata
-
-The same details go into every marketplace submission (Claude, ChatGPT, Codex, Cursor, MCP Registry):
-
-| Field | Value |
-| --- | --- |
-| Name | Morpho MCP |
-| Server URL | `https://mcp.morpho.org/` (Streamable HTTP, no authentication) |
-| Documentation | https://docs.morpho.org/developers/agents/mcp/ |
-| Privacy policy | https://morpho.org/privacy-policy |
-| Support | https://help.morpho.org |
-| Icon | `assets/logo.svg` (square, 200×200) or `assets/logo.png` (512×512) |
-
 ## Layout
 
-One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`) and the logo (`assets/logo.svg`, with a PNG export in `assets/logo.png`).
+One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`), the marketplace listing details (`metadata.json`) and the logo (`assets/logo.svg`, with a PNG export in `assets/logo.png`).
