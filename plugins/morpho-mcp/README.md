@@ -80,4 +80,4 @@ Vercel's console logs get a shorter line per call: call ID, tool, status, durati
 
 ## Layout
 
-One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`) and the logo (`assets/logo.svg`).
+One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`), the marketplace listing details (`metadata.json`) and the logo (`assets/logo.svg`, with a PNG export in `assets/logo.png`).
