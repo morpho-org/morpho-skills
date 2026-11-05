@@ -36,6 +36,20 @@ The Claude Code plugin installs the same self-contained skills and checker promp
 
 Any MCP client: point it at `https://mcp.morpho.org/`.
 
+### Codex CLI
+
+With a current Codex CLI that supports `codex plugin`:
+
+```bash
+codex plugin marketplace add morpho-org/morpho-skills
+codex plugin add morpho-mcp@morpho-skills
+codex plugin list
+```
+
+The plugin includes the server connection and the `safe-transactions` skill. No API key is needed. The marketplace also lists `morpho-builder`.
+
+For just the server connection, without the bundled skill, use `codex mcp add morpho --url https://mcp.morpho.org/` instead. See the [Codex setup guide](https://docs.morpho.org/developers/agents/mcp/#codex) for configuration and timeout settings.
+
 ### Agent Skills
 
 ```bash
