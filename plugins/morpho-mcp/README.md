@@ -19,7 +19,11 @@ The plugin holds the server connection and one skill, `safe-transactions`, which
 { "mcpServers": { "morpho": { "type": "http", "url": "https://mcp.morpho.org/" } } }
 ```
 
-**Any other MCP client** (Grok Bot, ChatGPT, Claude Desktop…): add a remote HTTP MCP server with the URL `https://mcp.morpho.org/` and no authentication.
+**ChatGPT**: for now, add `https://mcp.morpho.org/` as a custom connector in developer mode, with no authentication.
+
+**Codex**: run `codex mcp add morpho --url https://mcp.morpho.org/`.
+
+**Any other MCP client** (Grok Bot, Claude Desktop…): add a remote HTTP MCP server with the URL `https://mcp.morpho.org/` and no authentication.
 
 ## What it can do
 
@@ -80,4 +84,4 @@ Vercel's console logs get a shorter line per call: call ID, tool, status, durati
 
 ## Layout
 
-One folder with both manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`), the marketplace listing details (`metadata.json`) and the logo (`assets/logo.svg`, with a PNG export in `assets/logo.png`).
+One folder with three manifests (`.cursor-plugin/plugin.json`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` for ChatGPT and Codex), the server config (`mcp.json` for Cursor, `.mcp.json` for Claude and Codex), the `safe-transactions` skill (`skills/safe-transactions/SKILL.md`), the marketplace listing details (`metadata.json`) and the logo (`assets/logo.svg`, with a PNG export in `assets/logo.png`).
