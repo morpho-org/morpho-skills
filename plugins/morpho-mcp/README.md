@@ -21,7 +21,17 @@ The plugin holds the server connection and one skill, `safe-transactions`, which
 
 **ChatGPT**: for now, add `https://mcp.morpho.org/` as a custom connector in developer mode, with no authentication.
 
-**Codex**: run `codex mcp add morpho --url https://mcp.morpho.org/`.
+**Codex CLI**: install the plugin with a current Codex CLI that supports `codex plugin`:
+
+```bash
+codex plugin marketplace add morpho-org/morpho-skills
+codex plugin add morpho-mcp@morpho-skills
+codex plugin list
+```
+
+This includes the server connection and the `safe-transactions` skill. No API key is needed.
+
+For just the server connection, without the bundled skill, use `codex mcp add morpho --url https://mcp.morpho.org/` instead, then check it with `codex mcp list`. See the [Codex setup guide](https://docs.morpho.org/developers/agents/mcp/#codex) for configuration and timeout settings.
 
 **Any other MCP client** (Grok Bot, Claude Desktop…): add a remote HTTP MCP server with the URL `https://mcp.morpho.org/` and no authentication.
 
