@@ -25,7 +25,7 @@
       "name": "morpho-mcp",
       "source": "./plugins/morpho-mcp",
       "description": "Live Morpho vault, market and docs data, plus unsigned transaction preparation. Never signs or sends.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "Morpho Agents"
       },
