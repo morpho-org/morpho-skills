@@ -36,6 +36,10 @@ The Claude Code plugin installs the same self-contained skills and checker promp
 
 Any MCP client: point it at `https://mcp.morpho.org/`.
 
+### Cursor
+
+Install `morpho-builder` and `morpho-mcp` from the [Cursor Marketplace](https://cursor.com/marketplace).
+
 ### Agent Skills
 
 ```bash
