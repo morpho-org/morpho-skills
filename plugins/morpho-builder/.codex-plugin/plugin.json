@@ -14,8 +14,9 @@
     "developerName": "Morpho",
     "category": "Finance",
     "capabilities": [
-      "Build and review Earn integrations",
-      "Build and review borrow integrations"
+      "Morpho Vault V2: build/review earn integrations where users deposit loan assets (e.g. stablecoins) to earn yield",
+      "Morpho Blue: build/review variable-rate market integrations for stablecoin loans against crypto collateral",
+      "Morpho Midnight: build/review fixed-rate market integrations for stablecoin loans against crypto collateral"
     ]
   }
 }

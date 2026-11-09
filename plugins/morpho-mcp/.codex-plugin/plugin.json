@@ -16,10 +16,11 @@
     "developerName": "Morpho",
     "category": "Finance",
     "capabilities": [
-      "Query vault and market data",
+      "Morpho Vaults: read earn-vault data; prepare unsigned deposits of loan assets (e.g. stablecoins) to earn yield",
+      "Morpho Blue: read variable-rate markets; prepare unsigned stablecoin borrowing against crypto collateral",
+      "Morpho Midnight: read fixed-rate markets; prepare unsigned stablecoin borrowing against crypto collateral",
       "Read public wallet positions",
-      "Search official Morpho documentation",
-      "Prepare unsigned transactions"
+      "Search official Morpho documentation"
     ],
     "websiteURL": "https://morpho.org",
     "supportURL": "https://help.morpho.org",
