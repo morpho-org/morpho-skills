@@ -11,7 +11,8 @@
         "path": "./plugins/morpho-builder"
       },
       "policy": {
-        "installation": "AVAILABLE"
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
       },
       "category": "Finance"
     },
@@ -22,7 +23,8 @@
         "path": "./plugins/morpho-mcp"
       },
       "policy": {
-        "installation": "AVAILABLE"
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
       },
       "category": "Finance"
     }
