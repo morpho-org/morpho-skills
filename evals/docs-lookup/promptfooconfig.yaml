@@ -1,0 +1,73 @@
+description: Morpho documentation lookup — vanilla vs MCP (SDK-1857)
+
+prompts:
+  - |-
+    {{question}}
+
+    Answer concisely and precisely. Use Morpho documentation search tools if available.
+
+providers:
+  - id: anthropic:messages:anthropic/claude-fable-5.2
+    label: fable-vanilla
+    config: &gateway
+      apiBaseUrl: https://ai-gateway.vercel.sh
+      apiKeyEnvar: AI_GATEWAY_API_KEY
+      max_tokens: 4096
+  - id: anthropic:messages:anthropic/claude-fable-5.2
+    label: fable-mcp
+    config: &with_mcp
+      <<: *gateway
+      max_tool_calls: 8
+      mcp:
+        enabled: true
+        tools: [morpho_doc_search]
+        server:
+          url: https://mcp.morpho.org/
+  - id: anthropic:messages:anthropic/claude-opus-5.5
+    label: opus-vanilla
+    config: *gateway
+  - id: anthropic:messages:anthropic/claude-opus-5.5
+    label: opus-mcp
+    config: *with_mcp
+  - id: anthropic:messages:anthropic/claude-sonnet-5.5
+    label: sonnet-vanilla
+    config: *gateway
+  - id: anthropic:messages:anthropic/claude-sonnet-5.5
+    label: sonnet-mcp
+    config: *with_mcp
+  - id: anthropic:messages:anthropic/claude-haiku-5.5
+    label: haiku-vanilla
+    config: *gateway
+  - id: anthropic:messages:anthropic/claude-haiku-5.5
+    label: haiku-mcp
+    config: *with_mcp
+
+defaultTest:
+  options:
+    provider:
+      id: anthropic:messages:anthropic/claude-opus-5.5
+      config: *gateway
+  assert:
+    - type: llm-rubric
+      metric: Correctness
+      value: |-
+        Question: {{question}}
+        Reference answer: {{reference}}
+        Reference source: {{source_url}}
+
+        Pass only if the answer is correct and consistent with the reference,
+        including every key fact requested by the question. Missing a key fact,
+        refusing to answer, or contradicting the reference fails. Accept equivalent
+        wording, units, and mathematically equivalent formulas. Do not require
+        citations, exact phrasing, or unrelated details not asked by the question.
+    - type: javascript
+      metric: DocToolCalled
+      weight: 0
+      value: |-
+        const called = context.providerResponse?.metadata?.toolCalls?.some(t => t.name === 'morpho_doc_search') ?? false;
+        return { pass: true, score: Number(called), reason: called ? 'Documentation tool called' : 'No documentation tool call' };
+
+tests: file://questions.yaml
+
+evaluateOptions:
+  maxConcurrency: 2
