@@ -20,20 +20,30 @@ math on Midnight.
 | File | What it is |
 | --- | --- |
 | [rubric.md](rubric.md) | 40 criteria in 10 groups, each scored 0–10 with evidence |
-| [build-task.md](build-task.md) | the exact task given to each build session |
-| [grader-task.md](grader-task.md) | the exact task given to each grader session |
+| [prompts/build-earn-builder.md](prompts/build-earn-builder.md) | build prompt: Earn, builder skill |
+| [prompts/build-earn-vanilla.md](prompts/build-earn-vanilla.md) | build prompt: Earn, vanilla |
+| [prompts/build-borrow-builder.md](prompts/build-borrow-builder.md) | build prompt: Borrow, builder skill |
+| [prompts/build-borrow-vanilla.md](prompts/build-borrow-vanilla.md) | build prompt: Borrow, vanilla |
+| [prompts/grade.md](prompts/grade.md) | grader prompt: takes an app repo and branch, returns 0–10 per criterion with evidence as JSON and a Markdown table |
+
+Each prompt file lists the placeholders to fill in, then the text to paste
+below a line. The build task text is identical in the two conditions; only the
+first paragraph (read the skill, or don't use any Morpho skill) differs.
 
 ## Conditions
 
 | | Builder skill | Vanilla |
 | --- | --- | --- |
-| Earn | `morpho-builder` plugin, `earn-integration` skill | no Morpho plugin |
-| Borrow | `morpho-builder` plugin, `borrow-integration` skill | no Morpho plugin |
+| Earn | `earn-integration` skill from the SDK-1862 branch | no Morpho skill or plugin |
+| Borrow | `borrow-integration` skill from the SDK-1862 branch | no Morpho skill or plugin |
 
 - Same model, same task text, same API key, same web access in both
   conditions. Neither condition gets the `morpho-mcp` plugin or the product
   brief.
-- Pin the skill to a `morpho-skills` commit and record it with the results.
+- The builder condition reads the rewritten skill from a clone of
+  `morpho-skills` at `feature/sdk-1862-rewrite-the-morpho-builder-skills-around`,
+  kept outside the app. Record the commit SHA at the start of the round and
+  use it for every builder build.
 - Run at least one build per cell; three per cell when budget allows, so the
   median and range can be reported.
 - The build session must not ask questions. If it does, answer "Decide
@@ -54,7 +64,7 @@ From the brief's "Acceptance test for the 2-minute build":
 ## Forced failures
 
 Each app is run through the three failures the brief requires. The grader
-drives the app's UI with a browser wallet on the test account and records a HAR
+drives the app's UI with a connected browser wallet and records a HAR
 file. Nothing here needs funds to move: each failure stops before a transaction
 is sent.
 
@@ -68,15 +78,26 @@ When a failure cannot be reached through the UI (for example the app has no
 withdraw screen), record it as `not reachable` and score its criteria from the
 code, capped at 5.
 
+## Running a round
+
+1. Pick the Midnight market (see [Selectors](#selectors)) and record the
+   SDK-1862 skill commit SHA and the `morpho-skills` commit SHA of this rubric.
+2. Start the four builds, one per prompt in `prompts/build-*.md`, in fresh
+   sessions with the same model.
+3. Anonymize each app and start one grader per app (below).
+4. Aggregate the four sheets (see [Aggregation](#aggregation)).
+
 ## Blind grading
 
-1. Copy each finished app into a directory named with a random ID
-   (`earn-7f3a`). Remove `.git`, agent folders (`.agents/`, `.claude/`,
-   `.cursor/`, `.devin/`), session notes and any file or comment that names
-   the skill, the plugin or the condition. Keep the README's list of
-   decisions.
-2. Start one grader session per app with [grader-task.md](grader-task.md). A
-   grader never sees a build transcript or more than one app.
+1. Give each finished app a random ID (`earn-7f3a`). Copy its tree without
+   `.git`, agent folders (`.agents/`, `.claude/`, `.cursor/`, `.devin/`),
+   session notes and any file or comment that names the skill, the plugin or
+   the condition. Keep the README's list of decisions. Push it as a single
+   commit to a branch named with the ID, so the history doesn't show the
+   build session.
+2. Start one grader session per app with [prompts/grade.md](prompts/grade.md),
+   pointing it at that branch. A grader never sees a build transcript or more
+   than one app.
 3. Keep the ID → condition map outside the graders' reach until all sheets are
    in.
 
