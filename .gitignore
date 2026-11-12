@@ -1,1 +1,7 @@
 playbook.md
+
+# Local promptfoo eval output and cache
+evals/**/results*
+evals/**/*.log
+evals/**/.promptfoo/
+evals/**/.cache/
