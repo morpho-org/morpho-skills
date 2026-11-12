@@ -1,159 +1,183 @@
-# Blue variable-rate borrowing guide
+# Blue — variable rate, no `maturity`
 
-Read this reference when the requested product uses Morpho Blue: isolated markets identified by loan token, collateral token, oracle, interest-rate model, and LLTV. Do not apply Midnight orderbook or maturity semantics here.
+Apply the shared Actions contract, conventions, UX, errors, and verification rules in [SKILL.md](../SKILL.md) to every story. All routes below are REST GETs unless explicitly POST; read response fields under `data`. Define m = `{chainId}:{marketId}`, u = wallet `address`, o = `{chainId}:{oracle_address}`, and s = `{chainId}:{tokenAddress}`. Replace placeholders with discovered values; JSON sketches show valid field shapes, not executable addresses or preselected user `amounts`.
 
-## Contents
+Reference map: [market discovery](https://docs.morpho.org/api/blue/list-markets/), [config](https://docs.morpho.org/api/blue/get-market/), [state](https://docs.morpho.org/api/blue/get-market-state/), [liquidity](https://docs.morpho.org/api/blue/get-market-liquidity/), [average APY](https://docs.morpho.org/api/blue/get-market-apy-averages/), [position](https://docs.morpho.org/api/blue/user-market-position/), [performance](https://docs.morpho.org/api/blue/user-market-position-performance/), [position history](https://docs.morpho.org/api/blue/user-market-position-history/), [oracle](https://docs.morpho.org/api/oracles/get-oracle-state/), [`token`](https://docs.morpho.org/api/global/get-token/), [USD `price`](https://docs.morpho.org/api/global/get-token-price/), [Actions](https://api.morpho.org/actions/docs).
 
-- Market and position model
-- Data-source policy
-- Primary transaction pattern
-- Open, manage, close, reallocate, and refinance
-- Rates, rewards, risk, and UI
-- Safety and release checks
+Use `collateral` C in `collateral` base `units`, loan `debt` D in loan base `units`, oracle P, `value` V = C × P / 1e36, and L = `lltv_wad` / 1e18. Keep rational/integer arithmetic until formatting. Oracle P is not a USD `price`.
 
-## Market and position model
+## A1. Take a position
 
-A Blue market is uniquely derived from five immutable parameters:
+**Components:** `collateral` input with connected-wallet balance and Max; borrow input with Max; variable average rate; LTV before → after beside LLTV; liquidation `price`; available liquidity; review listing every signature and call.
 
-- loan token;
-- collateral token;
-- oracle;
-- interest-rate model (IRM);
-- liquidation loan-to-value (LLTV).
+**Reads:**
 
-Treat chain ID plus market ID/params as identity. Token symbols are insufficient. Discovery views should expose the pair, chain, variable borrow rate, utilization, available liquidity, LLTV, oracle/IRM, warnings, reward programs, and recent/historical behavior.
+| Route | Fields / purpose |
+| --- | --- |
+| GET `/v0/blue/markets` (discovery), then `/v0/blue/markets/{m}` | `loan_token`, `collateral_token`, `oracle_address`, `irm_address`, `lltv_wad` |
+| GET `/v0/blue/markets/{m}/state` | `total_borrow_assets`, `total_borrow_shares`, `total_supply_assets`, `total_supply_shares`; indexed block |
+| GET `/v0/blue/markets/{m}/liquidity` | `market_liquidity` + `reallocatable_liquidity`; `borrow_amount_to_target_utilization` is a separate target-utilization bound |
+| GET `/v0/blue/markets/{m}/apy-averages` | `borrow_apy_averages[rateWindow]`, default "6h" |
+| GET `/v0/blue/markets/{m}/users/{u}/position` | `collateral_assets`, `borrow_shares`, `supply_shares`; existing position or zeros |
+| GET `/v0/oracles/{o}/state` | `price`, `last_indexed_block` |
+| GET `/v0/tokens/{s}` and `/v0/tokens/{s}/price` for both `tokens` | `symbol`, `decimals`, `logo_uri`; nullable USD `price` |
 
-Blue stores market totals at the last interaction and accrues interest lazily. Before using debt, liquidity, rate, LTV, health, liquidation price, max borrow, or collateral-withdrawal capacity, fetch a common current block and obtain accrued market and position entities. `market.getMarketData()` and `market.getPositionData(userAddress)` are the default fresh read path.
+**Math:** derive D with the shared ceiling `shares`→`assets` formula. V = C × P / 1e36; LTV = D / V; theoretical max `debt` = V × L. Available loan `assets` = `market_liquidity` + `reallocatable_liquidity`, subject to Actions simulation and health constraints. Keep Max below LLTV using the shared **open** safety buffer; do not invent a number. Liquidation `price` = D / (C × L) in raw loan `units` per raw `collateral` `unit`; multiply by 10^(collateralDecimals−loanDecimals) for loan `tokens` per whole `collateral` `token`. USD values use `token` `price`, not oracle.
 
-## Data-source policy
+**Action:** POST `/v0/actions/blue/markets/{m}/borrow`. Supply `collateral` and borrow atomically, including shared-liquidity reallocation when needed:
 
-1. **`@morpho-org/morpho-sdk`:** primary abstraction for writes and fresh accrued market/position entities. Construct `client.morpho.blue(marketParams, chainId)` and use its actions, `getRequirements()`, and `buildTx(...)`.
-2. **Morpho REST API:** single-market config/state, APY/history, oracle/token data, and one user position after a market is known.
-3. **Morpho GraphQL API:** indexed market discovery/filtering, aggregate positions, USD values, IRM curves, warnings, histories, reward APRs, and Public Allocator candidates.
-4. **Onchain RPC:** final truth and fallback for current state, oracle reads, approvals/authorizations, accrual inputs, transaction simulation, and position management during API outages.
+~~~json
+{
+  "account": "<wallet>",
+  "amount": {"unit": "assets", "value": "<gross-loan-base-units>"},
+  "collateral_amount": {"unit": "assets", "value": "<collateral-base-units>"},
+  "funding": {"type": "erc20"},
+  "signature_mode": "auto"
+}
+~~~
 
-REST market selectors are `<chainId>:<marketId>`. Resolve the current version prefix from the [Core API reference](https://api.morpho.org/core/docs). Route families map as follows:
+Omit `collateral_amount` and `funding` together for borrow-only against existing `collateral`. Choose the shared `native`/`auto` `funding` object for wrapped-`native` `collateral` when requested; never submit a zero `collateral` `amount`. Optional attribution, expiry, and supported referral fee follow SKILL.md. Fees reduce received `assets`; show gross `debt` and net wallet receipt separately. Prepare, proof-check, preview, sign/continue, and send only under the shared contract.
 
-| Need | REST route family | GraphQL use |
+**Acceptance:** preview numbers match `simulation.position_changes` applied as deltas; the Max button must not claim a reject-free `amount` until the Actions health buffer is verified (open); block `amounts` above known available liquidity before POST, then require successful simulation before sending. Report unavailable Max-buffer evidence `UNVERIFIED` rather than inventing it.
+
+## A1b. Borrow by target LTV (slider)
+
+**Components:** slider from 0% to max LTV, health-colored track, visible but unreachable LLTV tick; numeric LTV input; borrow `token`/USD input in two-way sync; live liquidation `price`, `price` drop to liquidation, and "variable, 6h avg" (or chosen window); short warning in warning/danger bands. Existing positions start at current LTV. Right means Borrow; left means Repay, with matching button label.
+
+**Reads:** `all` A1 routes and fields. Recompute from current indexed `collateral`/`debt` and added `collateral`; do not fetch on every animation tick.
+
+**Math:** V = (current C + added C) × P / 1e36. Rightward borrow `assets` = max(0, floor(t × V − D)); inverse t = (D + `assets`) / V. Round down to whole loan-`token` base `units`, not floating-point `decimals`. Leftward repay `assets` = max(0, D − t × V), rounded conservatively; preview the actual resulting `debt`. Price drop to liquidation = 1 − LTV / L. Slider max = min(L − safety buffer, (D + available loan `assets`) / V), with available = `market_liquidity` + `reallocatable_liquidity`. The numeric safety buffer remains open; do not set the LLTV tick as the maximum.
+
+**Action:** for rightward moves POST `/v0/actions/blue/markets/{m}/borrow`:
+
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<computed-loan-assets>"},"signature_mode":"auto"}
+~~~
+
+Add the A1 `collateral_amount`/`funding` pair when adding `collateral` simultaneously. For leftward moves POST `/v0/actions/blue/markets/{m}/repay`:
+
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<computed-repay-assets>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
+
+At zero `debt` target use the A5 `all`-`debt` action, not an estimated dust-producing `assets` `amount`. Never POST a zero-`value` intent.
+
+**Acceptance:** slider, LTV input and `amount` always agree; the thumb cannot pass the max, and when liquidity is what limits it, the slider stops there with "Only {x} available to borrow now"; the previewed LTV matches the LTV implied by `simulation.position_changes` to within 0.1 pp; changing the `collateral` `amount` re-solves the borrow at the same target LTV. Keep safe-Max evidence explicitly open until verified.
+
+## A2. Show the position
+
+**Components:** `collateral` and `debt` `token`/USD balances, interest owed, variable average rate, LTV/LLTV, health factor, liquidation `price`; no `maturity` countdown.
+
+**Reads and Math:**
+
+| Field on screen | Exact source | Math / presentation |
 | --- | --- | --- |
-| Immutable market params | `/blue/markets/{selector}` | discovery and filtering across markets |
-| Market totals/liquidity | `/blue/markets/{selector}/state` | aggregates and USD analytics; accrue with SDK for execution |
-| APY averages/history | `/apy-averages`, `/apy/history`, `/state/history` under the market | flexible histories and IRM curves |
-| Oracle/token price | oracle state and token price routes | oracle composition and cross-market analytics |
-| User position | `/blue/markets/{selector}/users/{user}/position` | cross-market positions and USD values |
-| Rewards | indexed through GraphQL/rewards data | campaigns and per-token APRs |
-| Reallocation candidates | Public Allocator data routes | discovery and aggregate available shared liquidity |
+| Collateral (`token`, USD) | GET `/v0/blue/markets/{m}/users/{u}/position` → `collateral_assets`; GET `/v0/tokens/{collateral-selector}/price` | raw / 10^`decimals` × USD `price` |
+| Debt now | same position → `borrow_shares`; GET `/v0/blue/markets/{m}/state` | ceiling shared `debt` formula; USD via loan-`token` `price` |
+| Interest owed | GET `/v0/blue/markets/{m}/users/{u}/position/performance` → `borrow_net_cost_assets` | average-cost realized + unrealized borrow cost; do not replace with balance minus deposits |
+| Borrow rate | GET `/v0/blue/markets/{m}/apy-averages` → `borrow_apy_averages[rateWindow]` | default "variable, 6h avg"; never instant rate |
+| LTV | position, GET `/v0/oracles/{o}/state` → `price` | D / V |
+| LLTV | GET `/v0/blue/markets/{m}` → `lltv_wad` | divide by 1e18 |
+| Health factor | same `collateral`, `debt`, oracle and LLTV | V × L / D |
+| Liquidation `price` | same inputs | D / (C × L), decimal-adjusted loan `tokens` per `collateral` `token` |
+| Maturity | `none` | n/a |
 
-REST has no list endpoint for Blue discovery; use GraphQL for enumeration. Paginate connections (`first`/`skip`, `pageInfo`) because defaults are partial. Select only required fields, split history from list queries, monitor `extensions.warnings` for field deprecations, and migrate before removal. Cache market metadata and histories with explicit TTLs; do not cache borrow execution state as current. On `429`, honor `Retry-After` and back off with jitter. Read `last_indexed_block` or equivalent metadata where provided and compare with chain head. If freshness affects health or a write, use the SDK/onchain result.
+Get `decimals` from GET `/v0/tokens/{s}`. A missing `value` must not become zero. Label negative cost values as returned rather than clamping to zero.
 
-## Primary transaction pattern
+**Action:** display alone sends no POST. Route explicit Borrow/Add `collateral`/Repay/Exit clicks to A1/A4/A5, never `auto`-transact while polling. For a selected partial repay, POST `/v0/actions/blue/markets/{m}/repay`:
 
-Build the extended viem client with `morphoViemExtension`, then create the market from verified `MarketParams`. The action's `userAddress` must be the connected account that signs and sends.
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<user-selected-assets>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
 
-For each action:
+**Acceptance:** a position with no `debt` shows "No `debt`" (not health ∞); a null oracle or `token` `price` shows "—" and disables actions that need it.
 
-1. fetch one current block and fresh accrued market/position data;
-2. create the supported SDK action;
-3. await `getRequirements()` and dispatch every approval, Morpho authorization, or requested signature, waiting for prerequisite receipts;
-4. call `buildTx(signatures?)`;
-5. simulate the final authorized transaction from the actual account and with the exact native value;
-6. show post-action risk/cost, submit, wait for the receipt, and reconcile fresh accrued state.
+## A3. Monitor the position
 
-Requirements vary by action and client configuration. Never assume an approval, authorization, or permit already exists from an indexer response. Refresh if the account, market, amount, position, or reallocation plan changes.
+**Components:** health `status`/buffer, `price`-drop-to-liquidation, band-change alerts linked directly to A4; open-screen polling plus backend push alerts.
 
-## Discover and select a market
+**Reads:** A2 config/state/position/oracle/`price`/APY routes, every 30–60 s while open. Blue has no documented market-wide borrower list; store the integration's user/market IDs and query each GET `/v0/blue/markets/{m}/users/{u}/position`. Use `last_indexed_block` where present and never interpret stale polling as a fresh chain snapshot.
 
-Use GraphQL to filter candidates by chain, exact loan/collateral addresses, listing/warnings, liquidity, LLTV, oracle, IRM, rewards, and rate/history. Verify the selected market ID by reconstructing it from the returned params or resolving those params onchain. A familiar pair can have multiple markets with different oracle, IRM, or LLTV.
+**Math:** buffer = L − LTV in percentage points; `price` drop to liquidation = 1 − LTV / L. Apply proposed/design-unconfirmed health bands from SKILL.md. No `debt` ⇒ no liquidation alert; unknown oracle ⇒ unknown health, not healthy.
 
-Do not rank on headline variable rate alone. At minimum include available liquidity, utilization, LLTV/risk buffer, oracle design and warnings, market age/history, and reward durability. Keep rewards separate from protocol borrow cost.
+**Action:** monitoring is read-only. Link the alert to A4; after user consent an add-`collateral` action is POST `/v0/actions/blue/markets/{m}/supply-collateral`:
 
-## Open: collateral plus borrow
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<selected-collateral-assets>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
 
-Prefer the SDK's `supplyCollateralBorrow` for a one-bundle open. It supplies collateral before borrowing, resolves collateral-token approval/permit and GeneralAdapter1 Morpho authorization, and validates the post-action position against the SDK LLTV buffer.
+**Acceptance:** an alert fires when the band changes, never more than once per band change, and links straight to A4 (Keep it healthy).
 
-For a staged flow, use `supplyCollateral` and `borrow`; do not hand-compose their calldata. Before confirmation show:
+## A4. Keep it healthy
 
-- exact collateral and loan assets with token decimals and USD estimates;
-- post-action variable borrow rate and estimated cost, including the user's own utilization impact when material;
-- post-action debt, LTV, LLTV, health factor/buffer, liquidation price, and available liquidity;
-- protocol/reward/integrator fee components separately;
-- whether shared-liquidity reallocation is included and its native fee.
+**Components:** Add `collateral` and Repay side by side; "to reach LTV X%" `amount` helper; LTV and liquidation `price` before → after; wallet balance and `funding` cost.
 
-The SDK's safety buffer is a transaction guard, not the product's recommended user buffer. The UI should default materially below LLTV and warn before aggressive positions.
+**Reads:** A2 position/config/state/oracle and both `token` metadata/`price` routes; liquidity when offering additional borrow or `collateral` withdrawal. Refetch before preparing each action.
 
-## Manage a position
+**Math:** `collateral` needed for target t = max(0, D / (t × (P / 1e36)) − C), rounded **up** in `collateral` base `units`; repay needed = max(0, D − t × V), rounded **up** in loan base `units`. Do not divide by t=0: use full repay. Reject invalid targets or missing `price`; simulate the actual rounded result.
 
-Fetch fresh accrued `positionData` for every management action. Provide obvious routes to add collateral, repay, and—only while healthy—withdraw collateral.
+**Action:** POST `/v0/actions/blue/markets/{m}/supply-collateral`:
 
-### Partial repay
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<collateral-assets>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
 
-Use `repay` in asset-amount mode for an exact partial repayment. Preview post-repay accrued debt and health. Resolve loan-token funding approval/permit through `getRequirements()`.
+Or POST `/v0/actions/blue/markets/{m}/repay`:
 
-### Full repay
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<loan-assets>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
 
-Use `repay` in **shares mode** with the user's full fresh `borrowShares`. A fixed asset snapshot can leave dust as interest accrues before inclusion. Full-close success means fresh post-receipt borrow shares are zero, not merely that the submitted asset amount matched an earlier preview.
+Use `native`/`auto` `funding` only with the required `max_native_assets` object. If a computed partial repay exceeds fresh `debt`, offer A5 `all` instead.
 
-### Repay and withdraw collateral
+**Acceptance:** after confirmation the screen refreshes and the band clears without a manual reload. Preserve `pending` state until indexed `data` reconciles; if the chosen `amount` does not reach the target, explain rather than falsely clearing the band.
 
-Use `repayWithdrawCollateral` for an atomic combined action. The SDK orders repay before collateral withdrawal and validates the combined post-state. For a full close, repay by all borrow shares and explicitly choose the collateral amount to withdraw; reconcile both debt and collateral after the receipt.
+## A5. Exit the position
 
-### Withdraw collateral only
+**Components:** partial/full repay, `collateral` release `amount`, max wallet spend, before/after `debt` and `collateral`, `signatures`/`calls` review, `pending`/confirmed state.
 
-Use `withdrawCollateral` with fresh position data. The SDK builds the direct Morpho action and checks the resulting health against its LLTV buffer. Still simulate at the latest block and show the reduced buffer/liquidation price before confirmation.
+**Reads:** `debt` from A2; GET `/v0/blue/markets/{m}/users/{u}/position` → `collateral_assets`; market `/state`, oracle `/state` and `token` prices. Full repay does not depend on secondary-market liquidity.
 
-## Liquidity reallocation
+**Math:** estimate D with upward share conversion for display; use `all` rather than an estimated `assets` `amount` for full repayment. Read `max_repay_assets` from the `prepared` response: maximum wallet outflow including accrued interest and supported referral fee. Exact `collateral` withdrawal `amount` is the current raw `collateral` balance for a full exit, subject to simulation.
 
-When the target market lacks loan-asset liquidity, the SDK can prepend Public Allocator reallocation calls to a borrow or loan-asset withdrawal bundle. Use `getReallocationData(...)` and `getReallocations(...)` (or validated SDK-compatible inputs), not a hand-ordered liquidity plan.
+**Action:** POST `/v0/actions/blue/markets/{m}/repay`:
 
-- Show source vault(s), amounts, and Public Allocator native fees.
-- Include the fee in transaction `value` and total-cost preview.
-- Treat reallocation availability as ephemeral; refresh and simulate immediately before submission.
-- Do not imply that advertised reallocatable liquidity is guaranteed to remain available.
+~~~json
+{
+  "account":"<wallet>",
+  "amount":{"unit":"all"},
+  "collateral_amount":{"unit":"assets","value":"<current-collateral-assets>"},
+  "funding":{"type":"erc20"},
+  "signature_mode":"auto"
+}
+~~~
 
-## Refinance
+Omit `collateral_amount` if no `collateral` or not withdrawing it. `max_repay_assets` is **not** an input. Partial repay supports `assets` or `shares`; use `all` to avoid `debt` dust. Repay plus exact `collateral` withdrawal is atomic within the action.
 
-Use `refinance` to atomically move collateral and debt between compatible Blue markets sharing the same loan and collateral tokens. The target may differ in oracle, IRM, or LLTV.
+For a `debt`-free position with remaining `collateral`, POST `/v0/actions/blue/markets/{m}/withdraw-collateral`:
 
-- Compare source and target params, variable rates, liquidity, oracle risk, LLTV, rewards, fees, and post-refinance health.
-- Use **borrow-shares mode** for a full source-debt close; asset mode is for exact partial debt.
-- Include optional target-market reallocation only through the supported SDK flow.
-- Require explicit confirmation of the new market identity and risks; “lower rate” alone is not adequate consent.
-- Verify the source borrow shares are zero and the target position matches the preview after confirmation.
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<remaining-collateral-assets>"},"signature_mode":"auto"}
+~~~
 
-## Rates, rewards, and risk
+Do not invent a `collateral` `unit`: `all` variant.
 
-Label Blue borrow rates **variable** everywhere. They move with utilization and accrue continuously between market interactions. A current API rate is a snapshot; an action may change utilization and therefore the user's post-trade rate.
+**Acceptance:** after a full exit, hide the zero-`debt`/zero-`collateral` position from the active list even if an indexed row remains; the `collateral` appears in the wallet balance. Keep `pending` until the position and wallet reconcile; no full-exit `success` while `debt` dust remains.
 
-Display protocol borrow APY/APR consistently, state the compounding convention, and do not mix it with reward APR or the integrator's fees. Name every reward token and campaign/end/claim conditions. Rewards are incentives, not a reduction guaranteed for the life of the debt.
+## A6. Liquidated
 
-Health views must be based on fresh accrued debt and current oracle data. Show at least:
+**Components:** persistent liquidation banner with date, `collateral` seized, `debt` cleared and what remains; offer withdrawal of remaining `collateral`.
 
-- debt and collateral in native units and value;
-- LTV and LLTV;
-- health factor or remaining buffer with its convention explained;
-- liquidation price or equivalent actionable threshold;
-- variable rate and projected cost;
-- warnings for oracle, liquidity, bad debt, or market configuration.
+**Reads:** GET `/v0/blue/markets/{m}/users/{u}/position/history` → `collateral_assets`, `borrow_shares` and timestamps; current `/position` and `/state`; oracle and `token` prices from A2. **Open API gap:** no Blue REST user liquidation event feed is documented. Interim: compare history for a `collateral` drop with no user withdrawal in the integration's known action/receipt history. This is a signal, not proof: external wallet activity or coarse history can look identical. Do not fabricate exact liquidation date or `amounts` from snapshots.
 
-Explain plainly that interest growth can worsen health even if collateral price does not move and that liquidation can seize collateral. Never use infinite/undefined health from a zero-debt position as a misleading numeric score.
+**Math:** history `collateral`/`debt` differences are estimates, not event accounting. Current remaining `collateral` = `position.collateral_assets`; current `debt` follows A2. Mark missing event date/seized/cleared values unknown and the liquidation explanation `UNVERIFIED` until event evidence exists.
 
-## Position, attribution, and disclosures
+**Action:** only after explicit user choice and successful simulation, withdraw available `debt`-free `collateral` via POST `/v0/actions/blue/markets/{m}/withdraw-collateral`:
 
-Keep the exact Blue market pair and variable-rate label visible on detail, review, confirmation, and dashboard. Show pending/confirmed/failed transaction states and refetch accrued data after confirmation.
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<remaining-collateral-assets>"},"signature_mode":"auto"}
+~~~
 
-Before the first transaction, require an unavoidable acknowledgment covering the integrator's terms, the [Morpho disclaimer](https://morpho.org/disclaimers/), smart-contract, oracle, market-liquidity, variable-rate, collateral-price, and liquidation risks. Use the official Powered by Morpho asset on interaction surfaces. Do not present Morpho Association as the lender, market operator, guarantor, or risk assessor.
+If `debt` remains, use A4/A5 or a verified safe partial withdrawal; never presume `all` `collateral` is withdrawable.
 
-## Advanced math review
-
-The primary SDK should own supported transaction and entity math. If an integration intentionally performs custom analytics not exposed by it, review the exact lower-level entity/math implementation against the current SDK source, onchain rounding, oracle scale, and accrued timestamp. Keep protocol amounts as bigint until display formatting. Do not replace a supported SDK action with lower-level packages merely to save a call.
-
-## Safety and release checks
-
-- Market ID/params, account, and chain are verified.
-- Every debt/risk preview uses fresh accrued market and position data from one coherent block.
-- Full repay/refinance closes by shares; post-receipt debt shares are checked.
-- LTV/LLTV, liquidation, variable rate, liquidity, rewards, and all fees are distinct and visible.
-- Supported actions, reallocations, and refinance are built through `@morpho-org/morpho-sdk`.
-- All requirements resolve and the exact final transaction simulates before send.
-- No floating-point arithmetic touches raw token, share, oracle, rate, or risk values.
-- API pagination, caching, `429`/`Retry-After`, deprecation warnings, freshness, and onchain fallback are implemented and testable.
+**Acceptance:** a verified liquidated position shows a persistent banner with date, `collateral` seized, `debt` cleared and what remains, and offers to withdraw any remaining `collateral`. With only the interim signal, show a possible-liquidation notice and unknown event details; report the exact-event acceptance `UNVERIFIED` (API gap).

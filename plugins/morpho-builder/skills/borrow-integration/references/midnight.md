@@ -1,167 +1,213 @@
-# Midnight fixed-rate borrowing guide
+# Midnight — fixed rate, fixed `maturity`
 
-Read this reference when the requested product borrows at a fixed rate and fixed maturity through Morpho Midnight. Midnight is currently **Base-only** (chain ID 8453). Reject or reroute any attempt to construct a Midnight action on another chain; do not silently turn it into Blue borrowing.
+Apply the shared Actions contract, conventions, UX, errors, and verification rules in [SKILL.md](../SKILL.md). Keep this product separate from Blue. All reads are REST GETs; Actions builds every transaction. Define `id` = bare REST `market_id`, m = `{chain_id}:{market_id}` for Actions, u = wallet `address`, s = `{chain_id}:{tokenAddress}`, `o_i` = `{chain_id}:{collateralOracle}`. JSON sketches require substitution with discovered addresses and user-approved values.
 
-This skill covers the borrower side. Fixed-rate lending and advanced maker infrastructure are outside scope unless needed to understand a borrower's secondary exit.
+Reference map: [market discovery](https://docs.morpho.org/api/midnight/markets/list-markets/), [market](https://docs.morpho.org/api/midnight/markets/get-market/), [book](https://docs.morpho.org/api/midnight/books/get-book/), [quotes](https://docs.morpho.org/api/midnight/books/get-quote/), [user positions](https://docs.morpho.org/api/midnight/positions/list-positions/), [market positions](https://docs.morpho.org/api/midnight/positions/list-market-positions/), [transactions](https://docs.morpho.org/api/midnight/transactions/list-user-transactions/), [oracle](https://docs.morpho.org/api/oracles/get-oracle-state/), [`token`](https://docs.morpho.org/api/global/get-token/), [USD `price`](https://docs.morpho.org/api/global/get-token-price/), [Actions](https://api.morpho.org/actions/docs).
 
-## Contents
+Use `C_i` `collateral` base `units`, `P_i` oracle `price`, `V_i` = `C_i` × `P_i` / 1e36 in loan base `units`, V = Σ`V_i`, `L_i` = `lltv_i` / 1e18, borrowing capacity H = Σ(`V_i` × `L_i`), and effective LLTV `L_eff` = H / V. Debt D is `units` owed at `maturity`: one `unit` redeems for one loan-`token` base `unit` at `maturity`. Do not use loan `assets` received as `debt`.
 
-- Market, book, and position model
-- Data-source and API policy
-- Quote semantics
-- Atomic collateral and borrow
-- Position maintenance, maturity, and secondary exit
-- Errors and degraded operation
-- Safety and release checks
+## A1. Take a position
 
-## Market, book, and position model
+**Components:** `collateral` input(s) with connected-wallet balances and Max; borrow input with Max; quoted fixed APR and `maturity` date; LTV before → after and effective/per-`collateral` LLTV; liquidation prices; available liquidity; every signature and call in one review.
 
-A Midnight market fixes a loan token, accepted collateral configurations (token, LLTV, liquidation cursor, oracle), maturity, gates, and other market parameters. Positions exchange discounted **credit units**: one unit is face-value debt/credit at maturity, subject to protocol fees and loss mechanics.
+**Reads:**
 
-The offchain router indexes ratified maker offers into two sides:
-
-- **bids:** makers buy units (lend); a borrower takes bids, sells units, and receives loan assets;
-- **asks:** makers sell units (borrow); a lender—or an existing borrower buying units to close debt early—takes asks.
-
-For a borrow product, discovery must include chain, market ID, loan token, maturity, accepted collateral/LLTV/oracles, gates/warnings, bid depth, price and implied fixed rate, settlement/continuous fee information, and current position health. Never call an ask a borrow quote.
-
-The fixed rate applies to an executed fill, not to a displayed orderbook snapshot. The transaction creates debt in units due at the market maturity. Borrowers can be liquidated before maturity if debt exceeds collateral capacity and face post-maturity liquidation if debt remains unpaid.
-
-## Data-source policy
-
-1. **`@morpho-org/morpho-sdk`:** primary abstraction for fresh Midnight entities and all supported writes. Use `client.morpho.midnight(8453)`, same-block `getMarketData`/`getPositionData`, action `getRequirements()`, and `buildTx(...)`.
-2. **Midnight API:** sole source for executable orderbook plans. Use the Morpho SDK's Midnight API helper subpath when practical, pin the package version because that helper surface may change, and validate successful response shapes at the integration boundary.
-3. **Morpho REST API:** indexed market/book/position/performance/transaction discovery and history. Use GraphQL only for related cross-product metadata that the documented schema actually exposes; it is not a replacement for a Midnight quote.
-4. **Onchain RPC:** final truth and fallback for market/position state, collateral/oracle health, approvals/authorizations, and transaction simulation. During an API outage users must still be able to inspect and maintain/repay positions when the onchain path permits it, but new orderbook fills cannot invent a quote.
-
-Current REST route families are under `/midnight` and documented in the [Core API reference](https://api.morpho.org/core/docs):
-
-| Need | Route family |
+| Route | Fields / purpose |
 | --- | --- |
-| Discover markets and state | `/markets`, `/markets/{marketId}`, `/markets/{marketId}/state` |
-| Browse liquidity | `/books`, `/books/{marketId}`, `/books/{marketId}/{asks|bids}` |
-| Executable plan | `/books/{marketId}/{asks|bids}/quote` |
-| Raw executable offers | `/books/{marketId}/{side}/takeable-offers` |
-| User positions | `/users/{user}/positions`, `/markets/{marketId}/users/{user}/position` |
-| Position performance | `/markets/{marketId}/users/{user}/position/performance` |
-| User/market activity | user and market transaction routes |
-| Offer validation | `/mempool/validate` (advanced maker context only) |
+| GET `/v0/midnight/markets?chain_ids=…&loan_assets=…&collateral_assets=…&active_only=true&listed=true` | `chain_id`, `market_id`, `loan_token`, `maturity`; collaterals[] with `token`, oracle, lltv; one market per `maturity`/parameters |
+| GET `/v0/midnight/markets/{id}` | selected market configuration; keep `chain_id` for Actions |
+| GET `/v0/midnight/books/{id}` | best bid/book prices and liquidity for initial rate display |
+| GET `/v0/midnight/books/{id}/bids/quote?assets={borrowAssets}` | `average_best_price`, `average_worst_price`, `available_assets`, `available_units`, `takeable_offers` |
+| GET `/v0/midnight/users/{u}/positions` | existing `debt` and collaterals[] for selected market; paginate |
+| GET `/v0/oracles/{o_i}/state` for each `collateral` | `price` |
+| GET `/v0/tokens/{s}` and `/v0/tokens/{s}/price` for loan and each `collateral` | `decimals`, `symbol`, `logo_uri`; nullable USD `price` |
 
-List endpoints use cursor pagination. Continue until `cursor` is null; never treat the first page as complete. Cache discovery and historical analytics with explicit TTLs, but do not reuse a quote as a cached market fact. Read `last_indexed_block` from indexed position/performance responses and compare it with the Base head before showing critical status. For a write, fetch onchain state and quote again.
+`chain_ids` is required when `loan_assets` is supplied. Borrowers take **bids** (lenders' buy offers), not asks. A too-large quote returns 422 `INSUFFICIENT_LIQUIDITY`. Quote availability covers the returned offer window; fallback `takeable_offers` can sum to more than the requested target. Never execute that sum or hand-build `calls` from offers.
 
-Honor `429` and `Retry-After` with jittered backoff. Avoid synchronized polling. Monitor GraphQL `extensions.warnings` for deprecation warnings if GraphQL is used for related data. The Morpho API has no SLA, so keep an onchain maintenance/repayment fallback for open positions.
+**Math:** `V_i` = `C_i` × `P_i` / 1e36, H = Σ(`V_i` × `L_i`), LTV = D / V. The theoretical `debt` bound is H; safe Max must also respect available quoted `units`/`assets` and the **open** Actions safety buffer. A quote `price` p is WAD-scaled:
 
-## Fetch a borrow quote
+```latex
+\text{fixed APR}=\left(\frac{10^{18}}{p}-1\right)\frac{31{,}536{,}000}{\text{seconds to maturity}}
+```
 
-Use the Midnight quote helper or `GET /books/{marketId}/bids/quote` with exactly one target dimension:
+Use only positive time to `maturity`. Display the quoted `price`/rate and costs; settlement/continuous fees and quote guards can change the effective result, so reconcile with Actions simulation rather than promising a fee-free `price` formula is the final cost. For a requested `assets` `amount`, estimate target `units` with conservative rounding from the `price`; use the quote/Actions resolved `amount` for final review. Liquidation health uses `units` D, not the `assets` received.
 
-- `assets`: loan assets the borrower wants to receive; or
-- `units`: face-value units the borrower wants to sell/owe.
+**Action:** POST `/v0/actions/midnight/markets/{m}/borrow`:
 
-Apply one executable price guard:
+~~~json
+{
+  "account":"<wallet>",
+  "amount":{"unit":"assets","value":"<gross-loan-assets>"},
+  "collateral_supplies":[
+    {"collateral":{"address":"<collateral-token>"},"amount":{"unit":"assets","value":"<collateral-assets>"}}
+  ],
+  "funding":{"type":"erc20"},
+  "guard":{"type":"slippage","bps":50}
+}
+~~~
 
-- `slippage`, which derives a conservative worst-price guard; or
-- `average_worst_price`, an explicit guard.
+50 `bps` is an example requiring explicit integrator/user policy, not an API or design default. Omit `collateral_supplies` and `funding` together for existing-`collateral` borrow. Up to 16 supplied `collaterals` are allowed. Amount can instead be `{"unit":"units","value":"<debt-units>"}`.
 
-Do not send both. Also use a bounded `limit` for offers walked and returned.
+Borrow guard alternatives: `{"type":"max_rate","value":"<WAD-per-second-simple-rate>"}`; `max_units` for an `assets` target; `min_assets` for a `units` target. Convert an APR ceiling r to per-second WAD as floor(r × 1e18 / 31,536,000), not r × 1e18 alone. No `signature_mode` field on this intent. Native `funding` requires a wrapped-`native` supplied `collateral` and `max_native_assets`; `auto`/`native` applies only to that `collateral` portion. Optional supported referral fee/expiry/attribution follows SKILL.md. Require proof verification and successful simulation before sending.
 
-The response contains realized best/worst average prices, available assets/units, and ordered `takeable_offers`. Those offers intentionally include **fallback excess** beyond the target so the bundle can skip or partially consume offers that change before inclusion. The builder must stop at the requested target and enforce `loanAssets` plus `maxUnits`; never execute every returned cap as an independent take.
+**Acceptance:** preview numbers match `simulation.position_changes` applied as deltas; do not promise a rejection-free Max until the Actions health buffer is verified (open). A too-large `amount` is blocked using the bids quote before the Actions POST; never send a `failed` simulation.
 
-Quote lifecycle requirements:
+## A1b. Borrow by target LTV (slider)
 
-- refresh on market, collateral, amount, side, or slippage change;
-- cancel/ignore superseded requests so a slow response cannot overwrite the latest input;
-- bind the quote to market ID, Base chain, target, side `bids`, and guard;
-- show quote timestamp, fixed rate, price, debt units at maturity, assets received, fees, fallback nature, and expiry/deadline;
-- fetch fresh same-block market state, rebuild, and simulate immediately before signing;
-- use a finite deadline appropriate to the UX; “no expiry” requires an explicit product decision, not a default shortcut.
+**Components:** 0%-to-max slider with health-colored track, unreachable LLTV tick (effective LLTV with individual `collateral` limits explained); numeric LTV input; synchronized borrow `token`/USD input; live liquidation prices, `price`-drop-to-liquidation and quoted fixed APR; short warning in warning/danger band. Open at current LTV for existing positions. Right borrows; left repays; button label follows direction.
 
-An executable quote is still not a guaranteed fill. Offers can be consumed or invalidated before the bundle lands.
+**Reads:** A1 config, position, per-`collateral` oracle and `token` routes. On slider release, debounce roughly 300 ms before GET `/v0/midnight/books/{id}/bids/quote?assets={candidateAssets}`; never quote every tick. Cancel/ignore obsolete responses so a slower old quote cannot overwrite the current target.
 
-## Atomic collateral plus borrow
+**Math:** V includes current plus added `collateral`. `L_eff` = Σ(`V_i` × `L_i`) / V, not an unweighted mean. Target incremental `debt` `units` = max(0, floor(t × V − D)); inverse LTV after borrow = (D + quotedDebtUnits) / V. Re-solve `assets` from the quote when the slider stops; `debt` is `units` at `maturity`, not loan `assets`. Cap at `L_eff` minus the **open** safety buffer and liquidity-reachable LTV. Use rational/base-unit rounding; no floating-point monetary math. Leftward move repays max(0, D − t × V) `debt` `units`; direct repay consumes equivalent face-`value` `assets`. Price drop to liquidation for a uniform `collateral`-`price` move = 1 − LTV / `L_eff`.
 
-Construct `midnight = client.morpho.midnight(8453)`. Fetch a Base block, then `getMarketData(marketId, { blockNumber })`; select and validate the collateral index/config.
+**Action:** rightward POST `/v0/actions/midnight/markets/{m}/borrow`:
 
-For a new position, use `supplyCollateralTakeBorrow` with:
+~~~json
+{"account":"<wallet>","amount":{"unit":"units","value":"<computed-debt-units>"},"guard":{"type":"slippage","bps":50}}
+~~~
 
-- account address matching the connected signer;
-- fresh market data;
-- collateral amount and selected collateral index;
-- quote target assets and maximum units;
-- quote-provided takeable offers in their returned order;
-- a finite deadline.
+Add A1 `collateral_supplies`/`funding` when also supplying. Leftward POST `/v0/actions/midnight/markets/{m}/repay`:
 
-Await every `getRequirements()` result. The atomic route may require collateral-token approval and MidnightBundles authorization. Send prerequisite transactions and wait for their receipts before `buildTx()`. Midnight taker requirements are not interchangeable with Blue permits.
+~~~json
+{"type":"direct","account":"<wallet>","amount":{"unit":"assets","value":"<computed-face-value-assets>"},"funding":{"type":"erc20"}}
+~~~
 
-Simulate the exact built bundle from the user account. Before confirmation show:
+At zero target use direct `amount` `{"unit":"all"}`. Never POST zero values; use A5 for an explicitly chosen secondary-market exit rather than silently changing repayment mode.
 
-- collateral supplied and its oracle value;
-- loan assets targeted/expected;
-- debt units due at maturity and total fixed cost;
-- fixed rate and price, with best/worst execution bounds;
-- maturity date and time-to-maturity;
-- post-action max debt, health/buffer, LLTV, and liquidation consequence;
-- settlement fee, continuous fee exposure where relevant, gas, and any integrator fee separately.
+**Acceptance:** slider, LTV input and `amount` always agree; the thumb cannot pass the max, and when liquidity is what limits it, the slider stops there with "Only {x} available to borrow now"; the previewed LTV matches the LTV implied by `simulation.position_changes` to within 0.1 pp; changing the `collateral` `amount` re-solves the borrow at the same target LTV. Keep safe-Max evidence explicitly open until verified.
 
-If collateral is already supplied, use `takeBorrow` with the same quote, guard, deadline, fresh market data, requirement, and simulation discipline. Do not split an intended atomic open into collateral and borrow transactions unless the user understands the interim state.
+## A2. Show the position
 
-## Position maintenance
+**Components:** `collateral` rows/`token`/USD, `debt` at `maturity`, interest-cost explanation, effective APR, LTV/effective LLTV and `collateral`-specific thresholds, health factor, per-`collateral` liquidation prices, `maturity` countdown.
 
-Fetch a common Base block, hydrate market and user position data at that block, and accrue the returned position to the block timestamp before showing debt or health.
+**Reads and Math:**
 
-- **Add collateral:** use `supplyCollateral` and its approval requirement.
-- **Repay and/or withdraw collateral:** use `repayWithdrawCollateral`; set repay and withdrawal amounts explicitly, keep a finite deadline, and simulate the combined post-state.
-- **Health:** show total debt units/assets, collateral by token, max debt/capacity, oracle inputs, buffer, and pre-maturity liquidation status.
-- **Maturity:** show an absolute UTC/localized timestamp and a countdown. At maturity switch to a distinct matured state; never render a negative countdown.
+| Field on screen | Exact source | Math / presentation |
+| --- | --- | --- |
+| Collateral (`token`, USD) | GET `/v0/midnight/users/{u}/positions` → collaterals[]: `token`, `amount`; GET `/v0/tokens/{s}/price` | each raw `amount` / 10^`decimals` × USD `price` |
+| Debt now / due at `maturity` | positions → `debt` | `units` owed at `maturity`, in loan-`token` base `units`; do not accrue as Blue `shares` |
+| Interest owed | positions → `cost_basis` and `debt` | **open accounting question**: `cost_basis` is WAD-scaled average cost in loan-`token` `units`; candidate principal = `cost_basis` / 1e18 before subtracting from `debt`, not raw subtraction; do not `claim` exact interest without validating semantics/history |
+| Borrow rate | positions → `effective_apr` | simple annualized decimal fraction (365-day year), can be null; show fixed rate, not an average; ignore `rateWindow` |
+| LTV | `debt`; `collaterals`; GET `/v0/oracles/{o_i}/state` → `price` | D / Σ`V_i` |
+| LLTV | GET `/v0/midnight/markets/{id}` → `collaterals[].lltv` | each / 1e18; effective LLTV = Σ(`V_i` × `L_i`) / V |
+| Health factor | same inputs | Σ(`V_i` × `L_i`) / D |
+| Liquidation `price` | same inputs, holding other `collateral` prices fixed | `P_i`,liq = max(0, (D − Σ(j≠i)(`V_j` × `L_j`)) / (`C_i` × `L_i`)); decimal-adjust raw loan/`collateral` ratio |
+| Maturity | positions → `maturity` | date/countdown; unpaid `debt` past `maturity` can be liquidated or rolled to Blue if opted in |
 
-Do not say a Midnight loan is “locked at a fixed rate” without also naming its fixed maturity and debt at maturity. The quote rate does not remove collateral, oracle, liquidity, fee, or liquidation risk.
+Position `collaterals` carry `amounts`; resolve LLTV/oracle from market config, not the position `collateral` row. Fetch `token` `decimals` via GET `/v0/tokens/{s}`. No `collateral` `value` ⇒ unknown/undefined LTV, not a false healthy ratio. Do not divide by zero `collateral` or LLTV when computing a liquidation `price`; show "—" when undefined. A clamped zero threshold means other `collateral` alone covers the `debt` under this one-`price`-change assumption, not that the whole position is risk-free.
 
-## Repay at maturity
+**Action:** display is read-only; explicitly selected actions go to A1/A4/A5. Example selected partial repayment, POST `/v0/actions/midnight/markets/{m}/repay`:
 
-At or around maturity, quote/display the current repay assets needed from fresh accrued position state and use `repayWithdrawCollateral` to repay and optionally release collateral atomically. Resolve loan-token approval and bundle authorization, simulate, and reconcile the post-receipt debt and collateral.
+~~~json
+{"type":"direct","account":"<wallet>","amount":{"unit":"assets","value":"<selected-face-value-assets>"},"funding":{"type":"erc20"}}
+~~~
 
-Warn well before maturity. State plainly that unpaid debt can be liquidated after maturity. Do not rely on a client-side scheduler or notification as the only repayment path.
+**Acceptance:** a position with no `debt` shows "No `debt`" (not health ∞); a null oracle or `token` `price` shows "—" and disables actions that need it. Show interest owed as unknown/`UNVERIFIED` until the `cost_basis` accounting question is resolved, not fabricated principal.
 
-## Early close through secondary liquidity
+## A3. Monitor the position
 
-Before maturity, a borrower may close debt by buying units on the **ask** side. This is a new orderbook trade, not a refund of the original borrow, and it depends on available secondary liquidity.
+**Components:** band-change health alerts linked to A4; `maturity` reminders at minus 7 days, minus 1 day, and at `maturity`; backend push job plus open-screen polling.
 
-- Fetch an ask-side quote for the units required to reduce/close the fresh debt.
-- Apply the same slippage, fallback-window, finite-deadline, requirement, and simulation rules as any taker fill.
-- Show the assets paid, units acquired/netted, realized exit rate/price, fees, residual debt, and whether collateral can be withdrawn afterward.
-- Do not promise an early exit when the book cannot fill it. A partial quote must remain a partial close unless the user explicitly accepts it.
-- After the trade, refetch position data; withdraw collateral only when the fresh post-trade state permits it.
+**Reads:** `all` A2 routes every 30–60 s while open. Backend scan: GET `/v0/midnight/markets/{id}/positions?types=borrow`, paginated, gives borrowers with `debt`, `collaterals`, `maturity`, `effective_apr` and `cost_basis`. Hydrate config/oracles/`token` `data` separately. Midnight positions do not expose a universal `last_indexed_block` watermark.
 
-## API and quote failure handling
+**Math:** effective buffer = `L_eff` − LTV in percentage points; uniform `price` drop to liquidation = 1 − LTV / `L_eff`. Apply proposed/design-unconfirmed bands. Schedule `maturity` alerts from `maturity` timestamp, not browser uptime. Warn that unpaid matured `debt` is liquidatable or can roll into Blue under an opted-in configuration; do not promise automatic rollover for every loan.
 
-Branch on typed SDK/API errors where available and preserve the user's inputs. At minimum handle:
+**Action:** alerts do not transact. Link directly to A4; after user consent, POST `/v0/actions/midnight/markets/{m}/supply-collateral`:
 
-- `400`: invalid side/amount/guard/request—fix the request; do not retry unchanged;
-- `404`: unknown or inactive market/book—return to discovery and verify market ID;
-- `422`: target cannot fill within liquidity, guard, or offer limit—show available liquidity, allow a smaller target or explicit guard change, and never loosen slippage silently;
-- `429`: honor `Retry-After`, stop aggressive polling, and show a retry state;
-- `503`/network timeout: quote service unavailable—do not fabricate or reuse an expired quote; keep read/onchain maintenance paths available;
-- malformed success response: fail closed and log schema evidence without exposing secrets;
-- simulation revert: discard the plan, refetch quote and onchain state, then explain the decoded reason if known.
+~~~json
+{"account":"<wallet>","collateral":{"address":"<collateral-token>"},"amount":{"unit":"assets","value":"<selected-collateral-assets>"}}
+~~~
 
-Do not change `bids` to `asks`, extend the deadline, raise `maxUnits`, or increase slippage automatically to make a failed borrow pass.
+**Acceptance:** an alert fires when the band changes, never more than once per band change, and links straight to A4 (Keep it healthy). Maturity alerts fire at −7d, −1d and `maturity` once each; unknown health must not be reported healthy.
 
-## Rates, attribution, and disclosures
+## A4. Keep it healthy
 
-Label the executed result **fixed rate, fixed term**. The interface should distinguish orderbook price from implied annualized rate and label the annualization convention/time to maturity. Never describe Midnight's rate as utilization-driven.
+**Components:** Add `collateral` and Repay side by side; "to reach LTV X%" helpers; LTV and per-`collateral` liquidation prices before → after; wallet spend/balance.
 
-Before the first transaction, require an unavoidable acknowledgment covering the integrator's terms, the [Morpho disclaimer](https://morpho.org/disclaimers/), smart-contract, orderbook/partial-fill, secondary-liquidity, oracle, collateral, liquidation, fee, and maturity risks. Use the official Powered by Morpho asset on detail, review, confirmation, and position surfaces. Do not present Morpho Association as the counterparty, guarantor, or operator promising a fill.
+**Reads:** A2 position/config/oracle/`token`/`price` routes. Select which configured `collateral` is being added and respect `all` `collateral`-specific LLTVs.
 
-## Advanced math review
+**Math:** for chosen `collateral` i, added `collateral` to target t = max(0, (D / t − V) / (`P_i` / 1e36)), round up in `collateral` base `units`. Single-`collateral` equivalent: D / (t × `price`) − C. Repay to target t = max(0, D − t × V), round up to loan base `units` for direct face-`value` repay. At t=0 choose full repay rather than divide by zero. Recompute H and effective LLTV after adding `collateral`; validate both target LTV and weighted capacity.
 
-The primary SDK and quote response should own supported price/unit/fee math and transaction construction. If custom analytics are unavoidable, review the exact lower-level tick, price, unit, settlement-fee, rounding, and maturity implementation against current SDK source and contract behavior. Keep WAD and token values as bigint until formatting. Never use floating exponentiation for tick/rate conversions.
+**Action:** POST `/v0/actions/midnight/markets/{m}/supply-collateral`:
 
-## Safety and release checks
+~~~json
+{"account":"<wallet>","collateral":{"address":"<collateral-token>"},"amount":{"unit":"assets","value":"<collateral-base-units>"}}
+~~~
 
-- Base chain, market ID, bid side, collateral index, user, target, quote guard, and deadline are bound together.
-- Quote requests are race-safe, fresh, and never cached as executable truth.
-- Fallback offers are passed to the primary SDK builder, not blindly executed to their summed cap.
-- Atomic collateral+borrow and maintenance actions use `@morpho-org/morpho-sdk`, complete requirements, and simulate before send.
-- Fixed rate, price, maturity, debt units, fees, health, liquidation, and secondary-liquidity risk are visible and distinct.
-- Matured state, repayment, partial fill, no-liquidity, `422`, `429`, `503`, malformed response, and simulation failure are tested.
-- Cursor pagination, caching policy, freshness metadata, and onchain maintenance fallback are implemented.
+Or POST `/v0/actions/midnight/markets/{m}/repay`:
+
+~~~json
+{"type":"direct","account":"<wallet>","amount":{"unit":"assets","value":"<face-value-loan-assets>"},"funding":{"type":"erc20"}}
+~~~
+
+Standalone supply-`collateral` accepts only `account`, `collateral`, `amount`, and optional `calldata_origin`: no `funding`, `signature_mode`, or `expires_at`. Direct repayment pays face `value` now, including before `maturity`; no guard/offers are needed. If an estimated partial `amount` exceeds `debt`, refresh and offer direct `all`. Do not add a `price` guard to direct repay.
+
+**Acceptance:** after confirmation the screen refreshes and the band clears without a manual reload. Re-poll until indexed changes reconcile; if the action did not reach the target, explain rather than falsely clearing the band.
+
+## A5. Exit the position
+
+**Components:** direct face-`value` alternative beside early secondary exit quote; costs, `collateral` release, fees, remaining `debt`, quote guard/deadline, every signature/call in review.
+
+**Reads:** GET `/v0/midnight/users/{u}/positions` → `debt` and `collaterals[].amount`; market `maturity`/config; per-`collateral` oracle and `all` `token` metadata/prices. Before an early secondary exit GET `/v0/midnight/books/{id}/asks/quote?units={debt}`. Use asks to buy `debt` back, unlike bids for borrowing. Read `average_best_price`, `average_worst_price`, `available_assets` and `available_units`. On quote 422 offer direct face-`value` repay; on unavailable service show it unavailable, not a stale guaranteed quote.
+
+**Math:** direct face-`value` cost is D loan-`token` base `units`; quoted early cost is `units` × WAD `price` / 1e18, rounded up for spend preview and reconciled with `prepared` `max_repay_assets`/fees. Show difference vs face `value` and residual `units`. Secondary exit can cost less but depends on liquidity; never label it a refund. Full market repay targets exact current `units`, not `all`.
+
+**Action:**
+
+| Case | Exact POST route | Request |
+| --- | --- | --- |
+| At/after `maturity`, or explicit early direct alternative | `/v0/actions/midnight/markets/{m}/repay` | `type: direct`; `amount` `unit`: `all`; `funding`; optional `collateral_withdrawals` |
+| Early secondary exit | `/v0/actions/midnight/markets/{m}/repay` | `type: market`; `amount` `unit`: `units` with current `debt`; guard; `funding`; optional `collateral_withdrawals` |
+
+Direct full exit:
+
+~~~json
+{
+  "type":"direct",
+  "account":"<wallet>",
+  "amount":{"unit":"all"},
+  "funding":{"type":"erc20"},
+  "collateral_withdrawals":[{"collateral":{"address":"<token>"},"amount":{"unit":"all"}}]
+}
+~~~
+
+Early secondary full-`unit` target:
+
+~~~json
+{
+  "type":"market",
+  "account":"<wallet>",
+  "amount":{"unit":"units","value":"<current-debt>"},
+  "guard":{"type":"slippage","bps":50},
+  "funding":{"type":"erc20"},
+  "collateral_withdrawals":[{"collateral":{"address":"<token>"},"amount":{"unit":"all"}}]
+}
+~~~
+
+List each `collateral` to release. Market repay has no `amount` `unit`: `all`. Other market guards: `min_rate` (minimum per-second WAD simple rate), `min_units` with `assets` target, `max_assets` with `units` target. Never silently broaden a guard. If `debt` changed, refresh the exact `units` and re-confirm rather than claiming dust-free closure from an old quote.
+
+If `debt` is already zero and `collateral` remains, POST `/v0/actions/midnight/markets/{m}/withdraw-collateral`:
+
+~~~json
+{"account":"<wallet>","collateral_withdrawals":[{"collateral":{"address":"<token>"},"amount":{"unit":"all"}}]}
+~~~
+
+**Acceptance:** after a full exit the position disappears from the active list when `debt`, credit and `collateral` are zero, and the `collateral` appears in the wallet balance; the early-exit screen always shows both the market `price` and the face-`value` alternative. Re-poll indexed state, inspect residual `debt`, and do not declare full exit from a receipt alone.
+
+## A6. Liquidated
+
+**Components:** persistent liquidation banner with date, `collateral` seized, `debt` cleared and what remains; withdraw remaining `collateral` action; distinguish partial liquidation, full liquidation and roll.
+
+**Reads:** `GET /v0/midnight/users/{u}/transactions?event_types=partial_liquidation,full_liquidation,roll`, paginated; filter the selected chain/market. Liquidation events expose `created_at`, `tx_hash` and `data.collateral`, `seized_assets`, `repaid_units`, `bad_debt`, `post_maturity_mode` and `pure_bad_debt_realization`. Roll `data` instead includes `blue_market_id`, `debt_assets`, `collateral_assets` and `incentive_assets`; do not describe a roll as seized `collateral`. Refetch current positions/config and `token` prices for remaining `debt`/`collateral` and USD.
+
+**Math:** display `seized_assets` in `collateral` `units`, `repaid_units` and `bad_debt` in loan-`token` `units` with correct `decimals`; use event `amounts` for what happened, current position for what remains. Aggregate only within the selected event/transaction semantics; do not double-count a roll as a liquidation. Null prices leave `token` `amounts` visible.
+
+**Action:** if remaining `collateral` is safe to withdraw, POST `/v0/actions/midnight/markets/{m}/withdraw-collateral`:
+
+~~~json
+{"account":"<wallet>","collateral_withdrawals":[{"collateral":{"address":"<remaining-token>"},"amount":{"unit":"all"}}]}
+~~~
+
+Only use `all` when no `debt` needs that `collateral`; otherwise choose `{"unit":"assets","value":"<verified-safe-amount>"}` and require simulation. Offer A4/A5 if `debt` remains.
+
+**Acceptance:** a liquidated position shows a persistent banner with date, `collateral` seized, `debt` cleared and what remains, and offers to withdraw any remaining `collateral`. An empty event feed shows no liquidation, not invented event `data`. Keep transaction history available after the active position disappears.

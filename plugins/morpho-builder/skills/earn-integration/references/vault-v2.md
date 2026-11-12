@@ -1,164 +1,170 @@
-# Vault V2 implementation guide
+# Vault V2 — variable-rate Earn
 
-Read this reference for every Earn build or targeted review. It covers Morpho Vault V2 only; Vault V1 belongs here only when an existing position must migrate or remain compatible.
+Apply [SKILL.md](../SKILL.md) for the shared Actions contract, conventions, errors, UX, and verification. Define `v = {chainId}:{vaultAddress}`, `u = wallet address`, `s = {chainId}:{assetAddress}`. Morpho REST fields below are under `data`. JSON sketches show valid shapes, not executable addresses or chosen `amounts`.
 
-## Contents
+Reference map: [discovery](https://docs.morpho.org/api/vaults-v2/list-v2-vaults/), [config](https://docs.morpho.org/api/vaults-v2/get-v2-vault/), [state](https://docs.morpho.org/api/vaults-v2/get-v2-vault-state/), [average APY](https://docs.morpho.org/api/vaults-v2/get-v2-vault-realized-average-apy/), [positions](https://docs.morpho.org/api/vaults-v2/list-user-v2-vault-positions/), [performance](https://docs.morpho.org/api/vaults-v2/user-v2-vault-position-performance/), [position history](https://docs.morpho.org/api/vaults-v2/user-v2-vault-position-history/), [APY history](https://docs.morpho.org/api/vaults-v2/get-v2-vault-apy-history/), [withdrawal options](https://docs.morpho.org/api/vaults-v2/get-v2-vault-withdrawal-options/), [curator](https://docs.morpho.org/api/curators/get-curator-details/), [`token`](https://docs.morpho.org/api/global/get-token/), [`price`](https://docs.morpho.org/api/global/get-token-price/), [Actions](https://api.morpho.org/actions/docs), [Merkl opportunities](https://developers.merkl.xyz/api-reference/get/v4/opportunities), [APR records](https://developers.merkl.xyz/api-reference/get/v4/opportunities/%7Bid%7D/apr-records), [rewards](https://developers.merkl.xyz/api-reference/get/v4/users/%7Baddress%7D/rewards).
 
-- Product and data model
-- Data-source policy and endpoint map
-- Transaction pattern
-- Deposits and native assets
-- Liquid and illiquid exits
-- APY, rewards, positions, and UX
-- Safety and release checks
+Vault V2's `maxDeposit`, `maxMint`, `maxWithdraw` and `maxRedeem` return zero by design; never use them as availability or position signals. Use REST state/options and successful Actions simulation. "Withdraw anytime" is subject to liquidity. Separate `native` yield, rewards, fees and penalties; never promise guaranteed returns.
 
-## Product and data model
+## B1. Take a position
 
-A Vault V2 accepts one ERC-20 underlying asset and issues ERC-4626 shares. It can hold idle assets and allocate through enabled adapters, including Morpho Blue market adapters. Treat the vault address plus chain ID as identity; symbols and names are display metadata, not identifiers.
+*As a user, I see what the vault earns and who manages it, deposit an `amount`, and see my expected position before I sign.*
 
-For discovery and detail views, resolve at least:
+**Components:** vault header (name, asset, curator name/logo); variable average APY with separate rewards line when a live campaign exists; total deposits; deposit input with connected-wallet balance and Max; "you will receive" `shares` preview; review step listing `all` `signatures`/`calls`, fees and net receipt.
 
-- chain, address, name, symbol, listed/warning state, underlying address and decimals;
-- curator/owner roles and relevant pending governance actions;
-- total assets, total supply, share price, idle assets, allocated assets, and currently withdrawable assets;
-- adapter allocations, underlying markets, caps, and material exposure concentrations;
-- performance and management fee rates plus recipients;
-- instant and realized/historical APY, underlying-token yield, and rewards by token;
-- user shares, asset-equivalent value, activity/history, and realized/unrealized performance;
-- normal, force-deallocation, and in-kind withdrawal options.
+**Reads:**
 
-Accrual changes share value. For an execution preview, call `vault.getData()` and use the returned accrued Vault V2 entity and conversion helpers. Do not rebuild share math from API snapshots.
+| Exact GET route | Fields / purpose |
+| --- | --- |
+| `/v0/vaults-v2` then `/v0/vaults-v2/{v}` | vault identity, name, asset, fees, `curator`, `decimals_offset` |
+| `/v1/vaults-v2/{v}/state` | `total_assets`, `share_price_ray`, `last_indexed_block` |
+| `/v1/vaults-v2/{v}/apy-averages?lookback=six_hours` | `apy`; map selected `rateWindow` using SKILL.md |
+| `https://api.merkl.xyz/v4/opportunities?chainId={c}&mainProtocolId=morpho&identifier={vaultAddress}&campaigns=true` | opportunity `id`, `status`, `campaigns[]` with `campaignId`; paginate; B2 reward recipe |
+| `/v0/curators/{chainId}:{curator}/details` | `curators[]` → name, `logo_uri` |
+| `/v0/tokens/{s}`, `/v0/tokens/{s}/price` | `symbol`, `decimals`, `logo_uri`, nullable USD `price`; also load vault-share `decimals` |
 
-### Non-standard ERC-4626 max functions
+**Math:** displayed APY = `native` realized APY + Merkl reward APR over the same window (B2). Expected raw `shares` ≈ floor(assetsRaw × 10^shareDecimals × 1e27 / (10^assetDecimals × `share_price_ray`)); this is an indexed estimate, not a minimum receipt. USD = raw `assets` / 10^assetDecimals × USD `price`. Max uses wallet balance, accounting for `native` gas and maximum `native` spend; never POST zero. Show unknown rather than zero for missing `price`/rate.
 
-Vault V2 deliberately returns zero from `maxDeposit`, `maxMint`, `maxWithdraw`, and `maxRedeem`. Zero does **not** mean deposits are disabled, the user owns no shares, or nothing is withdrawable. Obtain position balances and withdrawal options from fresh state, validate gates/caps, and simulate the intended transaction.
+**Action:** `POST /v0/actions/vaults-v2/{v}/deposit`:
 
-## Data-source policy
+~~~json
+{
+  "account":"<wallet>",
+  "amount":{"unit":"assets","value":"<asset-base-units>"},
+  "funding":{"type":"erc20"},
+  "signature_mode":"auto"
+}
+~~~
 
-Use the least stale source appropriate to the decision:
+For wrapped-`native` vaults only, replace `funding` with `{"type":"native","max_native_assets":"<maximum-native-spend>"}` or `{"type":"auto","max_native_assets":"<maximum-native-spend>"}`; `auto` is balance-based, not mixed `funding`. Optional `slippage_bps`, `expires_at`, `calldata_origin` and `referral_fee` follow the shared schema. Preview `simulation.position_changes.vault_shares` and `wallet_changes`. Apply proof verification, `signatures`/`continuation`, final review and ordered `calls` before sending.
 
-1. **`@morpho-org/morpho-sdk`:** primary abstraction for writes and fresh protocol entities. Use `client.morpho.vaultV2(address, chainId)`, `vault.getData()`, the action's `getRequirements()`, and `buildTx(...)`.
-2. **Morpho REST API:** one-vault state, histories, positions, performance, APY, allocations, and withdrawal options when a vault selector is already known.
-3. **Morpho GraphQL API:** indexed discovery/filtering, cross-vault lists, USD analytics, rewards, histories, and aggregate user positions.
-4. **Onchain RPC:** critical fallback and final truth for balances, shares, gates, configuration, and transaction simulation. The API has no SLA and must not be the only dependency for exits.
+**Acceptance:** the APY label states its window ("6h avg") and says rewards are separate when shown; a vault that uses a Midnight liquidity adapter disables deposit with the API's reason.
 
-REST selectors are `<chainId>:<vaultAddress>`. The versioned prefix may evolve; resolve it from the [Core API reference](https://api.morpho.org/core/docs) instead of freezing an old version in a client. The current route families map as follows:
+## B2. Show the position
 
-| Need | REST route family | GraphQL use |
+*As a depositor, I see my balance, the rate I am earning, and how much I have earned so far.*
+
+**Components:** balance `token`/USD; headline Net APY with `native`/reward split; interest earned; per-`token` earned/`pending`/claimable rewards; Total earned with split; non-annualized return on capital; optional history chart; Claim beside Withdraw.
+
+**Reads and Math:**
+
+| Field on screen | Source | Math / presentation |
 | --- | --- | --- |
-| Config and fees | `/vaults-v2/{selector}` | `vaultV2ByAddress` or `vaultV2s` for discovery and metadata |
-| Accrued/live state | `/vaults-v2/{selector}/state` | indexed list/detail analytics; use SDK/onchain before writes |
-| Allocations | `/vaults-v2/{selector}/allocations` | adapters and nested market positions across vaults |
-| Instant APY | `/vaults-v2/{selector}/apy` | native/underlying/reward breakdown across vaults |
-| APY and state history | `/vaults-v2/{selector}/apy/history`, `/state/history` | configurable interval/time-range histories |
-| Realized average APY | `/vaults-v2/{selector}/apy-averages` | comparison and aggregate analytics |
-| Governance/caps | pending-action and caps-history routes | `pendingConfigs`, roles, caps, warnings |
-| Withdrawal planning | `/vaults-v2/{selector}/withdrawal-options` | discovery context only; confirm onchain |
-| User position | `/vaults-v2/{selector}/users/{user}/position` | cross-vault user portfolios and USD values |
-| User activity/history/performance | position activity, history, and performance routes | indexed transaction history and aggregate P&L |
+| Balance (`token`, USD) | `GET /v0/vaults-v2/users/{u}/positions` → selected vault `assets`, `shares` | raw `assets` / 10^assetDecimals × `GET /v0/tokens/{s}/price`; hide zero active positions, not reward claims |
+| **Net APY (headline, default)** | two rows below | `native` APY + reward APR over same window; label "incl. rewards", split tooltip; not compounded rewards |
+| Native APY | `GET /v1/vaults-v2/{v}/apy-averages?lookback=six_hours` → `apy` | fraction, multiply by 100 only for percentage display; null ⇒ "—" |
+| Reward APR | Merkl opportunity call in B1, then `GET /v4/opportunities/{id}/apr-records?from={from}&to={to}&grain=HOUR` | same six hours by default; drop `hasUntrustedContribution`; average retained `avg` × (records kept / 6) / 100, sum across opportunities; never `totalApr` or `nativeApr` |
+| Interest earned to date | `GET /v0/vaults-v2/{v}/users/{u}/position/performance` → `net_earnings_assets` | average-cost realized + unrealized; raw / 10^assetDecimals × asset `price`, not deposits minus withdrawals |
+| **Rewards earned to date ($, default)** | `GET https://api.merkl.xyz/v4/users/{u}/rewards?chainId={c}` → reward `breakdowns[]` scoped to this vault's `campaignId` set | Σ (scoped `amount + pending`) / 10^rewardDecimals × `GET /v0/tokens/{rewardChain}:{rewardToken}/price` |
+| Claimable now | same rewards response; scoped breakdown `amounts` for vault display | `amount − claimed` per `token`; separate `pending`, Claim button; actual `claim` uses full `token` cumulative `amount`/`proofs`, not a scoped subtotal |
+| Total earned ($) | interest USD + scoped rewards USD | always show native/rewards breakdown; unknown component ⇒ "—", never silently undercount |
+| Return on capital | performance → `return_on_capital` | non-annualized; label explicitly |
+| History chart (optional) | `GET /v0/vaults-v2/{v}/users/{u}/position/history`, `GET /v0/vaults-v2/{v}/apy/history` | selected `lookback` chooses chart range, not the averaging window |
 
-Treat these responses as indexed snapshots. Read `last_indexed_block` or equivalent freshness metadata when present; compare it to the chain head for critical views. Label delayed analytics, and refetch after a confirmed transaction rather than assuming the indexer has caught up.
+Use the documented `/v0` user list: the `/v1` list returned empty during research, so its nonempty shape is not verified. Select by chain/vault identity, not `symbol`. Cache/poll as in SKILL.md.
 
-For GraphQL, paginate every connection (`first`/`skip` and `pageInfo`); the default is only the first 100 results. Select only needed fields, split expensive history queries, and inspect `extensions.warnings` for deprecated fields. Cache discovery, metadata, and histories on the backend with purpose-specific TTLs; do not cache user execution state as if current. On `429`, honor `Retry-After`, add jittered backoff, and do not fan out retries. Preserve a read-only onchain exit path if the API is unavailable.
+**Reward rate recipe:** request `from`/`to` Unix seconds spanning the same window as native APY, `grain=HOUR`; paginate (default 100, max 200 records/page), deduplicate hourly timestamps, exclude an extra boundary bucket because bounds are inclusive. Expected counts: 6, 24, 168 for 6h, 24h, 7d. Missing buckets count as uncovered in the brief's coverage-weighted formula; all excluded/empty records ⇒ unavailable, not invented zero. At 30d/90d/1y show native only "excl. rewards". The reference verifies parameters and limited hourly retention; a live hourly sample confirmed `timestamp`, `avg` and `hasUntrustedContribution`. The coverage-weighted formula remains the brief's display convention, not a documented Merkl formula. If records/fields are unavailable, show Net APY "—" and retain native APY.
 
-## Primary transaction pattern
+**Reward attribution:** collect on-chain `campaigns[].campaignId` from `all` opportunities for this vault (including ended `campaigns` for earned-to-date, not just live). Match chain and `breakdowns[].campaignId`, using `opportunityId` as a consistency check. Sum scoped breakdown `amount`, `pending` and `claimed`, not the entire `token` totals: the same reward `token` can include unrelated vaults. Paginate `breakdowns`; unavailable/private/truncated attribution ⇒ unknown, not zero. The legacy endpoint supports `breakdownPage`; for large `users` use Merkl's paginated leaf breakdown route documented in its reference rather than accepting a truncated total. Pending is earned but not in a claimable `root`; `amounts` are cumulative and include `claimed` rewards. Use reward-`token` chain/`decimals`, not the vault underlying's.
 
-Build the extended viem client once with `morphoViemExtension`. The action's `userAddress` must match that client's connected account, and that same client must sign/send the built transaction.
+For large users, paginate `GET /v4/leaves/{recipient}/breakdowns?tokenAddress={token}&distributionChainId={c}&page={page}&items={items}`; see the [leaf breakdown reference](https://developers.merkl.xyz/api-reference/get/v4/leaves/%7Brecipient%7D/breakdowns). Discover each campaign's `distributionChainId`; it can differ from the vault's chain. Query rewards and send claims on the distribution chain, preserving vault campaign attribution.
 
-For every supported action:
+**Rewards by default:** when the vault has a live Merkl campaign, the position card leads with Net APY and Total earned, each with native/rewards split. With no campaign, hide reward rows, not 0. Preserve already earned/claimable rewards from past campaigns and post-exit claims in the rewards/exit surface; no live campaign does not imply no outstanding rewards. When discovery succeeds and no campaign has ever rewarded this vault, Total earned is native interest alone; do not confuse that known absence with a failed rewards fetch.
 
-1. fetch fresh vault and account state;
-2. create the Vault V2 action handle;
-3. await `getRequirements()`;
-4. dispatch each returned approval transaction or collect each requested signature, waiting for prerequisite receipts;
-5. call `buildTx(signatures?)` only after requirements resolve;
-6. simulate the final transaction from the actual account, including `value`;
-7. display a final preview, submit, wait for receipt, and reconcile fresh state.
+**Action:** display/polling sends no POST. User Deposit/Withdraw/Claim clicks route to B1/B3/Claim rewards; never `auto`-transact while loading.
 
-Do not assume requirements are always approvals or always signatures. Do not reuse a requirement set across account, chain, amount, deadline, or material state changes.
+**Acceptance:** earned-to-date uses the performance route, not deposits minus withdrawals; a missing `price` shows the `token` `amount` only.
 
-## Deposit
+**Acceptance (rewards):** reward APR and `native` APY use the same 6-hour window; a `failed` Merkl call shows Net APY as "—" with `native` APY still visible, never `native` APY relabelled as net; rewards $ uses `amount + pending`, claimable uses `amount − claimed`.
 
-Create the entity with `client.morpho.vaultV2(vaultAddress, chainId)` and fetch `vaultData = await vault.getData()`. Use `vault.deposit({ amount, userAddress, vaultData, slippageTolerance })` for the ERC-20 underlying.
+## B3. Exit the position
 
-- `amount` and `slippageTolerance` are bigint fixed-point values; obtain the exact current units from the SDK docs.
-- The SDK routes through Bundler3/GeneralAdapter1, resolves approval or permit requirements, and enforces a forward `maxSharePrice` bound against adverse share-price movement/inflation.
-- Preview assets in, expected shares, the worst acceptable share result implied by the bound, fees, and native transaction value.
-- Refresh `vaultData` if the review step is long-lived or the amount changes materially.
-- Simulate the final authorized transaction. A quote or successful requirement pass is not a simulation.
+*As a depositor, I withdraw some or `all` of my balance and know up front if the vault cannot pay `all` of it right now.*
 
-### Native-token deposit
+**Components:** `amount`/Max/full-position choice, available-now `amount`, before → after `shares`/`assets`, penalty in `token`/USD and net `assets`, normal/force/in-kind choice, received-position disclosure and review; Claim next to Withdraw.
 
-When the vault underlying is the chain's wrapped native token, use the SDK's `nativeAmount` deposit support. It wraps and deposits atomically. Mixed ERC-20 `amount` plus `nativeAmount` is supported when documented by the current SDK.
+**Reads:** `GET /v1/vaults-v2/{v}/state` → `withdrawable_assets` (idle + liquidity-adapter availability); `GET /v0/vaults-v2/{v}/withdrawal-options` → `idle_assets`, `liquidity_adapter_available_assets`, `adapter_penalties[]` with `adapter_address`, `adapter_kind`, `force_deallocatable_assets`, `penalty_rate_wad`. Refresh user `assets`/`shares` and `token` prices. Normal withdrawal with Midnight liquidity adapter can use only idle `assets`.
 
-Reject native input for any other underlying. Keep gas balance separate from the native amount being deposited, show the wrap in the review copy, and send the exact `value` produced by `buildTx`.
+**Math:** available to this user now ≤ min(position `assets`, `withdrawable_assets`), subject to successful simulation. Per-adapter indicative penalty ≈ selected forced `assets` × `penalty_rate_wad / 1e18`; use `simulation.effects.penalty_assets` for the action preview, never multiply the whole exit by an unrelated adapter's rate. Display penalty in `token` terms before signing, plus USD only when priced. Never double-count liquidity-adapter and force-deallocation capacity.
 
-## Liquid exits
+**Action — liquid exit:** `POST /v0/actions/vaults-v2/{v}/withdraw`:
 
-Use the action that matches the user's intent:
+~~~json
+{"account":"<wallet>","amount":{"unit":"all"},"signature_mode":"auto"}
+~~~
 
-- `withdraw({ amount, userAddress })`: request an exact asset amount. This is a direct vault call.
-- `redeem({ shares, userAddress })`: burn an exact share amount. Prefer this for “redeem these shares” and full-share exits because share price cannot change the number of shares burned.
+Partial withdrawal uses `{"unit":"assets","value":"<asset-base-units>"}` (optional `slippage_bps`) or `{"unit":"shares","value":"<raw-shares>"}`; neither `shares` nor `all` accepts `slippage_bps`. All redeems current `shares` rather than an estimated `assets` `amount`. Disclose ordinary withdrawal's lack of on-chain execution-`price` bounds.
 
-Preview both asset and share sides with fresh accrued data, but do not promise the preview as an exact output when the selected action does not guarantee it. Simulate to detect gates or insufficient liquidity. Never derive a “MAX” action from the zero-valued ERC-4626 max functions; use the user's actual share balance and fresh conversion/withdrawal data.
+On `422 INSUFFICIENT_LIQUIDITY` offer available `amount` from validated `details` (the withdrawal route documents it); if absent, refresh state/options and cap against the position. Never silently fail or invent an `amount`. Offer a smaller normal withdrawal first, then supported alternatives.
 
-If a liquid `withdraw` or `redeem` fails because underlying allocations cannot release enough assets, keep the position intact and offer explicit alternatives. Do not repeatedly submit the same doomed transaction.
+**Action — force exit:** `POST /v0/actions/vaults-v2/{v}/force-withdraw`, only after separate penalty consent. Full-position variant:
 
-## Illiquid exits
+~~~json
+{"account":"<wallet>","amount":{"unit":"all"},"max_penalty_bps":0}
+~~~
 
-Illiquidity is a routing state, not a reason to hide or disable exits. Present the available paths and their different outcomes.
+Here 0 means user consents only to penalty-free exits, not a magic general default. Replace with the user's explicit tolerance when needed; full-position requests do not accept `funding`, signature mode, referral fee, or client expiry. Cap is preparation-only, not enforced on chain. If `all` cannot be safely planned, `ACTION_UNSUPPORTED` can require retry with exact `assets` and new consent:
 
-### Force withdraw or force redeem
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<exact-exit-assets>"},"slippage_bps":50,"signature_mode":"auto"}
+~~~
 
-`forceWithdraw` and `forceRedeem` encode ordered `forceDeallocate` calls followed by one withdrawal/redeem inside the Vault V2 multicall. Use SDK-derived adapter/deallocation inputs and fresh state.
+The 50 `bps` sketch is illustrative, not an app default; disclose and obtain the user's tolerance. Assets variant has no `max_penalty_bps`. Its call reverts after `expires_at`; `all` variant has no on-chain deadline. Show `prepared` `residual_shares` and simulated `simulation.effects.remaining_shares`, which can differ; do not promise dust-free force exits.
 
-- Confirm each selected adapter can release the requested assets.
-- For share-based redemption, include a conservative deallocation buffer for share-price drift as directed by the SDK.
-- Preview and disclose any force-deallocation penalty/cost and its payer.
-- Simulate the exact multicall. A deallocation can fail even if an indexed withdrawal-options response looked sufficient.
+**Action — in kind:** `POST /v0/actions/vaults-v2/{v}/redeem-in-kind`:
 
-### In-kind redemption
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<exact-exit-assets>"},"market":"<same-chain-id>:<blue-market-id>","max_penalty_bps":200,"signature_mode":"auto"}
+~~~
 
-Use `vault.inKindRedeem(...)` only when supported on the chain and vault configuration. It burns vault shares, returns idle underlying first, then transfers ordered Morpho Blue supply positions for the illiquid remainder. The user does **not** necessarily receive only the vault's underlying token.
+Do not treat 200 `bps` as blanket consent. It illustrates the schema's conditional 2% coverage requirement: when current penalty <2% and its setter is not abdicated, `max_penalty_bps` is required and must cover 2%, regardless of setter timelock. Obtain explicit worst-case consent. The cap is checked at preparation/`continuation` only, never execution; a queued change can exceed it. Requires an exact `assets` `amount` and a caller-selected **same-chain Blue** market allocated by the vault with enough capacity. No automatic `amount` reduction, `all`, cross-chain market, `funding` or referral fee. Returns idle `assets` plus an illiquid Blue supply position, not all cash. Disclose split, penalty and subsequent position management; re-simulate if stale.
 
-- Use the SDK preview helper to enumerate supported choices and show idle assets, net assets, fee/penalty assets, remaining exit amount, and the market position(s) received.
-- Respect the supported-adapter constraint and registered exit-bundle address. Do not invent a custom equivalent.
-- Size against fresh `previewRedeem(sharesHeld)` and the SDK's rounding buffer; the SDK does not guarantee the user has sufficient shares merely because the action object was created.
-- Await `getRequirements()` so deadline, Blue balance, allowance, nonce, adapter, and coverage checks run. Still simulate the final authorized transaction because gates and snapshot drift can fail onchain.
-- Explain that transferred Blue supply positions may themselves be illiquid and require later withdrawal as liquidity returns.
+Vaults containing a Midnight adapter do not support force-withdraw or `redeem-in-kind`. Respect other unsupported-vault reasons; never present these as guaranteed fallbacks.
 
-## APY, fees, and rewards
+**Acceptance:** Max withdraws the full position with `unit: all`, leaving no dust on a supported liquid exit; a partial-liquidity case never fails silently and always shows the penalty in `token` terms before a force exit. Verify remaining `shares` rather than promising dust-free force exits. After full exit, hide zero active rows and preserve Claim access.
 
-Display components without silently summing unlike concepts:
+## Claim rewards — separate step
 
-- **native vault APY:** variable return from current allocations, net of the performance/management-fee treatment documented by the chosen source;
-- **underlying-token yield:** separate when the deposit asset itself is yield-bearing;
-- **rewards:** APR per named reward token, with campaign/end/claim information when available;
-- **fees:** performance fee, management fee, recipients, and any integrator fee, each separately labeled.
+Withdrawal does not `claim` rewards. Already earned rewards can remain `pending` and become claimable after full exit; do not imply a withdrawn position keeps earning new rewards indefinitely. Offer Claim next to Withdraw and in the post-exit wallet view. Actions has no `claim` route; build this transaction from Merkl `data`.
 
-Use instant APY for a current snapshot and realized/historical endpoints for backward-looking performance. Label the window and do not market historical performance as a forecast. Rewards data is indexed and may come from an external distribution system through Morpho; do not describe rewards as guaranteed interest.
+**Components:** claimable list per `token` (`amount`, USD), Claim all button, `pending` line "{x} more becomes claimable at the next Merkl update". Brief's "~8 h" cadence remains **open/unverified**; current docs say `pending` updates ~2 h, not the `root` schedule. Disable empty claims and show separate loading/error states.
 
-## Position and UX requirements
+**Reads:** `GET https://api.merkl.xyz/v4/users/{u}/rewards?chainId={c}` → chain `id` and `rewards[]` with `recipient`, `token.address`, `token.chainId`, `token.decimals`, `amount`, `claimed`, `pending`, `distributionLayer`, `proofs`. Inspect [rewards reference](https://developers.merkl.xyz/api-reference/get/v4/users/%7Baddress%7D/rewards). Match wallet and selected distribution chain; do not `claim` other `users`' entries.
 
-Across browse, detail, review, confirmation, and portfolio surfaces:
+**Math:** claimable = `amount − claimed`; earned-to-date = `amount + pending`. For this vault's card use scoped `breakdowns` (B2); for the chain-wide `claim` use full cumulative `token` values. Do not change an `amount` to a vault subtotal while retaining its proof. Label Claim all as `all` eligible `tokens` on the chain, including other `campaigns` where present.
 
-- keep vault name, chain, underlying asset, and Morpho attribution visible;
-- label APY variable and show its components and data timestamp/block;
-- name the curator and link to allocation/collateral exposure and material warnings;
-- distinguish TVL, user position value, idle assets, and currently withdrawable assets;
-- show receipt shares where useful without making the receipt-token symbol the product name;
-- provide deposit, normal exit, and illiquid-exit recovery paths;
-- after submission, show pending/confirmed/failed state and reconcile the actual shares/assets from fresh data.
+**Action:** retain only standard ERC-20 `TREE` entries where `amount > claimed` and `proofs` is non-empty. Exclude `LEDGER` (empty `proofs` by design), points, and unsupported pre-token/wrapper flows; name them as unsupported rather than failing the batch. Do not conclude every excluded zero-claim entry would revert; a mismatched leaf/proof can revert the whole batch with `InvalidProof`.
 
-Before the user's first transaction, require an unavoidable acknowledgment covering the integrator's terms, the [Morpho disclaimer](https://morpho.org/disclaimers/), smart-contract/curator/market/oracle/liquidity/reward risks, and the non-guaranteed variable nature of yield. Use the official Powered by Morpho asset on the detail, review, confirmation, and position surfaces; do not redraw the brand mark.
+ABI: `claim(address[] users, address[] tokens, uint256[] amounts, bytes32[][] proofs)` on the Merkl Distributor, commonly `0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae` on EVM chains, **not universally**. Verify the selected chain's deployment via Merkl chain contract metadata before enabling send; `address` confirmation is open where unavailable. Keep this ABI inline; do not link to non-reference tutorials/contracts.
 
-## Safety and release checks
+Set `users[i]` to the wallet, `tokens[i]` to `token.address`, `amounts[i]` to the cumulative `amount` (not claimable difference), `proofs[i]` unchanged. Arrays must align. ABI-encode one batch, simulate, review every `token`/delta, send from the user's own wallet on that chain, wait for receipt. Do not implement operator/`recipient`-management changes silently. Authorized operators exist, but this integration uses the wallet; configured `claim` recipients can redirect receipt, so do not promise wallet balance rises without checking.
 
-- No hardcoded vault facts, APYs, rewards, fees, liquidity, or allocations.
-- No use of Vault V2 max functions as availability signals.
-- No raw `Number`/floating-point conversion of token amounts or share math.
-- No supported transaction assembled by hand when the primary SDK has an action.
-- No `buildTx` before all requirements resolve; no send before final simulation.
-- No unqualified “withdraw anytime,” “guaranteed,” “risk-free,” “staking,” “fund,” or “investment” language.
-- No silent fallback from a liquid exit to a force or in-kind exit.
-- API pagination, caching, `429`/`Retry-After`, deprecation warnings, freshness, and onchain fallback are implemented and testable.
+After confirmation refetch rewards with `reloadChainId={c}` to bypass the cache (normal indexing may lag ~5 min); use this bypass only after claims, not every poll. Refresh wallet balances; keep `pending` state until reconciled. Root/proof change ⇒ refresh and review, never silently retry the old `claim`.
+
+**Acceptance:** after `claim` confirms and reads reconcile, claimable drops to 0 and the wallet balance rises by that `amount` for the default `recipient` and standard ERC-20 rewards; disclose configured-`recipient` exceptions. Withdraw all ends with "You still have {x} in rewards to claim" when claimable > 0; `claim` works on a wallet that has already fully withdrawn.
+
+## Vault V1 compatibility — same stories, versioned contracts
+
+Use the same B1 deposit, B2 display/performance/rewards, B3 liquid exit and Claim stories, never substitute V2 state/`price` math blindly. Reference [V1 config](https://docs.morpho.org/api/vaults-v1/get-v1-vault/), [state](https://docs.morpho.org/api/vaults-v1/get-v1-vault-state/), [average APY](https://docs.morpho.org/api/vaults-v1/get-v1-vault-realized-average-apy/), [positions](https://docs.morpho.org/api/vaults-v1/list-user-v1-vault-positions/).
+
+| Need | V1 route |
+| --- | --- |
+| Discovery/config | `GET /v0/vaults-v1`, `GET /v0/vaults-v1/{v}` |
+| State/APY | `GET /v0/vaults-v1/{v}/state`, `GET /v0/vaults-v1/{v}/apy-averages?lookback=six_hours` |
+| Positions/performance | `GET /v0/vaults-v1/users/{u}/positions`, `GET /v0/vaults-v1/{v}/users/{u}/position/performance` |
+| History | `GET /v0/vaults-v1/{v}/users/{u}/position/history`, `GET /v0/vaults-v1/{v}/apy/history` |
+| Deposit/withdraw | `POST /v0/actions/vaults-v1/{v}/deposit`, `POST /v0/actions/vaults-v1/{v}/withdraw` |
+
+Deposit body uses `assets`/`funding`/`auto` as B1; withdrawal accepts `assets`/`shares`/`all` with `auto` as B3. Only V1 action chains listed in SKILL.md are supported. Do not copy V2 force-withdraw/`redeem-in-kind` routes or V2 max-function behavior onto V1; no such V1 Actions fallback is documented. Merkl attribution/`claim` rules remain the same, using the V1 vault `address`.
+
+V1 deposit request:
+
+~~~json
+{"account":"<wallet>","amount":{"unit":"assets","value":"<asset-base-units>"},"funding":{"type":"erc20"},"signature_mode":"auto"}
+~~~
+
+V1 full liquid exit request:
+
+~~~json
+{"account":"<wallet>","amount":{"unit":"all"},"signature_mode":"auto"}
+~~~
