@@ -1,4 +1,8 @@
-# Full Earn integration review
+# Morpho integration review
+
+Apply shared sections and only the selected product’s scoped sections. Read only its product references; preserve separate product/version verdicts.
+
+## Scope
 
 Use for audit, QA, pre-launch or full review. **Review-only:** do not edit code, copy, configuration or external state unless fixes are separately requested. Do not execute dangerous transactions to manufacture evidence; use controlled fixtures and label them.
 
@@ -6,7 +10,13 @@ Reference sources: [REST](https://docs.morpho.org/api/), [Actions](https://api.m
 
 ## 1. Classify scope
 
+### Earn
+
 Default to Vault V2; include Vault V1 only when requested or evidenced. Read [vault-v2.md](vault-v2.md), including compatibility routes/chains. Identify chain + vault address, asset, curator and selected version; do not silently substitute direct Blue supply. Grade V1 separately when present; V2-only force/in-kind criteria are `N-A` for V1, not missing V1 features.
+
+### Borrow — Blue and Midnight
+
+Classify artifacts as Blue (variable/no maturity), Midnight (fixed rate/fixed maturity), or both. Midnight is not restricted to one chain: Actions supports `1, 4663, 5042, 8453`. Read [blue.md](blue.md) and/or [midnight.md](midnight.md). Unknown product ⇒ `UNVERIFIED` pending identity evidence. Tag shared artifacts; never transfer a Blue verdict to Midnight or collapse both into one verdict.
 
 ## Verdict semantics
 
@@ -21,8 +31,6 @@ Default to Vault V2; include Vault V1 only when requested or evidenced. Read [va
 
 Inventory routes/screens/copy for every scoped story, REST/Merkl clients and response artifacts, backend key handling, copied Actions helper/proof path, signature/continuation/send/receipt traces, math/rate utilities, cache/retry code, tests/fixtures and runtime screenshots. Missing UI/runtime evidence cannot be replaced by a successful build.
 
-When delegation is available, run one read-only worker per checker **in parallel**. Supply artifact paths, scope, known runtime limits and these verdict semantics. Require the worker to read its entire prompt and current skill/reference, stay within owned checks, make no edits and return evidence tables, separately for each scoped vault version.
-
 1. [vocabulary-compliance.md](checkers/vocabulary-compliance.md)
 2. [attribution-compliance.md](checkers/attribution-compliance.md)
 3. [disclosure-compliance.md](checkers/disclosure-compliance.md)
@@ -34,9 +42,15 @@ When delegation is available, run one read-only worker per checker **in parallel
 
 If delegation is unavailable run all eight sequentially; never skip after an early failure. Downgrade unsupported `PASS` or unlocated `FAIL` to `UNVERIFIED`. Deduplicate findings without erasing checker-owned verdicts.
 
-## 3. Shared contract and forced-failure matrix
+### Earn
 
-Evaluate these rows yourself after the checkers; checker summaries are not acceptance proof. Use independent V2/V1 applicability when both are present. Fill every row with verdict, evidence, impact and smallest fix; initial `UNVERIFIED` is a placeholder, not a reviewed result.
+When delegation is available, run one read-only worker per checker **in parallel**. Supply artifact paths, scope, known runtime limits and these verdict semantics. Require the worker to read its entire prompt and current skill/reference, stay within owned checks, make no edits and return evidence tables, separately for each scoped vault version.
+
+### Borrow — Blue and Midnight
+
+When delegation is available, run one read-only worker per checker **in parallel**. Supply artifact paths, scope, known runtime limits and these verdict semantics. Require the worker to read its entire prompt and current skill/reference, stay within owned checks, make no edits and return evidence tables separately for Blue and Midnight.
+
+## 3. Shared contract and forced-failure matrix
 
 | ID | Priority | Acceptance criterion | Verdict | Evidence / impact / smallest fix |
 | --- | --- | --- | --- | --- |
@@ -58,6 +72,15 @@ Evaluate these rows yourself after the checkers; checker summaries are not accep
 | CON-16 | Recommended | Cache metadata/config, paginate full lists, respect 750 requests/min/IP and 30–60 s position polling. Reads and Actions POSTs retry only HTTP 429/503 with bounded exponential backoff/jitter (≤3 retries), respecting `Retry-After` seconds/HTTP-date; no other 4xx retries or wallet auto-resubmission. Exercise non-JSON/empty errors and exhaustion without a JSON-parser crash. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | CON-17 | Critical | Reference pointers are restricted to REST API pages, Actions docs/OpenAPI and Merkl API references. No obsolete read/write integration workflow or tutorial pointer replaces the current contract. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | FORCE-01 | Critical | Force insufficient wallet balance: show “Not enough {token} in your wallet.” with balance, disable confirmation and send nothing. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+
+### Earn
+
+Evaluate these rows yourself after the checkers; checker summaries are not acceptance proof. Use independent V2/V1 applicability when both are present. Fill every row with verdict, evidence, impact and smallest fix; initial `UNVERIFIED` is a placeholder, not a reviewed result.
+
+Actions-only contract rows apply to Actions transactions, not the separate Merkl Distributor claim. For Claim, grade the explicit claim rows and shared source/consent/simulation/reconciliation rules; do not demand a nonexistent Actions endpoint or action-response proof.
+
+| ID | Priority | Acceptance criterion | Verdict | Evidence / impact / smallest fix |
+| --- | --- | --- | --- | --- |
 | FORCE-02 | Critical | Reach shortfall UI without a funded wallet using a dev-only non-signing fixture/override. Show what can leave now, smaller withdrawal, supported force-withdraw with maximum penalty and redeem-in-kind with positions received; explain unavailable alternatives. Unknown availability is not invented; preserve explicit consent. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | FORCE-03 | Critical | Force an expired action: stop before signing/sending, discard continuation, fetch a new action and require confirmation. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | EARN-01 | Critical | Use verified V2 versions: `/v1` state/APY averages; `/v0` config, positions, performance, history, withdrawal-options; curator `/details`. User positions use the published GET `/v0/vaults-v2/users/{user-address}/positions`, not a version inferred from state routes. V1 uses its own `/v0/vaults-v1` reads and deposit/withdraw Actions chain list. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
@@ -71,9 +94,28 @@ Evaluate these rows yourself after the checkers; checker summaries are not accep
 | OPEN-CADENCE | Recommended | Open: root-update “~8 h” cadence is unverified; pending ~2 h is not claimable-root timing. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | OPEN-DISTRIBUTOR | Recommended | Open: chain-specific Distributor deployment/configured recipient where evidence is unavailable; no universal address or wallet receipt guarantee. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 
-Actions-only contract rows apply to Actions transactions, not the separate Merkl Distributor claim. For Claim, grade the explicit claim rows and shared source/consent/simulation/reconciliation rules; do not demand a nonexistent Actions endpoint or action-response proof.
+### Borrow — Blue and Midnight
+
+Evaluate these rows yourself after the checkers; checker summaries are not acceptance proof. Apply common rows independently to Blue and Midnight; mark product-specific rows N-A only with scope evidence. Fill every row with verdict, evidence, impact and smallest fix; initial `UNVERIFIED` is a placeholder, not a reviewed result.
+
+| ID | Priority | Acceptance criterion | Verdict | Evidence / impact / smallest fix |
+| --- | --- | --- | --- | --- |
+| FORCE-02 | Critical | Force liquidity shortfall: show known availability, offer smaller amount and product-specific alternatives; unknown availability is not invented; preserve explicit consent. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| FORCE-03 | Critical | Using a controlled clock/response fixture, exercise the signing UI at 61 s and 59 s remaining: at ≤60 s disable signing, show “Action expiring — restart required” and a Restart action control. Verify restart discards continuation, fetches a new action and requires confirmation; expired actions never send. A dead helper is not evidence. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BOR-01 | Critical | Blue identity uses exact market ID/params, not pair symbols. Blue/token selectors are chain-prefixed; Midnight REST IDs are bare, Actions selectors are `{chain_id}:{market_id}`. Enforce each Actions chain list. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BOR-02 | Critical | Oracle `price` scales by 1e36; Blue debt shares→assets round up using virtual +1 assets/+10^6 shares, supply rounds down. Midnight units are debt at maturity; rate guards are WAD per-second, cost basis WAD-scaled. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BOR-03 | Critical | Single `rateWindow` controls Blue realized averages and Merkl buckets; null window stays unknown, never instant/fallback. Midnight fixed rates ignore it. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BOR-04 | Critical | Health uses LTV/LLTV and before→after, multi-collateral capacity uses weighted LLTV. Proposed bands remain labeled proposed. Bids for borrow, asks for early repay; direct repay fallback is explicit, never silently selected. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-BANDS | Recommended | Open: thresholds, color tokens/copy and empty-state parity remain `UNVERIFIED` until app-team design evidence; test band-change mechanics with labeled fixtures. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-MAX | Recommended | Open: numeric Max buffer below LLTV must match Actions; missing published value is `UNVERIFIED`, not invented. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-BLUE-FEED | Recommended | Open for Blue: history collateral drop without a user withdrawal is only an interim signal, not proof of liquidation/date/seized amounts. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-COST-BASIS | Recommended | Open for Midnight: interest-owed accounting interpretation of `cost_basis`, despite known WAD scaling. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-ROLL | Recommended | Open: rolling Midnight into Blue/Midnight and margin are not silently required shipped flows. Roll events are not liquidation events. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| OPEN-MERKL | Recommended | Open: Merkl recipe/schema confirmation remains as scoped by the Borrow skill; missing confirmation is not proof the vendor guarantees the formula. Any surfaced ~8 h root cadence remains unverified; do not invent a schedule. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 
 ## 4. Earn story acceptance matrix
+
+### Earn
 
 Read source acceptance in [vault-v2.md](vault-v2.md). `B2-rewards` rows are the separate rewards acceptance block. Apply the same stories to scoped V1 with verified route substitutions, not V2-only exits.
 
@@ -95,9 +137,67 @@ Read source acceptance in [vault-v2.md](vault-v2.md). `B2-rewards` rows are the 
 | EARN-Claim-03 | Critical | Withdraw all prompts “You still have {x} in rewards to claim” when claimable > 0. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 | EARN-Claim-04 | Critical | Claim works after full withdrawal. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 
+## 4. Blue story acceptance matrix
+
+### Borrow — Blue and Midnight
+
+Evaluate each clause separately; read source acceptance in [blue.md](blue.md).
+
+| ID | Priority | Acceptance criterion | Verdict | Evidence / impact / smallest fix |
+| --- | --- | --- | --- | --- |
+| BLU-A1-01 | Critical | Preview matches `simulation.position_changes` applied as deltas. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1-02 | Critical | Max does not promise a rejection-free amount while the Actions health buffer is open; unavailable numeric-buffer evidence stays `UNVERIFIED`, not invented. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1-03 | Critical | Amounts above known available liquidity are blocked before POST; sending requires successful simulation. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1b-01 | Critical | Slider, LTV input and loan amount always agree. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1b-02 | Critical | Thumb cannot pass the max; liquidity-limited movement stops with “Only {x} available to borrow now”. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1b-03 | Critical | Preview LTV matches the LTV implied by `simulation.position_changes` within 0.1 pp. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1b-04 | Critical | Changing collateral re-solves borrowing at the same target LTV. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A1b-05 | Critical | Safe-Max numeric-buffer evidence remains explicitly open until verified. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A2-01 | Critical | No debt shows “No debt”, not health infinity. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A2-02 | Critical | Null oracle/token price shows “—” and disables actions that require it. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A3-01 | Critical | An alert fires on a band change, never more than once per change, and links directly to A4. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A4-01 | Critical | Confirmation refreshes the screen and clears the band without manual reload only when the target is reached. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A4-02 | Critical | Pending remains until indexed state reconciles; a missed target is explained rather than falsely clearing the band. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A5-01 | Critical | Full exit hides zero-debt/zero-collateral positions from the active list even when an indexed row remains. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A5-02 | Critical | Released collateral appears in wallet balance. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A5-03 | Critical | Pending remains until position and wallet reconcile; debt dust prevents a full-exit success claim. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A6-01 | Critical | With verified liquidation evidence, persistent banner shows date, seized collateral, debt cleared, remaining amounts and safe remaining-collateral withdrawal. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| BLU-A6-02 | Critical | With only the interim history signal, show possible liquidation and unknown event details; exact-event acceptance stays `UNVERIFIED` (API gap). | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+
+## 5. Midnight story acceptance matrix
+
+### Borrow — Blue and Midnight
+
+Read source acceptance in [midnight.md](midnight.md). For mixed apps retain independent verdict/evidence columns per product.
+
+| ID | Priority | Acceptance criterion | Verdict | Evidence / impact / smallest fix |
+| --- | --- | --- | --- | --- |
+| MID-A1-01 | Critical | Preview matches `simulation.position_changes` applied as deltas. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1-02 | Critical | Do not promise rejection-free Max until the Actions health buffer is verified (open). | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1-03 | Critical | Too-large borrowing is blocked using the bids quote before POST; never send a failed simulation. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1b-01 | Critical | Slider, LTV input and loan amount always agree. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1b-02 | Critical | Thumb cannot pass the max; liquidity-limited movement stops with “Only {x} available to borrow now”. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1b-03 | Critical | Preview LTV matches the LTV implied by `simulation.position_changes` within 0.1 pp. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1b-04 | Critical | Changing collateral re-solves borrowing at the same target LTV. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A1b-05 | Critical | Safe-Max numeric-buffer evidence remains explicitly open until verified. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A2-01 | Critical | No debt shows “No debt”, not health infinity. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A2-02 | Critical | Null oracle/token price shows “—” and disables actions that require it. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A2-03 | Critical | Interest owed stays unknown/`UNVERIFIED` until `cost_basis` accounting is resolved; do not fabricate principal. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A3-01 | Critical | An alert fires on a band change, never more than once per change, and links directly to A4. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A3-02 | Critical | Maturity alerts fire at −7d, −1d and maturity once each. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A3-03 | Critical | Unknown health is not reported healthy. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A4-01 | Critical | Confirmation refreshes the screen and clears the band without manual reload when target is reached. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A4-02 | Critical | Re-poll until indexed changes reconcile; explain a missed target rather than falsely clearing the band. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A5-01 | Critical | Full exit disappears from the active list when debt, credit and collateral are zero, with released collateral in wallet. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A5-02 | Critical | Early-exit screen always shows market cost/price and direct face-value alternative. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A5-03 | Critical | Re-poll indexed state and inspect residual debt; do not declare full exit from receipt alone. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A6-01 | Critical | Verified liquidation shows persistent date, seized collateral, cleared debt and remaining amounts, plus safe remaining-collateral withdrawal. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A6-02 | Critical | Empty events show no liquidation, not fabricated event data. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
+| MID-A6-03 | Critical | Transaction history remains available after the active position disappears. | `UNVERIFIED` | Supply artifact or justify `N-A`. |
 ## Red-flag pass
 
 Search every supplied data/action path and rendered state, even if a checker found nothing:
+
 - Hand-built calldata where an Actions route exists; sending without verified proof, after `simulation_failed`, with modified/reordered calls, or with mismatched account/chain.
 - API key in browser/bundle, logs containing secrets/signatures, unbounded signature rounds, ≤60 s remaining at signing, expired continuation reuse or blind wallet resubmission.
 - Displayed protocol numbers from a non-REST path, or indexed snapshots treated as atomic execution truth.
@@ -108,13 +208,30 @@ Search every supplied data/action path and rendered state, even if a checker fou
 
 A confirmed red flag is Critical `FAIL` for the affected product, with evidence. Missing artifacts are `UNVERIFIED`. Open design/API values alone are not red flags.
 
+### Earn
+
 Earn red flags: V2 zero-max gating; unsupported Midnight-adapter deposit/force exit; in-kind described as all cash; penalty cap presented as on-chain protection; wrong campaign totals/proofs; expired/stale claim proof reuse; post-exit Claim hidden.
+
+### Borrow — Blue and Midnight
+
+Product-specific red flags: wrong bid/ask side; chain fixed to one Midnight network; fabricated liquidation event from Blue snapshots; missing maturity/repay path; mixed fixed/variable rate labels; residual debt called closed; unsupported `unit: all` on Midnight market repay.
 
 ## Final report
 
 Return in this order:
+
 1. **Scope classification and evidence limits:** named products, versions/chains, surfaces, runtime checks, fixtures and missing artifacts.
+
+### Step 2 — Earn
+
 2. **Product verdicts:** `PASS`/`FAIL`/`UNVERIFIED`, V2 and scoped V1 separately, Critical/Recommended counts; distinguish unresolved open rows.
+
+### Step 2 — Borrow
+
+2. **Product verdicts:** `PASS`/`FAIL`/`UNVERIFIED`, Blue and Midnight separately, Critical/Recommended counts; distinguish unresolved open rows.
+
+### Steps 3–8 — shared
+
 3. **Critical findings:** ordered by user-loss/compliance risk, row/checker ID, exact evidence, impact and smallest fix.
 4. **Recommended findings:** same structure.
 5. **Acceptance matrices:** every applicable contract, forced-failure and story row, including passes, open and `N-A` reasons.

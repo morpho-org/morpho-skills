@@ -1,6 +1,16 @@
-# Earn attribution checker
+# Attribution compliance — Earn and Borrow
+
+Apply shared sections and only the selected product’s scoped sections. Read only its product references; preserve separate product/version verdicts.
+
+## Scope
+
+### Earn
 
 Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Vault V2 and explicitly scoped V1 compatibility; keep version-specific applicability separate. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [vault-v2.md](../vault-v2.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
+
+### Borrow — Blue and Midnight
+
+Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Blue, Midnight or both; return independent Blue/Midnight verdicts. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [blue.md](../blue.md) / [midnight.md](../midnight.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
 
 ## Owned checks
 
