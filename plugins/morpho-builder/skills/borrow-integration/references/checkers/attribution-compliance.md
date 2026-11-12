@@ -9,7 +9,7 @@ Read-only. Review only owned criteria below; do not edit artifacts or external s
 | Official asset | Critical | Use the official Powered by Morpho badge/web component or current official asset, not a redrawn or text-only imitation. |
 | Interaction surfaces | Critical | Attribution is visible on detail, review, confirmation/status and position/manage/exit surfaces, including degraded and mobile states. |
 | Role accuracy | Critical | Morpho Association is not presented as lender, custodian, guarantor, counterparty, risk assessor or curator without concrete role evidence; protocol attribution is not an endorsement. |
-| Calldata attribution | Critical | If attribution is configured, pass `calldata_origin` as four-byte hex only on accepting intents; it is analytics, not authentication. Absence of optional attribution is `N-A` with reason, not an invented mandatory tag. |
+| Calldata attribution | Critical | Inspect every initial Actions intent body for top-level `calldata_origin`, a configured four-byte hex string (e.g. `0x25afea44`), not a header or nested field. API-optional but integration-required: missing configuration/tag blocks launch; test missing and malformed tags. Continuations retain their continuation-only schema. This is analytics, not authentication. |
 | Referral disclosure | Critical | Where accepted, `referral_fee` is `{bps,recipient}` with integer `bps` 1–200; disclose recipient, fee token/cost and gross vs net receipt. Omit zero; do not inject unsupported fields or modify returned calls. |
 | Persistent identity | Recommended | Product name, chain and exact market/vault identity persist through action/position states; receipt symbols do not replace identity. |
 
