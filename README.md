@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered Earn and Borrow products. The skills use the Morpho REST read API for displayed protocol data, the Actions API for vault and borrowing transactions, and Merkl for reward rates, balances, and Distributor claims. They include product-specific UI/UX, protocol math, disclosures, attribution, and pre-launch review.
+For teams building or reviewing Morpho-powered Earn and Borrow products. The integration skill uses the Morpho REST read API for displayed protocol data, the Actions API for vault and borrowing transactions, and Merkl for reward rates, balances, and Distributor claims. It includes product-specific UI/UX, protocol math, disclosures, attribution, and pre-launch review.
 
 | Product | Skill |
 | --- | --- |
-| Earn — Morpho Vault V2, with Vault V1 compatibility | `earn-integration` |
-| Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `borrow-integration` |
+| Earn — Morpho Vault V2, with Vault V1 compatibility | `morpho-integration` |
+| Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
 
-Each skill has build/update and review modes. Earn defaults to Vault V2, including deposits, position performance, liquid and illiquid exits, and separate Merkl reward claims. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under its skill's `references/checkers/` directory. Actions API keys stay server-side; browser requests go through the integrator's backend. The skills provide guidance, not a transaction execution service.
+The skill has build/update and review modes. Read only the selected product's references. Earn defaults to Vault V2, including deposits, position performance, liquid and illiquid exits, and separate Merkl reward claims. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under `morpho-integration/references/checkers/`. Actions API keys stay server-side; browser requests go through the integrator's backend. The skill provides guidance, not a transaction execution service.
 
 ### morpho-mcp
 
@@ -56,20 +56,17 @@ For just the server connection, without the bundled skill, use `codex mcp add mo
 npx skills add morpho-org/morpho-skills
 ```
 
-`npx skills` detects supported hosts and installs the two standalone skills. The root entries under `skills/` remain symlinks to the self-contained plugin copies, so both installation paths expose the same entrypoint, product references, review orchestrator, and checker fleet.
+`npx skills` detects supported hosts and installs the standalone integration skill. The root entry under `skills/` remains a symlink to the self-contained plugin copy, so both installation paths expose the same entrypoint, product references, review orchestrator, and checker fleet.
 
 ## Development
 
-Product guidance is maintained directly with each public skill:
+Product guidance is maintained in one public integration skill:
 
 ```text
 plugins/morpho-builder/skills/
-├── earn-integration/
-│   ├── SKILL.md
-│   └── references/{vault-v2.md,review.md,checkers/...}
-└── borrow-integration/
+└── morpho-integration/
     ├── SKILL.md
-    └── references/{blue.md,midnight.md,review.md,checkers/...}
+    └── references/{vault-v2.md,blue.md,midnight.md,review.md,checkers/...}
 ```
 
-Maintain each skill in place and keep Earn and Borrow references product-specific; do not copy generic reference files between them. Validate both skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
+Keep Earn, Blue and Midnight references product-specific; maintain shared contracts and checker rows once. Validate the skill directory after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
