@@ -1,27 +1,17 @@
 # Attribution compliance — Earn and Borrow
 
-Apply shared sections and only the selected product’s scoped sections. Read only its product references; preserve separate product/version verdicts.
-
-## Scope
-
-### Earn
-
-Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Vault V2 and explicitly scoped V1 compatibility; keep version-specific applicability separate. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [vault-v2.md](../vault-v2.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
-
-### Borrow — Blue and Midnight
-
-Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Blue, Midnight or both; return independent Blue/Midnight verdicts. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [blue.md](../blue.md) / [midnight.md](../midnight.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
+Read-only: review only owned criteria; do not edit code, copy, configuration, artifacts or external state. Read [SKILL.md](../../SKILL.md), [review.md](../review.md) and only the selected product references: [Vaults](../vault-v2.md), [Blue](../blue.md), [Midnight](../midnight.md), completely for applicable contracts/stories. Grade scoped V2/V1 compatibility, Blue and Midnight separately; V2-only illiquid actions do not apply to V1, and shared helpers do not imply shared correctness. The current skill/reference is the source of truth; do not infer missing design values.
 
 ## Owned checks
 
-| Check | Priority | Pass condition |
-| --- | --- | --- |
-| Official asset | Critical | Use the official Powered by Morpho badge/web component or current official asset, not a redrawn or text-only imitation. |
-| Interaction surfaces | Critical | Attribution is visible on detail, review, confirmation/status and position/manage/exit surfaces, including degraded and mobile states. |
-| Role accuracy | Critical | Morpho Association is not presented as lender, custodian, guarantor, counterparty, risk assessor or curator without concrete role evidence; protocol attribution is not an endorsement. |
-| Calldata attribution | Critical | Inspect every initial Actions intent body for top-level `calldata_origin`, a configured four-byte hex string (e.g. `0x25afea44`), not a header or nested field. API-optional but integration-required: missing configuration/tag blocks launch; test missing and malformed tags. Continuations retain their continuation-only schema. This is analytics, not authentication. |
-| Referral disclosure | Critical | Where accepted, `referral_fee` is `{bps,recipient}` with integer `bps` 1–200; disclose recipient, fee token/cost and gross vs net receipt. Omit zero; do not inject unsupported fields or modify returned calls. |
-| Persistent identity | Recommended | Product name, chain and exact market/vault identity persist through action/position states; receipt symbols do not replace identity. |
+| Scope | Check | Priority | Pass condition |
+| --- | --- | --- | --- |
+| All | Official asset | Critical | Use the official Powered by Morpho badge/web component or current official asset, not a redrawn or text-only imitation. |
+| All | Interaction surfaces | Critical | Attribution is visible on detail, review, confirmation/status and position/manage/exit surfaces, including degraded and mobile states. |
+| All | Role accuracy | Critical | Morpho Association is not presented as lender, custodian, guarantor, counterparty, risk assessor or curator without concrete role evidence; protocol attribution is not an endorsement. |
+| All | Calldata attribution | Critical | Inspect every initial Actions intent body for top-level `calldata_origin`, a configured four-byte hex string (e.g. `0x25afea44`), not a header or nested field. API-optional but integration-required: missing configuration/tag blocks launch; test missing and malformed tags. Continuations retain their continuation-only schema. This is analytics, not authentication. |
+| All | Referral disclosure | Critical | Where accepted, `referral_fee` is `{bps,recipient}` with integer `bps` 1–200; disclose recipient, fee token/cost and gross vs net receipt. Omit zero; do not inject unsupported fields or modify returned calls. |
+| All | Persistent identity | Recommended | Product name, chain and exact market/vault identity persist through action/position states; receipt symbols do not replace identity. |
 
 ## Evidence procedure
 

@@ -1,43 +1,19 @@
 # Disclosure compliance — Earn and Borrow
 
-Apply shared sections and only the selected product’s scoped sections. Read only its product references; preserve separate product/version verdicts.
-
-## Scope
-
-### Earn
-
-Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Vault V2 and explicitly scoped V1 compatibility; keep version-specific applicability separate. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [vault-v2.md](../vault-v2.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
-
-### Borrow — Blue and Midnight
-
-Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Blue, Midnight or both; return independent Blue/Midnight verdicts. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [blue.md](../blue.md) / [midnight.md](../midnight.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
+Read-only: review only owned criteria; do not edit code, copy, configuration, artifacts or external state. Read [SKILL.md](../../SKILL.md), [review.md](../review.md) and only the selected product references: [Vaults](../vault-v2.md), [Blue](../blue.md), [Midnight](../midnight.md), completely for applicable contracts/stories. Grade scoped V2/V1 compatibility, Blue and Midnight separately; V2-only illiquid actions do not apply to V1, and shared helpers do not imply shared correctness. The current skill/reference is the source of truth; do not infer missing design values.
 
 ## Owned checks
 
-| Check | Priority | Pass condition |
-| --- | --- | --- |
-| First-use gate | Critical | Before the first transaction, actively acknowledge integrator terms, Morpho disclaimer and product risks. No preselected checkbox or bypass via deep link, remembered state, alternate wallet/action or direct route. |
-| Review and consent | Critical | Explain account/chain, amounts, before→after position and wallet deltas, signatures, calls, gas, fees and deadline before wallet prompts. Label final calls pending until available; final call review precedes send. |
-| Changed outcome | Critical | No silent fallback changes action, guard, slippage, repayment mode, penalty tolerance, received assets/positions or recipient. Material changes require renewed review/consent. |
-| Privacy and record | Recommended | Acknowledgment version/time is auditable without logging secrets, raw signatures or unnecessary wallet data. Missing runtime gate evidence is `UNVERIFIED`, not a pass. |
-
-### Earn
-
-| Check | Priority | Pass condition |
-| --- | --- | --- |
-| Vault risks | Critical | Cover variable/non-guaranteed yield, contracts, curator/configuration/adapters, underlying markets/oracles, liquidity, vault/integrator fees and reward eligibility/variability. |
-| Deposit/withdraw protection | Critical | Native wrap, amount/shares, vault/asset, fees and expiry are visible. Ordinary withdraw has no execution-time maximum-share/minimum-assets guarantee; never misstate preparation slippage as an on-chain bound. |
-| Illiquid exits | Critical | Separate penalty consent before force/in-kind exit; show token penalty, idle/in-kind split, received Blue position and residual liquidity risk. Full-force/in-kind penalty cap is preparation-only and full-force has no on-chain deadline. |
-| Claim consent | Critical | Explain chain-wide eligible tokens, cumulative proof-bound amount, pending vs claimable, selected Distributor/recipient and claim separate from withdrawal; unsupported reward layers are labeled, not silently batched. |
-
-### Borrow — Blue and Midnight
-
-| Check | Priority | Pass condition |
-| --- | --- | --- |
-| Blue risks | Critical | Cover variable-rate/debt accrual, collateral/oracle price, LLTV/liquidation, market liquidity, contracts, rewards and applicable reallocation costs before first use. |
-| Midnight risks | Critical | Cover fixed term/maturity, bids/quote/fill, secondary liquidity, oracle/collateral, pre/post-maturity liquidation, contracts, settlement/continuous fees and direct repayment cost. |
-| Open and maintain review | Critical | Show exact market/account/chain, collateral, debt/units at maturity, LTV/LLTV, liquidation consequence and wallet receipt/cost; guards and deadlines are visible, proposed health bands not marketed as confirmed design. |
-| Exit consent | Critical | Partial/full repay, collateral release and early market vs direct face-value exit are distinct. Ask-side quote includes liquidity, cost vs face value, residual debt and explicit direct fallback. |
+| Scope | Check | Priority | Pass condition |
+| --- | --- | --- | --- |
+| All | First-use gate | Critical | Before the first transaction, actively acknowledge integrator terms, Morpho disclaimer and product risks. No preselected checkbox or bypass via deep link, remembered state, alternate wallet/action or direct route. |
+| All | Review and consent | Critical | Explain account/chain, amounts, before→after position and wallet deltas, signatures, calls, gas, fees and deadline before wallet prompts. Label final calls pending until available; final call review precedes send. |
+| All | Changed outcome | Critical | No silent fallback changes action, guard, slippage, repayment mode, penalty tolerance, received assets/positions or recipient. Material changes require renewed review/consent. |
+| All | Privacy and record | Recommended | Acknowledgment version/time is auditable without logging secrets, raw signatures or unnecessary wallet data. Missing runtime gate evidence is `UNVERIFIED`, not a pass. |
+| Selected | Product risks | Critical | Earn: Cover variable/non-guaranteed yield, contracts, curator/configuration/adapters, underlying markets/oracles, liquidity, vault/integrator fees and reward eligibility/variability. Blue: Cover variable-rate/debt accrual, collateral/oracle price, LLTV/liquidation, market liquidity, contracts, rewards and applicable reallocation costs before first use. Midnight: Cover fixed term/maturity, bids/quote/fill, secondary liquidity, oracle/collateral, pre/post-maturity liquidation, contracts, settlement/continuous fees and direct repayment cost. |
+| Selected | Action review | Critical | Earn: Native wrap, amount/shares, vault/asset, fees and expiry are visible. Ordinary withdraw has no execution-time maximum-share/minimum-assets guarantee; never misstate preparation slippage as an on-chain bound. Borrow: Show exact market/account/chain, collateral, debt/units at maturity, LTV/LLTV, liquidation consequence and wallet receipt/cost; guards and deadlines are visible, proposed health bands not marketed as confirmed design. |
+| Selected | Exit consent | Critical | Earn: Separate penalty consent before force/in-kind exit; show token penalty, idle/in-kind split, received Blue position and residual liquidity risk. Full-force/in-kind penalty cap is preparation-only and full-force has no on-chain deadline. Borrow: Partial/full repay, collateral release and early market vs direct face-value exit are distinct. Ask-side quote includes liquidity, cost vs face value, residual debt and explicit direct fallback. |
+| Earn | Claim consent | Critical | Explain chain-wide eligible tokens, cumulative proof-bound amount, pending vs claimable, selected Distributor/recipient and claim separate from withdrawal; unsupported reward layers are labeled, not silently batched. |
 
 ## Evidence procedure
 
