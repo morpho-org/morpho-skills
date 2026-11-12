@@ -8,14 +8,14 @@ at `ab3d74d7d8c339e4ec3383cdcbfda541fd991af5`.
 
 ## Run
 
-With `AI_GATEWAY_API_KEY` set, from this directory:
+With `ANTHROPIC_API_KEY` set, from this directory:
 
 ```sh
 npx --yes promptfoo@0.125.1 eval -c promptfooconfig.yaml --no-cache -o results.json
 ```
 
 View locally with `npx --yes promptfoo@0.125.1 view`. Results stay local and are
-gitignored. All targets and the fixed Opus 5.5 rubric grader use Vercel AI Gateway;
+gitignored. All targets and the fixed Opus 5.5 rubric grader use the direct Anthropic API;
 concurrency is 2. The prompt contains only the question and a shared instruction,
 never the reference. MCP runs execute tools and continue to a final answer.
 `DocToolCalled` is a zero-weight metric, not a correctness requirement.
@@ -23,6 +23,7 @@ never the reference. MCP runs execute tools and continue to a final answer.
 ## Measured results
 
 2026-11-11, promptfoo **0.125.1**, one uncached 160-cell run, 15m 17s.
+This recorded run used Vercel AI Gateway (the same Anthropic models) before the switch to the direct API.
 Pass means the fixed grader accepted all key facts against the reference, not
 just plausible wording. Tokens below are target-model totals across tool-loop
 turns, excluding the grader; latency is mean target latency, excluding grading.
@@ -39,9 +40,10 @@ turns, excluding the grader; latency is mean target latency, excluding grading.
 | haiku-mcp | 17/20 (85%) | 6.73 s | 1,209,971 | 20/20 |
 
 No execution errors or questions failed by all eight providers. Grading used
-another 174,466 tokens. Promptfoo does not know these gateway models' prices
-(it warns "unknown Anthropic model" and records zero cost); this is **not** a
-zero-cost run, and no reliable dollar total was reported.
+another 174,466 tokens. No reliable dollar total was reported for the recorded
+run; its zero cost values do **not** mean it was free. Promptfoo 0.125.1 may still
+warn "unknown Anthropic model" for IDs absent from its model registry, even when
+using the direct API.
 
 All 33 failed cells were selected for a separate uncached diagnostic rerun;
 5 passed, 28 failed and there were no execution errors. Retries are not

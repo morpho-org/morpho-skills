@@ -7,46 +7,44 @@ prompts:
     Answer concisely and precisely. Use Morpho documentation search tools if available.
 
 providers:
-  - id: anthropic:messages:anthropic/claude-fable-5.2
+  - id: anthropic:messages:claude-fable-5.2
     label: fable-vanilla
-    config: &gateway
-      apiBaseUrl: https://ai-gateway.vercel.sh
-      apiKeyEnvar: AI_GATEWAY_API_KEY
+    config: &anthropic
       max_tokens: 4096
-  - id: anthropic:messages:anthropic/claude-fable-5.2
+  - id: anthropic:messages:claude-fable-5.2
     label: fable-mcp
     config: &with_mcp
-      <<: *gateway
+      <<: *anthropic
       max_tool_calls: 8
       mcp:
         enabled: true
         tools: [morpho_doc_search]
         server:
           url: https://mcp.morpho.org/
-  - id: anthropic:messages:anthropic/claude-opus-5.5
+  - id: anthropic:messages:claude-opus-5.5
     label: opus-vanilla
-    config: *gateway
-  - id: anthropic:messages:anthropic/claude-opus-5.5
+    config: *anthropic
+  - id: anthropic:messages:claude-opus-5.5
     label: opus-mcp
     config: *with_mcp
-  - id: anthropic:messages:anthropic/claude-sonnet-5.5
+  - id: anthropic:messages:claude-sonnet-5.5
     label: sonnet-vanilla
-    config: *gateway
-  - id: anthropic:messages:anthropic/claude-sonnet-5.5
+    config: *anthropic
+  - id: anthropic:messages:claude-sonnet-5.5
     label: sonnet-mcp
     config: *with_mcp
-  - id: anthropic:messages:anthropic/claude-haiku-5.5
+  - id: anthropic:messages:claude-haiku-5.5
     label: haiku-vanilla
-    config: *gateway
-  - id: anthropic:messages:anthropic/claude-haiku-5.5
+    config: *anthropic
+  - id: anthropic:messages:claude-haiku-5.5
     label: haiku-mcp
     config: *with_mcp
 
 defaultTest:
   options:
     provider:
-      id: anthropic:messages:anthropic/claude-opus-5.5
-      config: *gateway
+      id: anthropic:messages:claude-opus-5.5
+      config: *anthropic
   assert:
     - type: llm-rubric
       metric: Correctness
