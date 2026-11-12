@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered Earn and Borrow products. The skills provide product-specific guidance for live data, `@morpho-org/morpho-sdk` transactions, UI/UX, protocol math, disclosures, attribution, and pre-launch review.
+For teams building or reviewing Morpho-powered Earn and Borrow products. The skills use the Morpho REST read API for displayed protocol data, the Actions API for vault and borrowing transactions, and Merkl for reward rates, balances, and Distributor claims. They include product-specific UI/UX, protocol math, disclosures, attribution, and pre-launch review.
 
 | Product | Skill |
 | --- | --- |
-| Earn — Morpho Vault V2 | `earn-integration` |
-| Borrow — Blue variable rate and/or Midnight fixed rate | `borrow-integration` |
+| Earn — Morpho Vault V2, with Vault V1 compatibility | `earn-integration` |
+| Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `borrow-integration` |
 
-Each skill has build/update and review modes. Earn defaults to Vault V2, including liquid and illiquid exits. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under its skill's `references/checkers/` directory.
+Each skill has build/update and review modes. Earn defaults to Vault V2, including deposits, position performance, liquid and illiquid exits, and separate Merkl reward claims. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under its skill's `references/checkers/` directory. Actions API keys stay server-side; browser requests go through the integrator's backend. The skills provide guidance, not a transaction execution service.
 
 ### morpho-mcp
 
