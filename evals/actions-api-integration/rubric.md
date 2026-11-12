@@ -259,14 +259,14 @@ Source: brief, A1 acceptance (a too-large amount is blocked before the POST); er
 
 ## 6. Units, selectors and display
 
-### C23. Selectors use the right format per product
+### C23. Selectors use the right format per product and API surface
 
-Source: brief, "Conventions" (Blue `{chainId}:{marketId}`; vault and token `{chainId}:{address}`; Midnight market ID alone).
+Source: brief, "Conventions", and the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json), `MidnightMarketSelector`: Blue uses `{chainId}:{marketId}`; vault and token selectors use `{chainId}:{address}`. Midnight REST market reads use the bare market ID, but every `/v0/actions/midnight/markets/{market-selector}/...` path requires `{chainId}:{marketId}` (`<chain_id>:0x<64 hex>`), not the bare ID.
 
-- **0:** paths use a bare address or market ID where a chain prefix is required (or the reverse for Midnight), so calls 404.
-- **5:** one product's selectors are right and another's wrong.
-- **10:** every REST and Actions path uses the product's selector format.
-- **Evidence:** `path:line` of URL builders.
+- **0:** none of the applicable product/API surfaces uses the correct selector format.
+- **5:** some product/API surfaces use the correct format, but others do not (including correct Midnight REST reads with incorrect Midnight Actions paths, or vice versa).
+- **10:** every REST and Actions path uses its product/API surface's selector format, including chain-prefixed Midnight Actions paths and bare-ID Midnight REST market reads.
+- **Evidence:** `path:line` of URL builders, checked separately for REST and Actions.
 
 ### C24. Amounts stay integers in base units
 
