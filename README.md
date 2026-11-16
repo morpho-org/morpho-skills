@@ -4,7 +4,7 @@
 
 ### morpho-builder
 
-For teams building, reviewing or migrating Morpho-powered integrations. The skills use the Morpho REST read API for displayed protocol data, the Actions API for vault and borrowing transactions, and Merkl for reward rates, balances, and Distributor claims. They include product-specific UI/UX, protocol math, disclosures, attribution, and pre-launch review.
+For teams building, reviewing or migrating Morpho-powered integrations. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards and UI correctness principles.
 
 | Product | Skill |
 | --- | --- |
@@ -12,7 +12,7 @@ For teams building, reviewing or migrating Morpho-powered integrations. The skil
 | Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
 | Migration — existing GraphQL reads and legacy transaction builders to REST + Actions | `migrate-graphql-to-rest` |
 
-The integration skill has build/update and review modes. Read only the selected product's references. Earn defaults to Vault V2, including deposits, position performance, liquid and illiquid exits, and separate Merkl reward claims. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under `morpho-integration/references/checkers/`. Actions API keys stay server-side; browser requests go through the integrator's backend. The skills provide guidance, not a transaction execution service.
+Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eight specialist checkers, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
 
 The migration skill audits query/transaction consumers, maps consumed fields to verified REST routes, rewrites transactions to Actions, and compares legacy/new outputs with explicit semantic changes and gaps. It includes a migration-report template; missing equivalents are not silently approximated.
 
@@ -75,4 +75,4 @@ plugins/morpho-builder/skills/
     └── references/{route-map.md,verification.md,migration-report.md}
 ```
 
-Keep Earn, Blue and Midnight references product-specific; maintain shared contracts and checker rows once. Validate both skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
+Keep Earn, Blue and Midnight manuals product-specific; maintain shared principles and specialist checker prompts once. Validate both skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
