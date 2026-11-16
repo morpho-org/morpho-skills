@@ -66,7 +66,7 @@ At zero `debt` target use the A5 `all`-`debt` action, not an estimated dust-prod
 
 ## A2. Show the position
 
-**Components:** `collateral` and `debt` `token`/USD balances, interest owed, variable average rate, LTV/LLTV, health factor, liquidation `price`; no `maturity` countdown.
+**Components:** `collateral` and `debt` `token`/USD balances, borrow cost to date, variable average rate, LTV/LLTV, health factor, liquidation `price`; no `maturity` countdown.
 
 **Reads and Math:**
 
@@ -74,7 +74,7 @@ At zero `debt` target use the A5 `all`-`debt` action, not an estimated dust-prod
 | --- | --- | --- |
 | Collateral (`token`, USD) | GET `/v0/blue/markets/{m}/users/{u}/position` → `collateral_assets`; GET `/v0/tokens/{collateral-selector}/price` | raw / 10^`decimals` × USD `price` |
 | Debt now | same position → `borrow_shares`; GET `/v0/blue/markets/{m}/state` | ceiling shared `debt` formula; USD via loan-`token` `price` |
-| Interest owed | GET `/v0/blue/markets/{m}/users/{u}/position/performance` → `borrow_net_cost_assets` | average-cost realized + unrealized borrow cost; do not replace with balance minus deposits |
+| Borrow cost to date | GET `/v0/blue/markets/{m}/users/{u}/position/performance` → `borrow_net_cost_assets` | average-cost realized + unrealized borrow cost; label it as cost to date, not interest still owed (outstanding interest is already inside Debt now); do not replace with balance minus deposits |
 | Borrow rate | GET `/v0/blue/markets/{m}/apy-averages` → `borrow_apy_averages[rateWindow]` | default "variable, 6h avg"; never instant rate |
 | LTV | position, GET `/v0/oracles/{o}/state` → `price` | D / V |
 | LLTV | GET `/v0/blue/markets/{m}` → `lltv_wad` | divide by 1e18 |
