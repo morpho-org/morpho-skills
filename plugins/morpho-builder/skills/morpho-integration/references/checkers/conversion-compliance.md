@@ -4,6 +4,8 @@ Read-only: review only owned criteria; do not edit code, copy, configuration, ar
 
 ## Owned checks
 
+Also read the shared and selected-product rows of [story acceptance](../story-acceptance.md); own S1/S3, E3–E6, B1–B3/B6–B7 and M1/M3 for the criteria below. Treat these as required acceptance checks, not optional examples. Return per-ID evidence for rendered controls, actual requests, calculations and normal/empty/error states; label safe fixtures and keep unexecuted confirmation paths `UNVERIFIED`.
+
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
 | All | Input and preview | Critical | Wallet balances, token/USD input, Max and before→after preview update together. Null values remain unknown; loading skeletons do not look like spendable zero or a completed quote. |

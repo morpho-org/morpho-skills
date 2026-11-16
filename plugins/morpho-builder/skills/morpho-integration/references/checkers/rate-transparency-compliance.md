@@ -4,6 +4,8 @@ Read-only: review only owned criteria; do not edit code, copy, configuration, ar
 
 ## Owned checks
 
+Also read the shared and selected-product rows of [story acceptance](../story-acceptance.md); own E1–E2, B1/B4 and M2 for the criteria below. Treat these as required acceptance checks, not optional examples. Return per-ID evidence for rendered controls, actual requests, calculations and normal/empty/error states; label safe fixtures and keep unexecuted confirmation paths `UNVERIFIED`.
+
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
 | All | REST realized rates | Critical | Variable rates come from realized REST averages, never instant rates. Trace every displayed number to exact route/field and selected window; history range is not averaging window. |

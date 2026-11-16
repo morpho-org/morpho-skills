@@ -4,6 +4,8 @@ Read-only: review only owned criteria; do not edit code, copy, configuration, ar
 
 ## Owned checks
 
+Also read the shared and selected-product rows of [story acceptance](../story-acceptance.md); own E6 and B5/B8 for the criteria below. Treat these as required acceptance checks, not optional examples. Return per-ID evidence for rendered controls, actual requests, calculations and normal/empty/error states; label safe fixtures and keep unexecuted confirmation paths `UNVERIFIED`.
+
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
 | All | Product entry | Recommended | Product is findable from relevant home/asset surfaces, with named Morpho product rather than a generic bucket. Optional absent nudges may be `N-A` with reason. |

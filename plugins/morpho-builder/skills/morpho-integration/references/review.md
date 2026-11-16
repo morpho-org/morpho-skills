@@ -26,6 +26,8 @@ Reference sources: [REST](https://docs.morpho.org/api/), [Actions](https://api.m
 
 ## 2. Establish evidence and run eight checkers
 
+Require the applicable IDs in [story acceptance](story-acceptance.md) in addition to the matrices below. Give each checker its owned IDs from that reference and require UI/request/calculation/fixture evidence, separately per product/version. Retain one verdict per applicable ID in the final report. A missing control is a defect even with an unfunded wallet; a source-supported but unexercised confirmation path is `UNVERIFIED`. Never promote a partial story to `PASS` because its opening review works. Explicitly capture the force-button URL/body and token penalty before signing, target-LTV collateral edits and left-to-repay, and receipt→stale index→refreshed UI transitions.
+
 When delegation is available, run one read-only worker per checker **in parallel**. Supply artifact paths, scope, known runtime limits and these verdict semantics. Require the worker to read its entire prompt and current skill/reference, stay within owned checks, make no edits and return evidence tables separately for every scoped vault version and for Blue/Midnight.
 
 Inventory routes/screens/copy for every scoped story, REST/Merkl clients and response artifacts, backend key handling, copied Actions helper/proof path, signature/continuation/send/receipt traces, math/rate utilities, cache/retry code, tests/fixtures and runtime screenshots. Missing UI/runtime evidence cannot be replaced by a successful build.

@@ -4,6 +4,8 @@ Read-only: review only owned criteria; do not edit code, copy, configuration, ar
 
 ## Owned checks
 
+Also read the shared and selected-product rows of [story acceptance](../story-acceptance.md); own S2, E1–E2, B2–B4/B6 and M1–M2 for the criteria below. Treat these as required acceptance checks, not optional examples. Return per-ID evidence for rendered controls, actual requests, calculations and normal/empty/error states; label safe fixtures and keep unexecuted confirmation paths `UNVERIFIED`.
+
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
 | All | Sources/selectors/chains | Critical | REST-only displayed protocol data, Merkl rewards and wallet balances; exact product selector, chain/action coverage and route version. Indexed/non-atomic state is a display baseline, successful Actions simulation validates execution. |
