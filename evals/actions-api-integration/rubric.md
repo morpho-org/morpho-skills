@@ -101,7 +101,7 @@ Source: brief, contract step 2; Actions docs, "How actions work" step 2.
 - **0:** the app ignores `signature_required` (treats it as an error or as `prepared`).
 - **5:** the app signs the typed data but sends a new action instead of the continuation, or posts signatures without their `id`, or posts to another path.
 - **10:** each entry of `signatures` is signed with `signTypedData` by the user's wallet, and the app POSTs `{continuation, signatures: [{id, signature}]}` to the same action path, repeating while the status stays `signature_required`.
-- **Evidence:** `path:line` of the loop; for full marks, a HAR pair of the first POST and the continuation POST.
+- **Evidence:** `path:line` of the loop and of the continuation request body; a HAR entry of the first POST returning `signature_required` when the run reaches it. Graders don't sign, so the continuation POST is scored from code.
 - **Vanilla trap:** assuming every response is already `prepared`.
 
 ### C07. The loop is bounded to three rounds
