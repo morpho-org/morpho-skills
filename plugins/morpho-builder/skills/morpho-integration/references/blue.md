@@ -22,7 +22,7 @@ LTV = D/V; health factor = V×L/D; price drop to liquidation = 1 − LTV/L. Liqu
 
 No debt is a distinct state, not infinite displayed health. Missing/zero valuation inputs make dependent ratios undefined; do not divide by zero or label unknown health safe. A negative performance cost is not silently clamped to zero.
 
-Use realized borrowing averages for the selected shared rate window, not instantaneous rates. Borrow cost/performance accounting comes from the performance contract, not debt minus deposits. Incentives remain separate from debt cost.
+Use realized borrowing averages for the selected shared rate window, not instantaneous rates. The performance contract's `borrow_net_cost_assets` is realized plus unrealized borrow cost to date, not interest still owed; outstanding interest is already included in current debt. Do not derive borrow cost from debt minus deposits. Incentives remain separate from debt cost.
 
 ## Capacity and target calculations
 
