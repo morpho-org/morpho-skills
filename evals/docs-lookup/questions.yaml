@@ -1,0 +1,119 @@
+- description: blue-oracle-scale
+  vars:
+    question: In Morpho Blue, what is ORACLE_PRICE_SCALE, and how do you convert a collateral amount in base units into loan-token base units using the oracle price?
+    reference: ORACLE_PRICE_SCALE is 10^36. Collateral value in loan-token base units is collateralAmount * oraclePrice / 10^36.
+    source_url: https://docs.morpho.org/developers/blue/concepts/ltv/
+
+- description: blue-liquidation-incentive
+  vars:
+    question: What is the Morpho Blue liquidation incentive factor formula, including the values of its cursor beta and maximum M?
+    reference: LIF = min(M, 1 / (beta * LLTV + (1 - beta))), with beta = 0.3 and M = 1.15, using LLTV as a fraction. The min cap is part of the Blue formula; the uncapped expression alone is not the full Blue LIF. The docs describe the LIF for 86% LLTV as approximately 1.05.
+    source_url: https://docs.morpho.org/learn/concepts/liquidation/#liquidation-incentive-factor-lif
+
+- description: blue-assets-versus-shares
+  vars:
+    question: For Morpho Blue supply and borrow calls, can assets and shares both be nonzero? Which should be zero when requesting an exact number of shares?
+    reference: Exactly one of assets and shares must be nonzero. For an exact share amount, set assets to zero and shares to the desired nonzero amount.
+    source_url: https://docs.morpho.org/developers/blue/concepts/market-mechanics/
+
+- description: blue-apy-conventions
+  vars:
+    question: Which APY rate convention do AdaptiveCurveIRM.borrowRateView, SDK Market.getBorrowApy(timestamp), and SDK Market.getAvgBorrowApy(timestamp) use in Morpho?
+    reference: AdaptiveCurveIRM.borrowRateView uses the interval-average borrow rate from lastUpdate to the block time. Market.getBorrowApy(timestamp) uses the end-of-interval rate. Market.getAvgBorrowApy(timestamp) uses the interval-average rate.
+    source_url: https://docs.morpho.org/learn/concepts/irm/#apy-conventions
+
+- description: vault-v1-timelock
+  vars:
+    question: After initial setup of a Morpho Vault V1, what is the allowed timelock range, and how do increases versus decreases take effect?
+    reference: After initial setup the timelock must be between 1 day and 2 weeks. Increases take effect immediately; decreases wait for the current longer timelock. Zero is allowed at deployment for setup.
+    source_url: https://docs.morpho.org/curate/concepts/timelock/#timelocks-in-morpho-vaults-v1
+
+- description: vault-v1-fees
+  vars:
+    question: In Morpho Vault V1, who controls fees, what is the maximum performance fee, is there a management fee, and are fee changes timelocked?
+    reference: The Owner controls the fee and recipient. The performance fee is capped at 50% of interest. There is no management fee. Fee parameter changes are immediate, not timelocked.
+    source_url: https://docs.morpho.org/curate/concepts/fee/#fee-structure-in-morpho-vaults-v1
+
+- description: vault-v2-fee-limits
+  vars:
+    question: What are the maximum performance and management fee rates in Morpho Vault V2, and what is the basis for each fee?
+    reference: The performance fee is capped at 50% of generated interest. The management fee is capped at 5% per year of totalAssets.
+    source_url: https://docs.morpho.org/curate/concepts/fee/#fee-structure-in-morpho-vaults-v2
+
+- description: vault-v2-decrease-timelock
+  vars:
+    question: In Morpho Vault V2, what waiting period applies to decreaseTimelock for a given function selector? Does V2 use one global timelock?
+    reference: V2 has per-function-selector timelocks, not a single global timelock. Decreasing a selector's timelock must wait for that selector's current timelock, preventing instant removal of its existing delay.
+    source_url: https://docs.morpho.org/curate/concepts/timelock/#timelock-management-in-v2
+
+- description: vault-v2-sentinel-powers
+  vars:
+    question: Can a Morpho Vault V2 Sentinel increase caps or allocate into adapters? Name its three main risk-reducing powers.
+    reference: A Sentinel cannot increase caps or allocate into adapters. It can revoke pending timelocked actions, decrease caps, and deallocate assets back to the vault's idle balance.
+    source_url: https://docs.morpho.org/curate/tutorials-v2/sentinel/
+
+- description: vault-v2-cap-hierarchy
+  vars:
+    question: For a Morpho Vault V2 using MorphoMarketV1AdapterV2, what three cap scopes gate allocations to a variable-rate market, and must all be nonzero?
+    reference: The three scopes are the whole adapter, the collateral token across markets sharing it, and the specific market MarketParams tuple. All three cap layers must be nonzero to allocate to that market.
+    source_url: https://docs.morpho.org/curate/tutorials-v2/market-listing/
+
+- description: vault-v2-adapter-timelock
+  vars:
+    question: Does configuring a Morpho Vault V2's addAdapter timelock also configure MorphoMarketV1AdapterV2's burnShares timelock? On which contract must the latter be configured, and does increasing it postpone already submitted burn proposals?
+    reference: They are separate timelocks. burnShares must be configured on the adapter contract, not the parent vault. Increasing a timelock does not postpone proposals already submitted; they keep their original execution timestamp, so pending unsafe proposals must be reviewed and revoked separately.
+    source_url: https://docs.morpho.org/curate/tutorials-v2/listing-adapters/#adapter-timelock-hardening
+
+- description: midnight-post-maturity-liquidation
+  vars:
+    question: In Midnight's post-maturity liquidation path, can healthy debt be liquidated, how does the liquidation incentive ramp, and does the Recovery Close Factor apply?
+    reference: Strictly after maturity, any outstanding debt can be liquidated regardless of health. LIF starts at 1.0 and ramps to maxLif over 60 minutes. No Recovery Close Factor applies to this path.
+    source_url: https://docs.morpho.org/learn/concepts/midnight/liquidations/#post-maturity-liquidation
+
+- description: midnight-fee-payers
+  vars:
+    question: In Midnight, who pays settlement fees versus continuous fees, and does a later continuous-fee rate change alter the rate on existing lender credit?
+    reference: Settlement fees are paid entirely by the taker when an offer is taken. Continuous fees accrue on outstanding lender credit and are borne by lenders. The rate is fixed when credit is opened; later market rate changes do not change the rate on that existing credit.
+    source_url: https://docs.morpho.org/learn/concepts/midnight/#fees
+
+- description: midnight-reduce-only
+  vars:
+    question: In Midnight's Offer struct, what does reduceOnly restrict for maker buy and sell offers? Does it restrict the taker's position too?
+    reference: A reduceOnly maker buy offer may only reduce maker debt; a maker sell offer may only reduce maker credit. The flag does not restrict the taker's position.
+    source_url: https://docs.morpho.org/developers/contracts/midnight/#offer-struct
+
+- description: midnight-tick-spacing
+  vars:
+    question: What relation must a Midnight offer's tick have to the market's current tickSpacing, and what happens in take if it does not?
+    reference: The tick must be a multiple of the market's current tickSpacing; otherwise take reverts.
+    source_url: https://docs.morpho.org/developers/contracts/midnight/#offer-struct
+
+- description: midnight-continuous-fee-cap-units
+  vars:
+    question: In Midnight's Offer struct, is continuousFeeCap an annualized percentage? Specify its time basis and numeric scale.
+    reference: continuousFeeCap is a maximum continuous fee rate expressed per second and scaled by 10^18 (WAD), not an annualized rate.
+    source_url: https://docs.morpho.org/developers/contracts/midnight/#offer-struct
+
+- description: bundles-position-owner
+  vars:
+    question: Whose position do Morpho MidnightBundlesV2 entrypoints operate on, and can a caller pass an arbitrary taker address?
+    reference: They operate on msg.sender's position. MidnightBundlesV2 entrypoints do not accept a taker address and are not intended to act on arbitrary third-party positions.
+    source_url: https://docs.morpho.org/developers/contracts/bundles/#midnightbundlesv2
+
+- description: api-selectors-and-scales
+  vars:
+    question: In Morpho's REST API, how is a vault identified in a path selector, and what numeric scales do the _wad and _ray suffixes indicate?
+    reference: A vault selector is chainId:address, combining chain ID and vault address with a colon. _wad means scaled by 10^18, and _ray means scaled by 10^27.
+    source_url: https://docs.morpho.org/developers/api/migrate-from-graphql/#what-changes
+
+- description: api-history-windows
+  vars:
+    question: For Morpho REST vault APY history, what trailing APY averaging windows correspond to lookback=seven_days, thirty_days, and ninety_days? Are Merkl rewards included?
+    reference: seven_days returns trailing one-day APY averages; thirty_days returns trailing seven-day averages; ninety_days returns trailing thirty-day averages. Merkl rewards are excluded. lookback selects chart range, not an identically sized averaging window.
+    source_url: https://docs.morpho.org/developers/api/migrate-from-graphql/#read-apy-history-data
+
+- description: api-blue-share-conversion
+  vars:
+    question: Given supply_shares and market total_supply_assets and total_supply_shares from Morpho REST, what integer formula converts a Blue supply position to assets, including the virtual asset/share offsets and rounding direction?
+    reference: supplyAssets = supply_shares * (total_supply_assets + 1) / (total_supply_shares + 1000000), using integer division rounded down. The offsets are 1 virtual asset and 1,000,000 virtual shares.
+    source_url: https://docs.morpho.org/developers/api/migrate-from-graphql/#find-the-rest-route-for-a-graphql-query
