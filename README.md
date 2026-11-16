@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered Earn and Borrow products. The integration skill uses the Morpho REST read API for displayed protocol data, the Actions API for vault and borrowing transactions, and Merkl for reward rates, balances, and Distributor claims. It includes product-specific UI/UX, protocol math, disclosures, attribution, and pre-launch review.
+For teams building or reviewing Morpho-powered Earn and Borrow products. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards and UI correctness principles.
 
 | Product | Skill |
 | --- | --- |
 | Earn — Morpho Vault V2, with Vault V1 compatibility | `morpho-integration` |
 | Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
 
-The skill has build/update and review modes. Read only the selected product's references. Earn defaults to Vault V2, including deposits, position performance, liquid and illiquid exits, and separate Merkl reward claims. Borrow first routes to Blue, Midnight, or both; mixed reviews preserve separate product verdicts. Review mode runs eight specialized checkers in parallel when delegation is available, evaluates a product acceptance matrix, and performs a red-flag pass. Every checker is a host-neutral prompt bundled under `morpho-integration/references/checkers/`. Actions API keys stay server-side; browser requests go through the integrator's backend. The skill provides guidance, not a transaction execution service.
+Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eight specialist checkers, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skill provides guidance, not a transaction execution service.
 
 ### morpho-mcp
 
@@ -69,4 +69,4 @@ plugins/morpho-builder/skills/
     └── references/{vault-v2.md,blue.md,midnight.md,review.md,checkers/...}
 ```
 
-Keep Earn, Blue and Midnight references product-specific; maintain shared contracts and checker rows once. Validate the skill directory after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
+Keep Earn, Blue and Midnight manuals product-specific; maintain shared principles and specialist checker prompts once. Validate the skill directory after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
