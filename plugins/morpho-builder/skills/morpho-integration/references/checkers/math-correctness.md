@@ -8,6 +8,7 @@ Also read the shared and selected-product rows of [story acceptance](../story-ac
 
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
+| Selected | Regression arithmetic and token identity | Critical | Apply SKILL.md's build checklist: vault-scoped `amount + pending`, same-window filtered/coverage-weighted reward APR, Total earned USD and non-annualized return must reconcile to adversarial fixtures. Approval/permit reviews resolve the actual token contract/decimals, distinguish shares from underlying, render max uint as unlimited and retain exact small amounts without overflow. Numeric LTV, amount and slider share one clamp; test an above-cap numeric entry, not just the slider. |
 | All | Sources/selectors/chains | Critical | REST-only displayed protocol data, Merkl rewards and wallet balances; exact product selector, chain/action coverage and route version. Indexed/non-atomic state is a display baseline, successful Actions simulation validates execution. |
 | All | Bigint and units | Critical | All raw assets/shares/rates/oracles/fees use bigint/rational arithmetic; no float/Number coercion, hardcoded 18 token decimals, early formatting, wrong sign or unsafe JSON conversion. Zero/null inputs cannot cause division-by-zero or fabricated zero values. |
 | All | Six-step contract | Critical | Every applicable action satisfies all six audit steps below, including proof-before-exposure, bounded signatures, unchanged ordered calls and server-only key. |

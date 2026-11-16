@@ -8,6 +8,7 @@ Also read the shared and selected-product rows of [story acceptance](../story-ac
 
 | Scope | Check | Priority | Pass condition |
 | --- | --- | --- | --- |
+| Selected | Fixture fidelity and navigation | Critical | Apply the story acceptance fixture contract through actual response parsing/review/reconciliation with signing/sending hard-disabled. A generic fixture-block error is not simulation failure evidence. Switch loaded Blue→Midnight→Blue, including delayed replies; no old-product data/quote/review may be interpreted under the new schema. Force review must be reachable with capacity and token penalty; claim review exposes cumulative call arrays/root/simulation before the first signing prompt. |
 | All | Input and preview | Critical | Wallet balances, token/USD input, Max and before→after preview update together. Null values remain unknown; loading skeletons do not look like spendable zero or a completed quote. |
 | All | Signature flow | Critical | Review explains every signature/call and rejection recovery. At most 3 continuation rounds and >60 s remain at each signature; stale/new requirements refresh the review, not silently sign. |
 | All | Submission recovery | Critical | Only verified-proof `prepared` + successful simulation sends ordered unchanged calls. Pending/rejection/failure/confirmation are distinct; stop on failure, reconcile receipts before retry and prevent duplicate submissions. |
