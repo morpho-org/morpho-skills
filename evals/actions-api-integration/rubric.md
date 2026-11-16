@@ -428,7 +428,7 @@ Source: brief, "Conventions" (shares → assets, round debt up with the `+1` / `
 
 Source: brief, A1 Midnight reads and action (`GET .../books/{id}/bids/quote`, `collateral_supplies`, `funding`, `guard` with `slippage` or `max_rate`); A1b (quote on slider release, debounced); A2 (`debt` face value, `effective_apr`, `maturity` countdown); A5 (at maturity `type: direct` with `{unit: "all"}` and `collateral_withdrawals`; early exit via `asks/quote` with `type: market` and a `guard`, always showing the face-value alternative); error table (quote codes → re-quote and reconfirm).
 
-Score the four parts and average them (each 0, 5 or 10):
+Score the four parts (each 0, 5 or 10), average them and round to the nearest integer, halves up (10, 10, 10, 5 → 8.75 → 9):
 
 | Part | 0 | 5 | 10 |
 | --- | --- | --- | --- |
