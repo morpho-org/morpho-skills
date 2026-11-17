@@ -1,0 +1,15 @@
+# One test per flow of the integration brief. `brief` is the only text that differs between tests.
+- description: borrow
+  vars:
+    scenario: borrow
+    brief: file://scenarios/borrow.md
+
+- description: earn
+  vars:
+    scenario: earn
+    brief: file://scenarios/earn.md
+
+- description: portfolio
+  vars:
+    scenario: portfolio
+    brief: file://scenarios/portfolio.md

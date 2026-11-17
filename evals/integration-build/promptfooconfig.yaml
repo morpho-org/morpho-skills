@@ -1,0 +1,68 @@
+description: Morpho integration build — rubric suite (vanilla vs MCP doc search vs integration skill)
+
+prompts:
+  - file://prompt.txt
+
+# Each provider is the Claude Code CLI building one demo app. The arms differ by one addition.
+providers:
+  - id: file://providers/claude-code.js
+    label: vanilla
+    config:
+      arm: vanilla
+  - id: file://providers/claude-code.js
+    label: mcp-doc-search
+    config:
+      arm: mcp
+  - id: file://providers/claude-code.js
+    label: integration-skill
+    config:
+      arm: skill
+
+tests: file://scenarios.yaml
+
+defaultTest:
+  assert:
+    # Ten requirements per category, graded in one call each from the app's source.
+    - type: javascript
+      metric: Compliance
+      value: file://graders/grade.js
+      config:
+        file: rubrics/compliance.md
+        prefix: Compliance
+    - type: javascript
+      metric: TrustAndRisk
+      value: file://graders/grade.js
+      config:
+        file: rubrics/trust-and-risk.md
+        prefix: TrustAndRisk
+    - type: javascript
+      metric: Growth
+      value: file://graders/grade.js
+      config:
+        file: rubrics/growth.md
+        prefix: Growth
+    - type: javascript
+      metric: ApiUsage
+      value: file://graders/grade.js
+      config:
+        file: rubrics/api-usage.md
+        prefix: ApiUsage
+    - type: javascript
+      metric: BuildPasses
+      value: file://graders/metrics.js:buildPasses
+    - type: javascript
+      metric: RunCompleted
+      value: file://graders/metrics.js:runCompleted
+    # Zero-weight sanity checks that each arm used what it was given.
+    - type: javascript
+      metric: SkillInvoked
+      weight: 0
+      value: file://graders/metrics.js:skillInvoked
+    - type: javascript
+      metric: DocSearchCalled
+      weight: 0
+      value: file://graders/metrics.js:docSearchCalled
+
+evaluateOptions:
+  # One build at a time by default. Each build is a long Claude Code session.
+  maxConcurrency: 1

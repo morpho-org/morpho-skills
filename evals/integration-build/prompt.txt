@@ -1,0 +1,14 @@
+You are building a demo web app for an integrator that offers Morpho to its own end users. Build it end to end in the current working directory, which is empty.
+
+{{brief}}
+
+## Requirements for every build
+
+- A TypeScript web app with a browser front end and a small backend of your choice. `npm install && npm run build` must succeed from the project root.
+- Real data and real transaction preparation against Morpho's production APIs. Do not mock protocol data. The app connects to the user's injected browser wallet.
+- Secrets come from environment variables listed in `.env.example`; none are committed. A Morpho API key will be supplied as `MORPHO_API_KEY` at run time. It is not set now.
+- The interface handles these failures: not enough wallet balance, not enough liquidity, and an action that expired before it was signed or sent.
+- A README that says how to configure and run the app, and lists anything you could not finish or verify.
+- You cannot ask questions. Make reasonable decisions and record them in the README. Do not sign or send any transaction yourself.
+
+Use any Morpho skills or documentation tools available in this session.
