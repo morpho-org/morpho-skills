@@ -4,7 +4,7 @@ Apply the shared [integration manual](../SKILL.md). Discover the selected vault'
 
 ## Data and valuation
 
-Use the [Core REST OpenAPI](https://docs.morpho.org/openapi.json) for discovery, configuration, state, positions, performance, prices and withdrawal options; derive routes, parameters, fields and versions from it. Use the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json) for transaction variants and supported chains.
+Use the [Core REST OpenAPI](https://api.morpho.org/core/docs/swagger/json) for discovery, configuration, state, positions, performance, prices and withdrawal options; derive routes, parameters, fields and versions from it. Use the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json) for transaction variants and supported chains.
 
 Vault/token selectors are `{chain_id}:{address}`. Obtain asset and share-token metadata independently. A share price quoted in RAY is whole underlying tokens per whole share, scaled by 1e27. The indexed estimate is:
 
@@ -56,7 +56,7 @@ Simulate the encoded claim, review tokens/costs/recipient, obtain consent, send 
 
 ## Vault V1 compatibility
 
-Use the V1 contracts in the same [Core REST spec](https://docs.morpho.org/openapi.json) and [Actions spec](https://api.morpho.org/actions/docs/openapi.json). Derive supported chains and amount variants independently.
+Use the V1 contracts in the same [Core REST spec](https://api.morpho.org/core/docs/swagger/json) and [Actions spec](https://api.morpho.org/actions/docs/openapi.json). Derive supported chains and amount variants independently.
 
 Use V1's own state and accounting contract rather than applying V2 RAY math to it. Do not infer availability from max functions without validating their semantics.
 

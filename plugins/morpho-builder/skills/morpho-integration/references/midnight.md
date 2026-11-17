@@ -4,7 +4,7 @@ Apply the shared [integration manual](../SKILL.md), keeping Midnight distinct fr
 
 ## Data and identity
 
-Use the [Midnight REST OpenAPI](https://api.morpho.org/midnight/docs/swagger/json) for market/book discovery, quotes, positions and transactions; use the [Core REST OpenAPI](https://docs.morpho.org/openapi.json) for token prices/metadata and oracles. Derive routes, filters, pagination, nullable fields and schemas from these documents. Use the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json) for executable plans and chain support.
+Use the [Midnight REST OpenAPI](https://api.morpho.org/midnight/docs/swagger/json) for market/book discovery, quotes, positions and transactions; use the [Core REST OpenAPI](https://api.morpho.org/core/docs/swagger/json) for token prices/metadata and oracles. Derive routes, filters, pagination, nullable fields and schemas from these documents. Use the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json) for executable plans and chain support.
 
 Midnight REST market IDs are bare, globally unique identifiers. Actions market selectors are `{chain_id}:{market_id}`; retain chain from discovery. Do not transfer the REST selector to an Actions operation unchanged.
 

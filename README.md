@@ -4,14 +4,14 @@
 
 ### morpho-builder
 
-For teams building or reviewing Morpho-powered Earn and Borrow products. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards and UI correctness principles.
+For teams building or reviewing Morpho-powered Earn and Borrow products. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards, UI correctness principles and an integrator handbook of product guidelines grouped by the concern each solves, and REST API best practice.
 
 | Product | Skill |
 | --- | --- |
 | Earn — Morpho Vault V2, with Vault V1 compatibility | `morpho-integration` |
 | Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
 
-Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eight specialist checkers, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skill provides guidance, not a transaction execution service.
+Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skill provides guidance, not a transaction execution service.
 
 ### morpho-mcp
 
@@ -66,7 +66,7 @@ Product guidance is maintained in one public integration skill:
 plugins/morpho-builder/skills/
 └── morpho-integration/
     ├── SKILL.md
-    └── references/{vault-v2.md,blue.md,midnight.md,review.md,checkers/...}
+    └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md,review.md,checkers/...}
 ```
 
 Keep Earn, Blue and Midnight manuals product-specific; maintain shared principles and specialist checker prompts once. Validate the skill directory after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
