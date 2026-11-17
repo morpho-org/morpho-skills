@@ -4,7 +4,7 @@ Review read-only using [review guidance](../review.md), the [shared manual](../.
 
 Trace every protocol read and transaction to its source. Protocol data should come from Core or Midnight REST and transactions from Actions. A GraphQL query, subgraph, direct RPC read of protocol state or hand-built calldata is a finding unless the integration names the coverage gap it fills. Wallet balances, allowances, receipts and Merkl claims are the stated exceptions.
 
-Check each route, version prefix, selector and parameter against the fetched OpenAPI operation, not a neighbouring route or a remembered list. Verify integer-string parsing to `bigint`, retained `last_indexed_block`, an explicit `lookback`, and use of replacements for deprecated fields.
+Check each route, version prefix, selector and parameter against the fetched OpenAPI operation, not a neighbouring route or a remembered list. Verify integer-string parsing to `bigint`, retained `last_indexed_block`, an explicit averaging-window choice (`lookback` where supported, the response window key for Blue averages), and use of replacements for deprecated fields.
 
 Follow pagination to a `null` cursor before any total, maximum or absence conclusion. A cursor reused after a sort or filter change, or one the client parsed or built, is a defect.
 

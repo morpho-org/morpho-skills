@@ -43,7 +43,7 @@ An existing integration that reads protocol data through GraphQL should move tho
 - **Paginate to the end before aggregating.** A total, a maximum or an "absent" conclusion drawn from the first page is wrong.
 - **Parse amounts as integers.** Base-unit and WAD values are integer strings; convert to `bigint`, never to a float. Rates such as APY averages are decimal fractions.
 - **Keep `last_indexed_block` with the data.** Different resources can be at different blocks; do not present them as one atomic snapshot.
-- **Choose the averaging window explicitly.** APY-average routes take `lookback` (`six_hours` by default). History routes derive their averaging window from `lookback`, so a chart range is not the averaging window.
+- **Choose the averaging window explicitly.** Vault APY-average routes take `lookback` (`six_hours` by default); Blue returns all windows in `borrow_apy_averages` and `supply_apy_averages`, so select the desired response key. Check the operation's specification. History routes derive their averaging window from `lookback`, so a chart range is not the averaging window.
 - **Honour deprecations.** Use the replacement the specification names, for example Midnight's `effective_apr` in place of the deprecated `effective_rate_wad`.
 
 ### Status codes carry meaning
