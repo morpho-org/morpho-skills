@@ -1,6 +1,6 @@
 ---
 name: morpho-integration
-description: Build or review correct Morpho integrations using REST reads, Actions transactions and Merkl rewards. Covers Earn through Vault V2 with Vault V1 compatibility, Blue variable-rate borrowing and Midnight fixed-rate, fixed-maturity borrowing; protocol units, transaction verification, accounting, state management and risk disclosure.
+description: Build or review correct Morpho integrations using REST reads, Actions transactions and Merkl rewards. Covers Earn through Vault V2 with Vault V1 compatibility, Blue variable-rate borrowing and Midnight fixed-rate, fixed-maturity borrowing; protocol units, transaction verification, accounting, state management, and product guidelines for language, attribution, disclosure, transparency and risk.
 ---
 
 # Morpho integration manual
@@ -11,15 +11,17 @@ Use this manual to build, update or review an integration. Choose the product fr
 
 - **Earn:** [Vault V2](references/vault-v2.md) by default; Vault V1 only for explicit compatibility. A vault is not direct Blue supply, a staking product or guaranteed investment.
 - **Borrow:** [Blue](references/blue.md) has variable rates and no maturity; [Midnight](references/midnight.md) has fixed rates and fixed maturity. They have different debt units, liquidity and repayment semantics.
-- Read only the applicable product manuals, then apply the shared transaction and UI rules below. In a mixed integration, keep product/version evidence separate.
+- Read only the applicable product manuals, then apply the shared transaction and UI rules below and the [integrator handbook](references/handbook.md). In a mixed integration, keep product/version evidence separate.
 
 Morpho provides protocol infrastructure; do not describe Morpho Association as lender, custodian, guarantor, counterparty, risk assessor or curator without evidence. Distinguish integrator, curator, vault, underlying asset, receipt shares and reward tokens. Historical rates are not forecasts; collateral, smart-contract, oracle, liquidity, configuration and fee risks remain.
 
 ## Data: use the published contracts
 
+Prefer Morpho's REST APIs: Core and Midnight REST for protocol reads, Actions for every protocol transaction. Do not use GraphQL, a subgraph, direct RPC reads of protocol state or hand-built calldata where a REST route covers the need. [REST API best practice](references/rest-api-best-practice.md) gives the reasons, the exceptions, read conventions and the full proof procedure.
+
 | Contract | Canonical OpenAPI |
 | --- | --- |
-| Core REST: Blue, Vault V1/V2, tokens, prices and oracles | https://docs.morpho.org/openapi.json |
+| Core REST: Blue, Vault V1/V2, tokens, prices and oracles | https://api.morpho.org/core/docs/swagger/json |
 | Midnight REST: markets, books, positions and activity | https://api.morpho.org/midnight/docs/swagger/json |
 | Actions: transaction preparation and simulation | https://api.morpho.org/actions/docs/openapi.json |
 
@@ -64,7 +66,15 @@ Use `signature_mode: "auto"` only where accepted, supported ERC-2612 permits onl
 
 Copy the documented TypeScript `postAction`/`runAction` helper from the [Actions documentation](https://api.morpho.org/actions/docs); do not reimplement the verification/wallet flow from a sketch. Go, Python and Java proof verifiers are not complete wallet flows.
 
-Verify `Morpho-Action-Proof` before exposing typed data or calls. The helper enforces ES256; `kid` against same-origin `/.well-known/morpho-actions-jwks.json`; `typ: morpho-action-proof+jwt`; its exact production issuer; audience `morpho-actions-client`; subject `action-response`; expiry and `iat` freshness (not future, at most 60 seconds old with allowed clock skew); and exact request/response byte binding. Cache JWKS at most 60 seconds and refresh an unknown key ID. Fail closed. A valid proof does not replace checks of account, chain, typed-data domain, expiry or user intent.
+Verify `Morpho-Action-Proof` before exposing typed data or calls, following the [proof procedure](references/rest-api-best-practice.md#verify-the-actions-response-proof). The helper must:
+
+- **Bind the origin and bytes.** POST only to a `/v0/actions/` path on the keyed origin, without following redirects. Keep the exact request body bytes and hash the response body bytes before parsing; the proof binds the path, not the host.
+- **Verify the signature.** Allow only ES256; select exactly one key by `kid` from same-origin `/.well-known/morpho-actions-jwks.json`; require `typ: morpho-action-proof+jwt`, the environment's canonical issuer (`https://api.morpho.org/v0/actions` in production, not the host called), audience `morpho-actions-client` and subject `action-response`.
+- **Bound the lifetime.** Require an unexpired `exp` and an `iat` that is not in the future and at most 60 seconds old, with a few seconds of clock skew. Cache JWKS at most 60 seconds and refresh on an unknown key ID.
+- **Match the exchange.** `request_id` equals the `X-Request-Id` header; `action_id` and `action` equal the response data; `request` and `response` claims match method, path, content types, HTTP status and the base64url SHA-256 of each body.
+- **Match the decision.** `signature_required`, `rejected` for `simulation_failed`, or `approved` for `prepared` with a successful simulation. Send calls only for `prepared` with a verified `approved` decision.
+
+Fail closed. A valid proof does not stop an unchanged response being replayed before it expires, and does not replace checks of account, chain, typed-data domain, expiry or user intent.
 
 ### Signature rounds and simulation
 
@@ -99,6 +109,18 @@ Standard vault intents default to two hours, valid more than 60 seconds and at m
 ## UI correctness principles
 
 Read [UI integration principles](references/ui-principles.md) for state isolation, canonical controls, precision, source-shaped tests and honest asynchronous status. These apply to whatever product functionality the integration actually offers; they do not prescribe an application layout or feature set.
+
+## Integrator handbook
+
+Read the [integrator handbook](references/handbook.md) for what users must be told and shown. It groups product guidelines by the concern each solves, tagged by product and priority:
+
+| Concern | Categories |
+| --- | --- |
+| Compliance | Truthful language; attribution and protocol boundary; legal acknowledgment |
+| Trust and risk | Exposure transparency; rate and cost honesty; position risk and safety |
+| Growth | Transaction friction; discovery and activation; user education |
+
+The guidelines are recommendations for the functionality offered, except the first-interaction acknowledgment of Morpho's disclaimer, which is an obligation. They never relax a rule in this manual.
 
 ## Review
 

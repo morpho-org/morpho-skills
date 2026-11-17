@@ -4,7 +4,7 @@ Apply the shared [integration manual](../SKILL.md). Blue has a variable rate and
 
 ## Data and identity
 
-Derive discovery, market/position state, performance, historical averages, liquidity, oracles and metadata from the [Core REST OpenAPI](https://docs.morpho.org/openapi.json). Derive transaction variants and chain support from the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json); this manual does not duplicate their route or field catalogues.
+Derive discovery, market/position state, performance, historical averages, liquidity, oracles and metadata from the [Core REST OpenAPI](https://api.morpho.org/core/docs/swagger/json). Derive transaction variants and chain support from the [Actions OpenAPI](https://api.morpho.org/actions/docs/openapi.json); this manual does not duplicate their route or field catalogues.
 
 Market selectors are `{chain_id}:{market_id}`; token/oracle selectors are chain-prefixed addresses. Resolve exact identity rather than symbol. Indexed history and current state may differ in freshness.
 
