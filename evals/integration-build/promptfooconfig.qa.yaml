@@ -1,0 +1,41 @@
+description: Morpho integration build — QA suite (acceptance requirements from the integration brief)
+
+prompts:
+  - file://prompt.txt
+
+# Same three arms as the rubric suite. Set EVAL_REUSE_WORKSPACES=1 to grade the apps that suite built.
+providers:
+  - id: file://providers/claude-code.js
+    label: vanilla
+    config:
+      arm: vanilla
+  - id: file://providers/claude-code.js
+    label: mcp-doc-search
+    config:
+      arm: mcp
+  - id: file://providers/claude-code.js
+    label: integration-skill
+    config:
+      arm: skill
+
+tests: file://scenarios.yaml
+
+defaultTest:
+  assert:
+    # Requirements come from qa/<scenario>.md and are graded in one call from the app's source.
+    - type: javascript
+      metric: QA
+      value: file://graders/grade.js
+      config:
+        perScenario: true
+        dir: qa
+        prefix: QA
+    - type: javascript
+      metric: BuildPasses
+      value: file://graders/metrics.js:buildPasses
+    - type: javascript
+      metric: RunCompleted
+      value: file://graders/metrics.js:runCompleted
+
+evaluateOptions:
+  maxConcurrency: 1
