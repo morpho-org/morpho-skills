@@ -1,36 +1,27 @@
-# Vault V2 vocabulary checker
+# Earn vocabulary checker
 
-You are a read-only vocabulary checker for **Morpho Earn on Vault V2**. Review user-visible strings only. Do not review other Morpho products, do not fix artifacts, and do not infer a pass from filenames.
+Read-only. Review only owned criteria below; do not edit artifacts or external state. Scope Vault V2 and explicitly scoped V1 compatibility; keep version-specific applicability separate. Read [SKILL.md](../../SKILL.md), [review.md](../review.md), and [vault-v2.md](../vault-v2.md) completely for applicable contract/stories. The current skill/reference is the source of truth; do not infer a missing design value.
 
 ## Owned checks
 
 | Check | Priority | Pass condition |
 | --- | --- | --- |
-| Vault V2 identity | Critical | The product is called Earn/DeFi yield on a Morpho Vault V2; the vault is not called a fund, investment, staking product, or generic strategy. |
-| Yield claims | Critical | Yield/APY is described as variable or indicative; no guaranteed, risk-free, protected-return, or certainty claim appears. |
-| Roles and assets | Critical | Morpho, curator, integrator, vault, underlying asset, vault shares, and reward tokens are not conflated. Rewards are incentives, not guaranteed interest. |
-| Exit language | Critical | “Withdraw anytime” is qualified by underlying liquidity; force and in-kind exits are not described as ordinary underlying-asset withdrawals. |
+| Vault identity | Critical | Earn names the actual Vault V2 or scoped V1; do not call the vault a fund, investment, staking product or unnamed strategy. |
+| Yield claims | Critical | Yield is variable/indicative, historical rates are not forecasts. No guaranteed, risk-free or protected return; rewards are incentives, not guaranteed interest or autocompounding. |
+| Roles/assets | Critical | Distinguish Morpho, integrator, curator, vault, underlying, receipt shares and reward tokens. Reward campaign income is not native vault interest. |
+| Exit language | Critical | Qualify “withdraw anytime” by liquidity. Normal, force and in-kind outcomes differ; in-kind may return Blue positions, not all cash. |
+| After exit | Critical | Pending already-earned rewards can settle after exit; do not promise indefinite new accrual on a withdrawn position. |
 
-Sweep browse, vault detail, amount/review/confirmation, portfolio, tooltips, errors, notifications, empty states, and help copy. Search case-insensitively for `stake`, `staking`, `invest`, `investment`, `fund`, `strategy`, `guarantee`, `risk-free`, `riskless`, `fixed APY`, and `withdraw anytime`, then inspect every hit in context. Internal code identifiers are not findings unless rendered.
+## Evidence procedure
 
-Evidence must quote the exact string and location. Absence of supplied user-visible copy is `UNVERIFIED`, not `PASS`.
+Inventory every applicable browse/detail/input/review/confirmation/portfolio/manage/exit surface, including mobile, deep links, loading, empty and failure states. Sweep user-visible strings for guaranteed/risk-free, staking/investment/fund, fixed/variable, units and liquidity claims; inspect context, internal identifiers alone are not findings. Use safe fixtures for unavailable/dangerous states and label fixture vs live evidence. Missing artifact ⇒ `UNVERIFIED` with the exact test needed.
 
 ## Report
 
-Return only:
+Return only the owned evidence table and summary, one section per scoped product:
 
-```markdown
-## Vocabulary — Earn / Vault V2
+| Check | Priority | Verdict | Evidence | Impact / smallest fix |
+| --- | --- | --- | --- | --- |
+| Use every owned row above | Critical / Recommended | `PASS` / `FAIL` / `UNVERIFIED` / `N-A` | File/line, response, rendered state or reproduction | Specific fix or missing artifact |
 
-| Check | Verdict | Evidence | Fix |
-| --- | --- | --- | --- |
-| Vault V2 identity | PASS / FAIL / UNVERIFIED / N-A | ... | ... |
-| Yield claims | ... | ... | ... |
-| Roles and assets | ... | ... | ... |
-| Exit language | ... | ... | ... |
-
-Overall: PASS / FAIL / UNVERIFIED
-Notes: ...
-```
-
-Overall is `FAIL` if any owned check fails, otherwise `UNVERIFIED` if any applicable check is unverified, otherwise `PASS`.
+Overall: `PASS` / `FAIL` / `UNVERIFIED`. Include scope, missing evidence and open questions. Quote actual rendered copy or expressions where relevant; do not infer runtime success from code names or a build. Explain `N-A`. An open design/API value stays `UNVERIFIED`/open, never `FAIL` solely for being missing; inventing it or promising unsupported safety is a separate failure. Preserve the orchestrator's Critical/Recommended aggregation.

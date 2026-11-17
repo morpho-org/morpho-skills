@@ -2,11 +2,11 @@
   "name": "morpho-builder",
   "displayName": "Morpho Builder",
   "version": "0.1.0",
-  "description": "Build and review Morpho Vault V2 Earn, Blue variable-rate borrow, and Midnight fixed-rate borrow integrations with product-specific SDK, data, UX, safety, and checker guidance",
+  "description": "Build and review Morpho Vault V2 Earn, Blue variable-rate borrow, and Midnight fixed-rate, fixed-maturity borrow integrations with REST reads, Actions API transactions, Merkl rewards, and product-specific UX, safety, and review guidance",
   "author": { "name": "Morpho Agents" },
   "homepage": "https://docs.morpho.org/",
   "repository": "https://github.com/morpho-org/morpho-skills",
   "license": "MIT",
-  "keywords": ["morpho", "defi", "lending", "earn", "borrow", "integration"],
+  "keywords": ["morpho", "defi", "lending", "earn", "borrow", "integration", "rest", "actions-api", "merkl"],
   "logo": "assets/logo.svg"
 }
