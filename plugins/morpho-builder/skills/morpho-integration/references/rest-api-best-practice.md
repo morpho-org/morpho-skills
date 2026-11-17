@@ -39,7 +39,7 @@ An existing integration that reads protocol data through GraphQL should move tho
 - **Derive the route from the specification, including its version.** Versions are per route: Vault V2 state and APY averages are under `/v1` while most Vault V2 routes are under `/v0`. Do not copy a prefix from a neighbouring route.
 - **Use the documented selector.** Core selectors are `<chain_id>:<address>` or `<chain_id>:<market_id>`. Midnight REST market IDs are bare; Midnight address filters must be combined with `chain_ids`, because an address alone is not unique across chains.
 - **Read the envelope, then the data.** Single resources are wrapped in `data`. Lists are cursor-paginated; Midnight lists return `{ cursor, data }` and a `null` cursor marks the last page.
-- **Treat the cursor as opaque.** It encodes the sort field, direction and filters. Changing any of them invalidates it; never parse or build one. `limit` defaults to 100 and is capped at 1000.
+- **Treat the cursor as opaque.** It encodes the sort field, direction and filters. Changing any of them invalidates it; never parse or build one. Read `limit` defaults and bounds from the operation's specification; they vary by route and API.
 - **Paginate to the end before aggregating.** A total, a maximum or an "absent" conclusion drawn from the first page is wrong.
 - **Parse amounts as integers.** Base-unit and WAD values are integer strings; convert to `bigint`, never to a float. Rates such as APY averages are decimal fractions.
 - **Keep `last_indexed_block` with the data.** Different resources can be at different blocks; do not present them as one atomic snapshot.
