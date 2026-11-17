@@ -1,10 +1,10 @@
 # Reviewing an integration
 
-Review is read-only: do not change code, configuration, copy or external state. Read the [shared manual](../SKILL.md), [UI principles](ui-principles.md) and only the applicable product manuals: [Vaults](vault-v2.md), [Blue](blue.md), [Midnight](midnight.md).
+Review is read-only: do not change code, configuration, copy or external state. Read the [shared manual](../SKILL.md), [UI principles](ui-principles.md), [integrator handbook](handbook.md), [REST API best practice](rest-api-best-practice.md) and only the applicable product manuals: [Vaults](vault-v2.md), [Blue](blue.md), [Midnight](midnight.md).
 
 ## Establish scope and contracts
 
-Identify deployed product/version, chains, market/vault identities, supported actions and dependencies. Fetch the canonical OpenAPI documents linked in the manual. Trace implemented routes, params and response parsing to the relevant operation/schema rather than checking against a second route catalogue.
+Identify deployed product/version, chains, market/vault identities, supported actions and dependencies. Fetch the canonical OpenAPI documents linked in the manual. Protocol reads and transactions that bypass the REST APIs are findings unless the integration states the gap they cover. Trace implemented routes, params and response parsing to the relevant operation/schema rather than checking against a second route catalogue.
 
 Judge the functionality actually offered and the agreed integration scope. Do not infer a missing application feature from a review prompt. Product/version correctness remains separate even when helpers are shared.
 
@@ -14,14 +14,19 @@ Use these read-only prompts in parallel when delegation is available; otherwise 
 
 | Perspective | Reference |
 | --- | --- |
-| Product naming and role accuracy | [Vocabulary](checkers/vocabulary-compliance.md) |
-| Rate sources and accounting conventions | [Rate transparency](checkers/rate-transparency-compliance.md) |
-| Terms, risks, recipients and consent | [Disclosure](checkers/disclosure-compliance.md) |
-| Attribution and integration fees | [Attribution](checkers/attribution-compliance.md) |
-| State, errors and safety | [Clarity and safety](checkers/clarity-safety-compliance.md) |
-| Information accessibility | [Discoverability](checkers/discoverability-compliance.md) |
-| Intent-to-confirmation continuity | [Conversion](checkers/conversion-compliance.md) |
+| Product naming, roles and claims in copy | [Truthful language](checkers/truthful-language.md) |
+| Badge, interface-versus-protocol framing and origin tag | [Attribution and protocol boundary](checkers/attribution-protocol-boundary.md) |
+| Disclaimer acknowledgment before first interaction | [Legal acknowledgment](checkers/legal-acknowledgment.md) |
+| Vault or market identity, curator, collateral, oracle and warnings | [Exposure transparency](checkers/exposure-transparency.md) |
+| Rate sources, components, fees and accounting conventions | [Rate and cost honesty](checkers/rate-cost-honesty.md) |
+| Health, liquidation, maturity and unknown states | [Position risk and safety](checkers/position-risk-safety.md) |
+| Intent-to-confirmation continuity and consent | [Transaction friction](checkers/transaction-friction.md) |
+| Entry points, prompts and position visibility | [Discovery and activation](checkers/discovery-activation.md) |
+| Explanations and paths to learn more | [User education](checkers/user-education.md) |
+| API choice, read conventions and proof verification | [REST API usage](checkers/rest-api-usage.md) |
 | Units, calculations and transaction integrity | [Math correctness](checkers/math-correctness.md) |
+
+The first nine follow the [handbook](handbook.md) categories; the last two cover [REST API best practice](rest-api-best-practice.md) and the shared manual's units and transaction rules. Handbook priorities order the findings: trust-critical gaps first, then recommended, then nice to have.
 
 ## Evidence and conclusions
 

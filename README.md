@@ -4,7 +4,7 @@
 
 ### morpho-builder
 
-For teams building, reviewing or migrating Morpho-powered integrations. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards and UI correctness principles.
+For teams building, reviewing or migrating Morpho-powered integrations. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards, UI correctness principles, an integrator handbook of product guidelines grouped by the concern each solves, and REST API best practice.
 
 | Product | Skill |
 | --- | --- |
@@ -12,7 +12,7 @@ For teams building, reviewing or migrating Morpho-powered integrations. The inte
 | Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
 | Migration — existing GraphQL reads and legacy transaction builders to REST + Actions | `migrate-graphql-to-rest` |
 
-Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eight specialist checkers, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
+Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
 
 The migration skill audits query/transaction consumers, maps consumed fields to verified REST routes, rewrites transactions to Actions, and compares legacy/new outputs with explicit semantic changes and gaps. It includes a migration-report template; missing equivalents are not silently approximated.
 
@@ -69,7 +69,7 @@ Product guidance is maintained in one public integration skill, alongside the mi
 plugins/morpho-builder/skills/
 ├── morpho-integration/
 │   ├── SKILL.md
-│   └── references/{vault-v2.md,blue.md,midnight.md,review.md,checkers/...}
+│   └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md,review.md,checkers/...}
 └── migrate-graphql-to-rest/
     ├── SKILL.md
     └── references/{route-map.md,verification.md,migration-report.md}
