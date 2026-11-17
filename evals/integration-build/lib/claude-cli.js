@@ -8,16 +8,41 @@ const ISOLATION_ARGS = ['--setting-sources', '', '--strict-mcp-config', '--no-se
 
 function runClaude({ args, input, cwd, timeoutMs, onEvent }) {
   return new Promise((resolve) => {
-    const child = spawn(CLAUDE_BIN, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(CLAUDE_BIN, args, {
+      cwd, stdio: ['pipe', 'pipe', 'pipe'], detached: process.platform !== 'win32',
+    });
     const events = [];
     let buffer = '';
     let stderr = '';
     let timedOut = false;
+    let stdinFailed = false;
+    let finished = false;
+    let killTimer;
+    const killTree = (signal) => {
+      if (!child.pid) return;
+      if (process.platform === 'win32') {
+        const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+        killer.on('error', (error) => { stderr += `\n${error}`; });
+        killer.unref();
+      } else {
+        try {
+          process.kill(-child.pid, signal);
+        } catch (error) {
+          if (error.code !== 'ESRCH') stderr += `\n${error}`;
+        }
+      }
+    };
     const timer = timeoutMs
       ? setTimeout(() => {
           timedOut = true;
-          child.kill('SIGTERM');
-          setTimeout(() => child.kill('SIGKILL'), 10_000).unref();
+          killTree('SIGTERM');
+          killTimer = setTimeout(() => {
+            killTree('SIGKILL');
+            child.stdin.destroy();
+            child.stdout.destroy();
+            child.stderr.destroy();
+            finish(child.exitCode);
+          }, 10_000);
         }, timeoutMs)
       : null;
 
@@ -31,6 +56,15 @@ function runClaude({ args, input, cwd, timeoutMs, onEvent }) {
         // Not a JSON line (a warning printed to stdout); keep going.
       }
     };
+    const finish = (exitCode) => {
+      if (finished) return;
+      finished = true;
+      if (timer) clearTimeout(timer);
+      if (killTimer) clearTimeout(killTimer);
+      if (timedOut) killTree('SIGKILL');
+      take(buffer);
+      resolve({ events, exitCode: stdinFailed && exitCode === 0 ? 1 : exitCode, stderr, timedOut });
+    };
     child.stdout.on('data', (chunk) => {
       buffer += chunk;
       const lines = buffer.split('\n');
@@ -41,13 +75,13 @@ function runClaude({ args, input, cwd, timeoutMs, onEvent }) {
       stderr = (stderr + chunk).slice(-4000);
     });
     child.on('error', (error) => {
-      if (timer) clearTimeout(timer);
-      resolve({ events, exitCode: null, stderr: String(error), timedOut });
+      stderr += `\n${error}`;
+      finish(null);
     });
-    child.on('close', (exitCode) => {
-      if (timer) clearTimeout(timer);
-      take(buffer);
-      resolve({ events, exitCode, stderr, timedOut });
+    child.on('close', finish);
+    child.stdin.on('error', (error) => {
+      stdinFailed = true;
+      stderr += `\nstdin: ${error}`;
     });
     child.stdin.end(input ?? '');
   });

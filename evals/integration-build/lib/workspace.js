@@ -18,10 +18,13 @@ const TEXT_FILE =
 const MAX_FILE_CHARS = Number(process.env.EVAL_DIGEST_FILE_CHARS || 40_000);
 const MAX_TOTAL_CHARS = Number(process.env.EVAL_DIGEST_CHARS || 320_000);
 
-const safeName = (value) => String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
-
 function locate(arm, scenario) {
-  const key = path.join(safeName(arm), safeName(scenario));
+  for (const value of [arm, scenario]) {
+    if (typeof value !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(value)) {
+      throw new Error('Arm and scenario must contain only letters, numbers, underscores or hyphens.');
+    }
+  }
+  const key = path.join(arm, scenario);
   return {
     workspace: path.join(ROOT, 'workspaces', key),
     record: path.join(ROOT, 'runs', `${key}.json`),
@@ -63,7 +66,12 @@ function digestWorkspace(workspace) {
   const omitted = [];
   let total = parts[0].length;
   for (const file of readable) {
-    let text = fs.readFileSync(path.join(workspace, file), 'utf8');
+    const target = fs.realpathSync(path.join(workspace, file));
+    const relative = path.relative(fs.realpathSync(workspace), target);
+    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      throw new Error('Source files must be inside the workspace.');
+    }
+    let text = fs.readFileSync(target, 'utf8');
     if (text.length > MAX_FILE_CHARS) {
       text = `${text.slice(0, MAX_FILE_CHARS)}\n[... file truncated at ${MAX_FILE_CHARS} characters]`;
     }

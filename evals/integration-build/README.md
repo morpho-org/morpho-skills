@@ -45,7 +45,7 @@ Grading is static. A pass means the source shows the behaviour, not that it was 
 
 ## Run
 
-Requires the `claude` CLI, signed in, and Node.js 20 or later. From this directory:
+Requires the `claude` CLI, signed in, and Node.js 22.22.0 or later (required by promptfoo 0.125.1). From this directory:
 
 ```sh
 npx --yes promptfoo@0.125.1 eval -c promptfooconfig.yaml --no-cache -o results.json
@@ -69,6 +69,12 @@ Builds run with shell access and without permission prompts. Run them in a conta
 | `EVAL_MORPHO_MCP_URL` | `https://mcp.morpho.org/` | MCP server for the MCP arm. |
 
 Results stay local and are gitignored.
+
+Run the harness regression tests without Claude or model calls:
+
+```sh
+node --test harness.test.js
+```
 
 ## Limits
 

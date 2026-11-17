@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { runClaude, resultEvent, ISOLATION_ARGS } = require('../lib/claude-cli');
-const { locate, resetWorkspace, digestWorkspace, checkBuild } = require('../lib/workspace');
+const { ROOT, locate, resetWorkspace, digestWorkspace, checkBuild } = require('../lib/workspace');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const DOC_SEARCH_TOOL = 'mcp__morpho__morpho_doc_search';
@@ -45,14 +45,19 @@ module.exports = class ClaudeCodeBuildProvider {
     const scenario = context?.vars?.scenario;
     if (!scenario) return { error: 'The test must set vars.scenario.' };
     const paths = locate(this.arm, scenario);
+    const recordPath = path.resolve(paths.record);
+    const relative = path.relative(path.join(ROOT, 'runs'), recordPath);
+    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      throw new Error('Run records must be inside the runs directory.');
+    }
 
     let record;
-    if (process.env.EVAL_REUSE_WORKSPACES === '1' && fs.existsSync(paths.record)) {
-      record = { ...JSON.parse(fs.readFileSync(paths.record, 'utf8')), reused: true };
+    if (process.env.EVAL_REUSE_WORKSPACES === '1' && fs.existsSync(recordPath)) {
+      record = { ...JSON.parse(fs.readFileSync(recordPath, 'utf8')), reused: true };
     } else {
       record = await this.build(prompt, scenario, paths);
-      fs.mkdirSync(path.dirname(paths.record), { recursive: true });
-      fs.writeFileSync(paths.record, JSON.stringify(record, null, 2));
+      fs.mkdirSync(path.dirname(recordPath), { recursive: true });
+      fs.writeFileSync(recordPath, JSON.stringify(record, null, 2));
     }
 
     const digest = digestWorkspace(paths.workspace);
@@ -69,9 +74,14 @@ module.exports = class ClaudeCodeBuildProvider {
   }
 
   async build(prompt, scenario, paths) {
+    const transcriptPath = path.resolve(paths.transcript);
+    const relative = path.relative(path.join(ROOT, 'runs'), transcriptPath);
+    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      throw new Error('Transcripts must be inside the runs directory.');
+    }
     resetWorkspace(paths.workspace);
-    fs.mkdirSync(path.dirname(paths.transcript), { recursive: true });
-    const transcript = fs.createWriteStream(paths.transcript);
+    fs.mkdirSync(path.dirname(transcriptPath), { recursive: true });
+    const transcript = fs.createWriteStream(transcriptPath);
     const arm = ARMS[this.arm];
     const model = process.env.EVAL_BUILD_MODEL || this.config.model || 'claude-fable-5-2';
     const budget = process.env.EVAL_MAX_BUDGET_USD || this.config.maxBudgetUsd;

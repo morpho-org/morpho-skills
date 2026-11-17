@@ -79,7 +79,9 @@ async function askGrader(input) {
     const events = run.events.flatMap((event) => (Array.isArray(event) ? event : [event]));
     const result = resultEvent(events);
     try {
-      if (!result || result.is_error) throw new Error(result?.result || run.stderr || 'no result from the grader');
+      if (run.timedOut || run.exitCode !== 0 || !result || result.is_error) {
+        throw new Error(run.stderr || result?.result || 'no successful result from the grader');
+      }
       return { verdicts: parseVerdicts(result), cost: result.total_cost_usd };
     } catch (error) {
       lastError = error;
@@ -93,7 +95,12 @@ module.exports = async (output, context) => {
   const scenario = context.vars?.scenario;
   const file = config.perScenario ? path.join(config.dir, `${scenario}.md`) : config.file;
   const prefix = config.prefix || path.basename(file, '.md');
-  const requirements = parseRequirements(fs.readFileSync(path.join(EVAL_DIR, file), 'utf8'));
+  const target = fs.realpathSync(path.resolve(EVAL_DIR, file));
+  const relative = path.relative(EVAL_DIR, target);
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    return { pass: false, score: 0, reason: 'Requirements must be inside the evaluation directory.' };
+  }
+  const requirements = parseRequirements(fs.readFileSync(target, 'utf8'));
   if (requirements.length === 0) return { pass: false, score: 0, reason: `No requirements found in ${file}` };
 
   const input = [
