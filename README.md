@@ -4,7 +4,7 @@
 
 ### morpho-builder
 
-For teams building, reviewing or migrating Morpho-powered integrations. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards, UI correctness principles, an integrator handbook of product guidelines grouped by the concern each solves, and REST API best practice.
+For teams building, reviewing or migrating Morpho-powered integrations. The integration manual covers REST reads, Actions transactions and Merkl rewards through product manuals, data contracts derived from canonical OpenAPI specifications, shared transaction safeguards, UI correctness principles and an integrator handbook of product guidelines grouped by the concern each solves, and REST API best practice.
 
 | Product | Skill |
 | --- | --- |
