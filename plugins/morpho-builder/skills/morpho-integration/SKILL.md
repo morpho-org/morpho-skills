@@ -8,9 +8,9 @@ description: Build or review correct Morpho integrations using REST reads, Actio
 ## Always
 
 - Keep Actions and Merkl credentials server-side ([keys](#data-use-the-published-contracts)).
-- Prepare every protocol transaction through Actions; never hand-build calldata ([REST API](references/rest-api-best-practice.md)).
+- Prepare every protocol transaction through Actions, never hand-built calldata; Merkl claims are excepted ([claims](references/vault-v2.md#rewards-and-claims)).
 - Verify `Morpho-Action-Proof` before exposing typed data or calls ([proof](#verify-before-exposing-a-plan)).
-- Send only `prepared` calls whose simulation succeeded, and take review values from that simulation ([simulation](#signature-rounds-and-simulation)).
+- Except for Merkl claims, send only `prepared` calls whose simulation succeeded; review values come from that simulation ([simulation](#signature-rounds-and-simulation)).
 - Show the official Powered by Morpho attribution where users interact with Morpho ([attribution](references/handbook.md#attribution-and-protocol-boundary)).
 - Require acknowledgment of Morpho's disclaimer before a user's first protocol interaction; this is an obligation ([disclaimer](references/handbook.md#legal-acknowledgment)).
 - Label every rate, reward APR included, as fixed or variable, APR or APY, with its averaging window (a fixed rate: its maturity). Show native yield and rewards separately ([rates](#rates-and-accounting)).
