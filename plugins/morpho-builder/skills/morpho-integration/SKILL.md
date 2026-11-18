@@ -100,6 +100,8 @@ Previews apply `simulation.position_changes` deltas to the matching indexed base
 
 Before a wallet prompt, explain the signature or currently available call plan, account/chain, units, amounts, approvals, fees, protection limits and expected changes. A signature-required response may not contain final calls: identify them as pending, update the review after continuation, and review the final ordered calls before sending. Never claim unseen calls were reviewed.
 
+Present the review as ordered steps in the order the wallet will ask: signatures first, then calls. Give each step a readable label, its token, spender or recipient, amount, and any fee or limit; a signature also shows its kind and typed-data domain. Raw typed data and calldata are secondary details, not the review itself. During a signature round, say visibly that the final calls are pending and follow after signing.
+
 Send returned `to`, `data` and `value` unchanged, in order, from the selected account on the selected chain before expiry. Atomic EIP-5792 batching is allowed only if the wallet supports atomic batches; otherwise send sequentially, awaiting each confirmation. Stop on the first failure. Earlier approvals/authorizations can remain applied.
 
 Track confirmed and possibly submitted calls. Reconcile receipts before retrying and request a new action instead of blindly resending remaining calls. After confirmation, refetch until the indexed watermark reaches the transaction block where available; otherwise reconcile position and wallet state explicitly. Midnight has no universal watermark. Rewards index independently. A receipt alone does not prove a refreshed position or a complete exit.
