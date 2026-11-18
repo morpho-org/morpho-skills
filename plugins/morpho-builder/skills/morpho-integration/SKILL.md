@@ -5,6 +5,15 @@ description: Build or review correct Morpho integrations using REST reads, Actio
 
 # Morpho integration manual
 
+## Always
+
+- Show the official Powered by Morpho attribution where users interact with Morpho ([attribution](references/handbook.md#attribution-and-protocol-boundary)).
+- Require acknowledgment of Morpho's disclaimer before a user's first protocol interaction; this is an obligation ([legal acknowledgment](references/handbook.md#legal-acknowledgment)).
+- Label every rate, reward APR included, as fixed or variable, APR or APY, with its averaging window (a fixed rate: its maturity). Show native yield and rewards separately ([rates](#rates-and-accounting)).
+- Show missing or failed values as unknown, never as zero ([identity and units](#identity-and-units)).
+- Take review values from the verified simulation ([simulation](#signature-rounds-and-simulation)).
+- Bound Max and sliders by available liquidity and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
+
 ## Concepts
 
 Use this manual to build, update or review an integration. Choose the product from the requested use case and deployed configuration, not from a preferred transaction template.
@@ -34,25 +43,19 @@ Keep Actions `x-api-key` and Merkl credentials server-side. Browser clients call
 ### Identity and units
 
 - Token, vault and Blue market selectors combine chain and address/market ID as `{chain_id}:{identifier}`. Midnight REST market IDs are bare and globally unique; Midnight Actions use `{chain_id}:{market_id}`, with the chain obtained from discovery.
-- Raw integer amounts are `bigint` base units. Earn shares use the share token's decimals; Borrow shares are raw accounting units, not token-decimal amounts. Never rescale execution payloads for display.
-- Keep token math in integers. Convert between base units and decimal strings with string/`bigint` helpers (a `parseUnits`/`formatUnits` pair) and the token's own decimals. Parse user input as a decimal string, rejecting more fractional digits than the token has. Never pass a token amount, share amount or scaled price through `Number`, `parseFloat` or floating-point multiplication; floating point is acceptable only for a display-only value that never feeds back into an amount, such as a rounded USD estimate.
+- Raw integer amounts are `bigint` base units. Earn shares use the share token's decimals; Borrow shares are raw accounting units, not token-decimal amounts. Never rescale execution payloads for display or use floats for token math.
 - Resolve metadata from contract identity plus chain, not symbol. USD value = raw amount / 10^tokenDecimals × token USD price. An oracle exchange ratio is not a USD price.
 - Oracle price is scaled by 1e36: collateralRaw × oraclePrice / 1e36 yields loan-token base units. LLTV fractions use WAD (1e18); the product manuals explain share-price and debt scaling.
-- Preserve null, loading, empty and zero as distinct states. A missing price leaves the token amount available but its USD value unknown; a missing input to a safety calculation blocks actions depending on it.
-- Never default a missing, null or failed value to zero (`?? 0`, `|| 0`, `Number(x) || 0`, a zero default parameter or an empty-array fallback for a failed fetch). Render it as unknown, with the reason where one is known (not priced, not supported, request failed). A sum, average, ranking or ratio that needs an unknown input is unknown, or is shown as partial and names what it excludes. Sort unknown values apart from known zeros.
+- Preserve null, loading, empty and zero as distinct states. A missing price leaves the token amount available but its USD value unknown; a missing input to a safety calculation blocks actions depending on it. Never default a missing or failed value to zero; see [unknown values](references/ui-principles.md#numbers-metadata-and-previews).
 - Indexed reads can be non-atomic or stale. Keep identity, freshness and any available block watermark with the baseline rather than treating it as execution state.
 
 ### Rates and accounting
 
-Choose one explicit `rateWindow` for variable native rates and reward APR. Use realized REST averages rather than instantaneous rates; a chart range is not an averaging window. Six hours is the integration default unless configured otherwise. Never replace a null selected window with another window silently. Fixed-term Midnight rates do not use this window.
+Choose one explicit `rateWindow` for every variable native rate and reward APR. Use realized REST averages rather than instantaneous rates; a chart range is not an averaging window. Six hours is the integration default unless configured otherwise. Never replace a null selected window with another window silently. Fixed-term Midnight rates do not use this window.
 
-The Merkl coverage-weighted display convention uses hourly records over the same interval: deduplicate timestamps, exclude the extra inclusive boundary bucket, discard `hasUntrustedContribution` records, and sum mean(retained `avg`) × retained/expected / 100 across opportunities. Expected hourly counts are 6, 24 and 168 for six hours, one day and seven days. Paginate before computing. Do not substitute opportunity spot APR, `totalApr` or `nativeApr`. Empty/all-excluded or failed data is unavailable, not an invented zero.
+Compute reward APR over the same window with the [Merkl display convention](references/vault-v2.md#reward-apr-convention); failed or empty reward data is unavailable, not zero. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
 
-Hourly retention and vendor averaging guarantees remain unconfirmed. This convention is not a Merkl guarantee. For 30/90-day or one-year native windows, omit the unsupported reward average and identify the exclusion. Vault one-hour/inception lookbacks are not automatic substitutes. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
-
-Every displayed rate states, next to the number, whether it is fixed or variable, whether it is APR or APY, and for variable rates the averaging window it was computed over. Earn yield shows native yield and each reward token as separate components; a combined figure appears only beside that breakdown and only when every component is known. Net worth and earned to date include priced reward amounts as their own component alongside native value, while position value and debt stay native (borrow rewards do not reduce debt); when reward data or a reward price is unknown the total is partial and says so, never silently native-only.
-
-Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Cumulative earnings and return on capital are not the same as a historical rate window.
+Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Cumulative earnings and return on capital are not the same as a historical rate window. Net worth and earned to date include priced rewards, or are marked partial.
 
 ## Transactions: verified preparation, consent and execution
 
@@ -90,12 +93,7 @@ Require more than 60 seconds before `expires_at` before each signature; otherwis
 
 Only `prepared` with `simulation.status === "success"` may proceed to sending. `simulation_failed` or a failed simulation sends nothing and must not be bypassed. Explain failure using structured data; expose raw `simulation.failure.message` only in secondary details. Do not loosen guards to make a plan pass.
 
-Previews apply `simulation.position_changes` deltas to the matching indexed baseline and use signed `simulation.wallet_changes`. They are not full snapshots. Use product-specific accounting units, simulated fees/penalties, actual wallet spend and net receipts.
-
-- **Before preparation,** figures derived from the typed amount are estimates and are labelled as estimates.
-- **After a successful simulation,** the review's before and after values come from the response: before is the indexed baseline the delta applies to, after is that baseline plus `simulation.position_changes`, converted with the product's accounting and the same state used for the baseline. Wallet spend and receipt are the signed `simulation.wallet_changes`. Confirmed gross, fee and net amounts and any resulting ratio come from the variant's `simulation.effects` where it reports them.
-- **Do not recompute** an after value from the input amount, or show a local estimate in place of a simulated value. A value the simulation does not report stays unavailable or is labelled as an estimate; it is not filled silently with a local calculation.
-- **A changed input** discards the simulated preview until a new preparation succeeds.
+Previews apply `simulation.position_changes` deltas to the matching indexed baseline and use signed `simulation.wallet_changes`. They are not full snapshots; never recompute review values from the input amount ([preview detail](references/ui-principles.md#numbers-metadata-and-previews)). Use product-specific accounting units, simulated fees/penalties, actual wallet spend and net receipts.
 
 ### Review, send and reconcile
 
@@ -109,15 +107,15 @@ Track confirmed and possibly submitted calls. Reconcile receipts before retrying
 
 Parse empty/non-JSON errors defensively. Use the OpenAPI's error schema and validated structured details when available; retain inputs and request IDs without leaking secrets. Unknown codes fail safely. Raw service messages belong in details, not promises of recovery.
 
-Retry HTTP 429 and 503, and only those: both are transient, so a bounded retry usually recovers without the user doing anything, while retrying other statuses repeats a request that will fail the same way. Sharing one retrying fetch helper across REST and Actions calls keeps the policy consistent. Honor `Retry-After` when present, as either delay seconds or an HTTP date; otherwise use bounded exponential backoff with jitter, at most three retries, then surface the failure with its request ID. A 429 can arrive without a JSON body. Retrying an Actions preparation request is safe because preparation sends nothing. Never retry other statuses automatically or automatically resubmit a wallet transaction.
+Retry only HTTP 429/503, honoring `Retry-After` (seconds or HTTP date) with bounded exponential backoff and jitter, at most three retries. Never retry other 4xx automatically or automatically resubmit a wallet transaction.
 
-Expired/invalid continuations require a new intent. Stale quotes or slippage/rate failures require a fresh quote and consent. Liquidity failures require refreshed capacity and a smaller supported amount or explicitly chosen alternative; unknown capacity stays unknown. A shortfall message states the requested amount, the amount currently available and the difference, in token units with USD when priced, and names the bound that applies. Unsupported actions remain unavailable with their reason. Repayment beyond current debt requires refreshing and selecting a supported full-repay mode, not increasing the amount blindly.
+Expired/invalid continuations require a new intent. Stale quotes or slippage/rate failures require a fresh quote and consent. Liquidity failures require refreshed capacity and a smaller supported amount or explicitly chosen alternative; unknown capacity stays unknown. Shortfalls state requested and available amounts. Unsupported actions remain unavailable with their reason. Repayment beyond current debt requires refreshing and selecting a supported full-repay mode, not increasing the amount blindly.
 
-Standard vault intents default to two hours, valid more than 60 seconds and at most seven days ahead. Blue defaults to 30 minutes, more than 60 seconds and at most two hours. Midnight quoted borrow/market repayment defaults to 30 minutes, minimum five minutes, at most one hour and not beyond maturity; direct repayment is more than 60 seconds and at most 24 hours. Recheck the operation schema, including collateral-only exceptions. An offer expiring before the action deadline can make a quote stale.
+Per-product intent [expiry bounds](references/rest-api-best-practice.md#expiry-bounds) still apply.
 
 ## UI correctness principles
 
-Read [UI integration principles](references/ui-principles.md) for state isolation, canonical controls and amount limits, number formatting, resilient list loading, source-shaped tests and honest asynchronous status. These apply to whatever product functionality the integration actually offers; they do not prescribe an application layout or feature set.
+Read [UI integration principles](references/ui-principles.md) for state isolation, canonical controls and limits, precision, resilient lists, previews, source-shaped tests and honest asynchronous status. These apply to whatever product functionality the integration actually offers; they do not prescribe an application layout or feature set.
 
 ## Integrator handbook
 

@@ -54,6 +54,12 @@ The Distributor ABI is `claim(address[] users, address[] tokens, uint256[] amoun
 
 Simulate the encoded claim, review tokens/costs/recipient, obtain consent, send on the distribution chain and wait for receipt. Refresh rewards with the vendor's post-claim cache bypass (`reloadChainId`), not on every poll; ordinary cache/indexing can lag. Refresh wallet balances independently and reconcile claimed values. Root/proof change requires fresh data and review, never silent resubmission.
 
+### Reward APR convention
+
+The Merkl coverage-weighted display convention uses hourly records over the same interval: deduplicate timestamps, exclude the extra inclusive boundary bucket, discard `hasUntrustedContribution` records, and sum mean(retained `avg`) × retained/expected / 100 across opportunities. Expected hourly counts are 6, 24 and 168 for six hours, one day and seven days. Paginate before computing. Do not substitute opportunity spot APR, `totalApr` or `nativeApr`. Empty/all-excluded or failed data is unavailable, not an invented zero.
+
+Hourly retention and vendor averaging guarantees remain unconfirmed. This convention is not a Merkl guarantee. For 30/90-day or one-year native windows, omit the unsupported reward average and identify the exclusion. Vault one-hour/inception lookbacks are not automatic substitutes.
+
 ## Vault V1 compatibility
 
 Use the V1 contracts in the same [Core REST spec](https://api.morpho.org/core/docs/swagger/json) and [Actions spec](https://api.morpho.org/actions/docs/openapi.json). Derive supported chains and amount variants independently.

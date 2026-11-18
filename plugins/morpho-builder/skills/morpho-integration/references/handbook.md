@@ -84,7 +84,7 @@ A rate without context sets the wrong expectation: users assume a blended number
 - **Blue ⭐** State that the borrow rate changes with utilization. Rewards arrive as a separate token and do not reduce debt; keep them out of the borrow cost.
 - **Blue, Midnight ⭐** Show an integrator fee as the integrator's own, separate from the protocol rate, with net amount received against gross debt. Interest accrues on gross debt.
 - **Midnight ⭐** Present the fixed rate as priced from available offers: it moves with the borrow size and as offers change. Requote on input changes and before signing, and show quote freshness.
-- **Shared ⭐** State the averaging window of a variable rate and whether the figure is APR or APY, following the [rate convention](../SKILL.md#rates-and-accounting).
+- **Shared ⭐** State the averaging window of every variable native rate and reward APR, and whether the figure is APR or APY, following the [rate convention](../SKILL.md#rates-and-accounting).
 - **Earn ⭐** Count rewards in totals such as net worth and earned to date, as their own line. When reward data is unknown, mark the total partial rather than showing native value alone as complete.
 - **Earn Rec** Show the end date of a rewards program when it has one.
 - **Blue Rec** In a high-utilization market, warn that a new borrow can itself raise the rate.

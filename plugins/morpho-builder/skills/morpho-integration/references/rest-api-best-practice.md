@@ -58,7 +58,7 @@ An existing integration that reads protocol data through GraphQL should move tho
 | 429 | Rate limited at the gateway; the body may not be JSON | Wait for `Retry-After` (delay seconds or an HTTP date), then retry within the bound |
 | 503 | Temporary upstream unavailability | Retry with bounded backoff |
 
-Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those, preferably through one shared fetch helper, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
+Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
 
 Midnight list routes document short public caching (`max-age` of 2 to 5 seconds). Polling faster than the cache lifetime returns the same data; debounce quotes and bind each response to the inputs that produced it.
 
@@ -73,6 +73,10 @@ Midnight list routes document short public caching (`max-age` of 2 to 5 seconds)
 - **Do not take gas values from the simulation.** A successful simulation does not prove a wallet can send the calls; let the wallet estimate gas.
 - **Disclose the `signature_mode: "none"` fallback.** When a wallet cannot sign typed data, the returned approval calls can grant more than the signature would have, including an unlimited approval. Tell the user before sending them.
 - **Classify what was sent before retrying.** After a failure, nothing, part or an unknown amount of the plan may have landed. Check a pending hash or batch before requesting the action again, or it can run twice.
+
+### Expiry bounds
+
+Standard vault intents default to two hours, valid more than 60 seconds and at most seven days ahead. Blue defaults to 30 minutes, more than 60 seconds and at most two hours. Midnight quoted borrow/market repayment defaults to 30 minutes, minimum five minutes, at most one hour and not beyond maturity; direct repayment is more than 60 seconds and at most 24 hours. Recheck the operation schema, including collateral-only exceptions. An offer expiring before the action deadline can make a quote stale.
 
 ## Verify the Actions response proof
 
