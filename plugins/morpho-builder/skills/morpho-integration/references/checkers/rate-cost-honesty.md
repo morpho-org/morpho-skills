@@ -12,7 +12,7 @@ Distinguish native yield/cost, reward APR, underlying-token yield where relevant
 
 Where accepted, referral fees require integer `bps` 1–200, a valid recipient, omission of zero and disclosure of token cost/gross versus net receipt. Verify the actual body and unchanged calls rather than a configuration variable alone.
 
-Check every rendered rate for its fixed or variable label, APR or APY, and averaging window. Check that net worth and earned-to-date totals include priced rewards as their own component, or name the rewards they leave out (how many and which) when those are unknown, and that rewards are not netted against position value or debt.
+Check every rendered rate for its fixed or variable label, APR or APY, and averaging window. Check that net worth and earned-to-date totals include priced rewards as their own component, or, when rewards are unknown, name what they leave out where known and are otherwise marked incomplete, and that rewards are not netted against position value or debt.
 
 Combined metrics are unknown when a required component fails. Confirmed no campaign differs from failure and does not erase previously earned rewards.
 

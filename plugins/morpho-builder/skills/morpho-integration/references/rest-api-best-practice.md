@@ -23,7 +23,7 @@ Where REST does not apply:
 
 - **Wallet state.** Token balances, allowances and transaction receipts come from the wallet or an RPC node.
 - **Merkl rewards and claims.** These use [Merkl's API](https://developers.merkl.xyz/api-reference/get/v4/opportunities) and the Distributor contract; Actions has no claim route.
-- **History.** Read protocol events, transactions and past rates from REST history and activity routes. Where no route covers a history need, show it as unavailable or name the substitute source and why; node log scans and a legacy query API are not defaults.
+- **History.** Read protocol events, transactions and past rates from REST history and activity routes. Where no route covers a history need, show it as unavailable or name the substitute source and why. Node log scans and legacy query APIs lack REST's units, freshness and null handling, so they work best as a named fallback rather than a default.
 - **A gap in coverage.** When no REST route exists, say which value comes from another source and why. A missing Actions route is a reason to leave the action unavailable, not to build calldata.
 
 An existing integration that reads protocol data through GraphQL should move those reads to the matching REST routes, one resource at a time, comparing units and null handling as it goes.
@@ -59,7 +59,7 @@ An existing integration that reads protocol data through GraphQL should move tho
 | 429 | Rate limited at the gateway; the body may not be JSON | Wait for `Retry-After` (delay seconds or an HTTP date), then retry within the bound |
 | 503 | Temporary upstream unavailability | Retry with bounded backoff |
 
-Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls. It returns structured errors (status, code, request ID); the interface explains them in its own words and keeps raw service messages in secondary details.
+Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls. Having it return structured errors (status, code, request ID) lets the interface explain failures in its own words and keep raw service messages in secondary details.
 
 Midnight list routes document short public caching (`max-age` of 2 to 5 seconds). Polling faster than the cache lifetime returns the same data; debounce quotes and bind each response to the inputs that produced it.
 

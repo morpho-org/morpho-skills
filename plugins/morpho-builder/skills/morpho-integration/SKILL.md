@@ -7,23 +7,23 @@ description: Build or review correct Morpho integrations using REST reads, Actio
 
 ## Always
 
-Most-missed rules, not the whole manual: every section and linked reference still applies.
+Core rules, not the whole manual: every section and linked reference still applies.
 
 - Keep Actions and Merkl credentials server-side ([keys](#data-use-the-published-contracts)).
-- Read protocol data, history included, from Core and Midnight REST, not node logs or a legacy query API, and read every page before a total or "none found" ([data](#data-use-the-published-contracts)).
+- Read protocol data, history included, from Core and Midnight REST, and every page before a total or "none found"; where REST lacks a route, name the other source and why ([data](#data-use-the-published-contracts)).
 - Prepare every protocol transaction through Actions with the integration's configured `calldata_origin`, never hand-built calldata; Merkl claims are excepted ([intent](#initial-intent-and-funding), [claims](references/vault-v2.md#rewards-and-claims)).
 - Verify `Morpho-Action-Proof` before exposing typed data or calls ([proof](#verify-before-exposing-a-plan)).
 - Handle every Actions status: review and continue `signature_required`; send only `prepared` calls whose simulation succeeded (Merkl claims excepted), with review values from it. Recheck account, chain and validity before each signature and send ([rounds](#signature-rounds-and-simulation)).
-- Show the official Powered by Morpho badge where users interact with Morpho, keep Morpho's disclaimer reachable from it, and say the integrator operates the interface while the protocol is Morpho's ([attribution](references/handbook.md#attribution-and-protocol-boundary)).
+- Show the official Powered by Morpho badge where users interact with Morpho and say the integrator operates the interface while the protocol is Morpho's; linking the disclaimer from it is recommended ([attribution](references/handbook.md#attribution-and-protocol-boundary)).
 - Before a user's first protocol interaction, require acknowledgment of a notice naming the integrator's own terms and Morpho's Disclaimer, in the handbook's wording; this is an obligation ([disclaimer](references/handbook.md#legal-acknowledgment)).
 - Label every rate, reward APR included, as fixed or variable, APR or APY, with its averaging window (a fixed rate: its maturity). Show native yield and rewards separately ([rates](#rates-and-accounting)).
-- Show missing, failed or loading values as unknown, never as zero or a smaller complete-looking value; a total that leaves items out says how many and which ([units](#identity-and-units)).
+- Show missing, failed or loading values as unknown, never as zero or a smaller complete-looking value; a total missing items names them where known, else is marked incomplete ([units](#identity-and-units)).
 - Bound Max and sliders by every applicable limit (balance, position, liquidity, caps, health) and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
 - Explain errors from structured data; raw service messages go in secondary details ([recovery](#recovery-and-protection-limits)).
 
 ## Concepts
 
-Choose the product from the requested use case and deployed configuration, not from a preferred transaction template.
+Choose the product from the use case and deployed configuration, not a preferred transaction template.
 
 - **Earn:** [Vault V2](references/vault-v2.md) by default; Vault V1 only for explicit compatibility. A vault is not direct Blue supply, a staking product or guaranteed investment.
 - **Borrow:** [Blue](references/blue.md) has variable rates and no maturity; [Midnight](references/midnight.md) has fixed rates and fixed maturity. They have different debt units, liquidity and repayment semantics.
@@ -43,7 +43,7 @@ Prefer Morpho's REST APIs: Core and Midnight REST for protocol reads and history
 
 Fetch the applicable OpenAPI before implementing a client and derive routes, versions, parameters, pagination, envelopes, nullable fields, chains and variants from its referenced schemas, not guessed paths or a neighboring operation's version. Core and Midnight are separate documents. Read coverage does not imply Actions support; an unsupported action is not a reason to build custom calldata.
 
-Use REST GETs for displayed protocol data, token metadata/prices and indexed position baselines; use wallet reads for wallet balances. Use Actions for protocol transactions: it builds and simulates, but never submits. The explicit exception is [Merkl Distributor claims](references/vault-v2.md#rewards-and-claims), which have no Actions route.
+Use REST GETs for displayed protocol data, token metadata/prices and indexed position baselines; wallet reads for wallet balances. Use Actions for protocol transactions: it builds and simulates, but never submits. The exception is [Merkl Distributor claims](references/vault-v2.md#rewards-and-claims), which have no Actions route.
 
 Browser clients call the integration backend, which holds the Actions `x-api-key` and Merkl credentials; never embed or log secrets. Use the documented REST host/authentication rather than assuming it shares Actions authentication.
 
@@ -53,7 +53,7 @@ Browser clients call the integration backend, which holds the Actions `x-api-key
 - Raw integer amounts are `bigint` base units. Earn shares use the share token's decimals; Borrow shares are raw accounting units, not token-decimal amounts. Never rescale execution payloads for display or use floats for token math.
 - Resolve metadata from contract identity plus chain, not symbol. USD value = raw amount / 10^tokenDecimals × token USD price. An oracle exchange ratio is not a USD price.
 - Oracle price is scaled by 1e36: collateralRaw × oraclePrice / 1e36 yields loan-token base units. LLTV fractions use WAD (1e18); the product manuals explain share-price and debt scaling.
-- Preserve null, loading, empty and zero as distinct states. A missing price leaves the token amount available but its USD value unknown; a missing input to a safety calculation blocks actions depending on it. Failed data is unavailable, not zero. A list total waits for every row; a value derived from a failed read (debt, health, Max) is unknown, not 0 or "no debt"; a combined rate missing a part is not shown under the combined label. See [unknown values](references/ui-principles.md#numbers-metadata-and-previews).
+- Preserve null, loading, empty and zero as distinct states. A missing price leaves the token amount available but its USD value unknown; a missing input to a safety calculation blocks actions depending on it. Failed data is unavailable, not zero. A total over loading or unknown rows is pending, or excludes them and says so; a value derived from a failed read (debt, health, Max) is unknown, not 0 or "no debt"; a combined rate missing a part loses the combined label. See [unknown values](references/ui-principles.md#numbers-metadata-and-previews).
 - Indexed reads can be non-atomic or stale. Keep identity, freshness and any available block watermark with the baseline rather than treating it as execution state.
 
 ### Rates and accounting
@@ -62,7 +62,7 @@ Choose one explicit `rateWindow` for every variable native rate and reward APR. 
 
 Compute reward APR over the same window with the [Merkl display convention](references/rest-api-best-practice.md#reward-apr-convention); failed or empty reward data is unavailable, not zero. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
 
-Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Omit an unsupported reward average and identify the exclusion. Net worth and earned to date include priced rewards; a total that leaves some out names how many and which.
+Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Omit an unsupported reward average and identify the exclusion. Net worth and earned to date include priced rewards; a total missing some names them where known, else is marked incomplete.
 
 ## Transactions: verified preparation, consent and execution
 
@@ -106,7 +106,7 @@ Track confirmed and possibly submitted calls. Reconcile receipts before retrying
 
 ### Recovery and protection limits
 
-Parse empty/non-JSON errors defensively. Use the OpenAPI's error schema and validated structured details when available; retain inputs and request IDs without leaking secrets. Unknown codes fail safely. Raw service messages, including any a shared fetch helper passes through, belong in secondary details, never inline or as promises of recovery.
+Parse empty/non-JSON errors defensively. Use the OpenAPI's error schema and validated structured details when available; retain inputs and request IDs without leaking secrets. Unknown codes fail safely. Raw service messages, including those a shared fetch helper passes through, belong in details, not inline or promises of recovery.
 
 Retry only HTTP 429/503, honoring `Retry-After` (seconds or HTTP date) with bounded exponential backoff and jitter, at most three retries. Never automatically retry other 4xx or resubmit a wallet transaction.
 
@@ -120,7 +120,7 @@ Read [UI integration principles](references/ui-principles.md) for state, control
 
 ## Integrator handbook
 
-Read the [integrator handbook](references/handbook.md) for what users must be told and shown: compliance (truthful language, attribution, legal acknowledgment), trust and risk (exposure, rate and cost honesty, position safety) and growth (friction, discovery, education). Its guidelines are recommendations for the functionality offered, except the first-interaction acknowledgment of Morpho's disclaimer, which is an obligation. They never relax a rule in this manual.
+Read the [integrator handbook](references/handbook.md) for what users must be told and shown: compliance (truthful language, attribution, legal acknowledgment), trust and risk (exposure, rate and cost honesty, position safety) and growth (friction, discovery, education). Its guidelines are recommendations, except the first-interaction acknowledgment of Morpho's disclaimer, which is an obligation. They never relax a rule in this manual.
 
 ## Review
 
