@@ -58,9 +58,15 @@ An existing integration that reads protocol data through GraphQL should move tho
 | 429 | Rate limited at the gateway; the body may not be JSON | Wait for `Retry-After` (delay seconds or an HTTP date), then retry within the bound |
 | 503 | Temporary upstream unavailability | Retry with bounded backoff |
 
-Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
+Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls.
 
 Midnight list routes document short public caching (`max-age` of 2 to 5 seconds). Polling faster than the cache lifetime returns the same data; debounce quotes and bind each response to the inputs that produced it.
+
+## Reward APR convention
+
+The Merkl coverage-weighted display convention uses hourly records over the same interval: deduplicate timestamps, exclude the extra inclusive boundary bucket, discard `hasUntrustedContribution` records, and sum mean(retained `avg`) × retained/expected / 100 across opportunities. Expected hourly counts are 6, 24 and 168 for six hours, one day and seven days. Paginate before computing. Do not substitute opportunity spot APR, `totalApr` or `nativeApr`. Empty/all-excluded or failed data is unavailable, not an invented zero.
+
+Hourly retention and vendor averaging guarantees remain unconfirmed. This convention is not a Merkl guarantee. For 30/90-day or one-year native windows, omit the unsupported reward average and identify the exclusion. Vault one-hour/inception lookbacks are not automatic substitutes.
 
 ## Preparing transactions with Actions
 

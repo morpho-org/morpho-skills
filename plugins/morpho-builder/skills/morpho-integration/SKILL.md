@@ -7,12 +7,15 @@ description: Build or review correct Morpho integrations using REST reads, Actio
 
 ## Always
 
+- Keep Actions and Merkl credentials server-side ([keys](#data-use-the-published-contracts)).
+- Prepare every protocol transaction through Actions; never hand-build calldata ([REST API](references/rest-api-best-practice.md)).
+- Verify `Morpho-Action-Proof` before exposing typed data or calls ([proof](#verify-before-exposing-a-plan)).
+- Send only `prepared` calls whose simulation succeeded, and take review values from that simulation ([simulation](#signature-rounds-and-simulation)).
 - Show the official Powered by Morpho attribution where users interact with Morpho ([attribution](references/handbook.md#attribution-and-protocol-boundary)).
-- Require acknowledgment of Morpho's disclaimer before a user's first protocol interaction; this is an obligation ([legal acknowledgment](references/handbook.md#legal-acknowledgment)).
+- Require acknowledgment of Morpho's disclaimer before a user's first protocol interaction; this is an obligation ([disclaimer](references/handbook.md#legal-acknowledgment)).
 - Label every rate, reward APR included, as fixed or variable, APR or APY, with its averaging window (a fixed rate: its maturity). Show native yield and rewards separately ([rates](#rates-and-accounting)).
-- Show missing or failed values as unknown, never as zero ([identity and units](#identity-and-units)).
-- Take review values from the verified simulation ([simulation](#signature-rounds-and-simulation)).
-- Bound Max and sliders by available liquidity and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
+- Show missing or failed values as unknown, never as zero ([units](#identity-and-units)).
+- Bound Max and sliders by every applicable limit (balance, position, liquidity, caps, health) and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
 
 ## Concepts
 
@@ -53,7 +56,7 @@ Keep Actions `x-api-key` and Merkl credentials server-side. Browser clients call
 
 Choose one explicit `rateWindow` for every variable native rate and reward APR. Use realized REST averages rather than instantaneous rates; a chart range is not an averaging window. Six hours is the integration default unless configured otherwise. Never replace a null selected window with another window silently. Fixed-term Midnight rates do not use this window.
 
-Compute reward APR over the same window with the [Merkl display convention](references/vault-v2.md#reward-apr-convention); failed or empty reward data is unavailable, not zero. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
+Compute reward APR over the same window with the [Merkl display convention](references/rest-api-best-practice.md#reward-apr-convention); failed or empty reward data is unavailable, not zero. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
 
 Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Cumulative earnings and return on capital are not the same as a historical rate window. Net worth and earned to date include priced rewards, or are marked partial.
 
