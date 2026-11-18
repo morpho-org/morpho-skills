@@ -55,10 +55,10 @@ An existing integration that reads protocol data through GraphQL should move tho
 | 404 | The selected resource does not exist on that chain | Report it; do not fall back to another chain or version |
 | 422 on a Midnight quote | The requested size cannot be filled | Refresh capacity and let the user choose a smaller amount |
 | 501 on reallocatable liquidity | Unsupported vault adapter or vault outside the simulated set | Treat as unknown capacity, never as zero |
-| 429 | Rate limited at the gateway; the body may not be JSON | Wait `Retry-After` seconds, then retry within the bound |
+| 429 | Rate limited at the gateway; the body may not be JSON | Wait for `Retry-After` (delay seconds or an HTTP date), then retry within the bound |
 | 503 | Temporary upstream unavailability | Retry with bounded backoff |
 
-Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those, through one shared client wrapper, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
+Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those, preferably through one shared fetch helper, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
 
 Midnight list routes document short public caching (`max-age` of 2 to 5 seconds). Polling faster than the cache lifetime returns the same data; debounce quotes and bind each response to the inputs that produced it.
 

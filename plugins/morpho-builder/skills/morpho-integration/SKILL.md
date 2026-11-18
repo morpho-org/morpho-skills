@@ -50,7 +50,7 @@ The Merkl coverage-weighted display convention uses hourly records over the same
 
 Hourly retention and vendor averaging guarantees remain unconfirmed. This convention is not a Merkl guarantee. For 30/90-day or one-year native windows, omit the unsupported reward average and identify the exclusion. Vault one-hour/inception lookbacks are not automatic substitutes. Keep APR and APY conventions distinct; adding reward APR does not establish auto-compounding.
 
-Every displayed rate states, next to the number, whether it is fixed or variable, whether it is APR or APY, and for variable rates the averaging window it was computed over. Earn yield shows native yield and each reward token as separate components; a combined figure appears only beside that breakdown and only when every component is known. Totals of value or earnings, such as net worth, position value and earned to date, include priced reward amounts as their own component alongside native value; when reward data or a reward price is unknown the total is partial and says so, never silently native-only.
+Every displayed rate states, next to the number, whether it is fixed or variable, whether it is APR or APY, and for variable rates the averaging window it was computed over. Earn yield shows native yield and each reward token as separate components; a combined figure appears only beside that breakdown and only when every component is known. Net worth and earned to date include priced reward amounts as their own component alongside native value, while position value and debt stay native (borrow rewards do not reduce debt); when reward data or a reward price is unknown the total is partial and says so, never silently native-only.
 
 Scope rewards to the actual campaign, token and distribution chain. A successful no-campaign result differs from lookup failure; an incomplete combined rate must not be relabeled as complete native-only yield. Borrow incentives remain separate from borrowing cost. Cumulative earnings and return on capital are not the same as a historical rate window.
 
@@ -109,7 +109,7 @@ Track confirmed and possibly submitted calls. Reconcile receipts before retrying
 
 Parse empty/non-JSON errors defensively. Use the OpenAPI's error schema and validated structured details when available; retain inputs and request IDs without leaking secrets. Unknown codes fail safely. Raw service messages belong in details, not promises of recovery.
 
-Route every REST and Actions request through one client wrapper that retries HTTP 429 and 503, and only those. The retry is required, not optional: honor `Retry-After` (seconds) when present, otherwise use bounded exponential backoff with jitter, at most three retries, then surface the failure with its request ID. A 429 can arrive without a JSON body. Retrying an Actions preparation request is safe because preparation sends nothing. Never retry other statuses automatically or automatically resubmit a wallet transaction.
+Retry HTTP 429 and 503, and only those: both are transient, so a bounded retry usually recovers without the user doing anything, while retrying other statuses repeats a request that will fail the same way. Sharing one retrying fetch helper across REST and Actions calls keeps the policy consistent. Honor `Retry-After` when present, as either delay seconds or an HTTP date; otherwise use bounded exponential backoff with jitter, at most three retries, then surface the failure with its request ID. A 429 can arrive without a JSON body. Retrying an Actions preparation request is safe because preparation sends nothing. Never retry other statuses automatically or automatically resubmit a wallet transaction.
 
 Expired/invalid continuations require a new intent. Stale quotes or slippage/rate failures require a fresh quote and consent. Liquidity failures require refreshed capacity and a smaller supported amount or explicitly chosen alternative; unknown capacity stays unknown. A shortfall message states the requested amount, the amount currently available and the difference, in token units with USD when priced, and names the bound that applies. Unsupported actions remain unavailable with their reason. Repayment beyond current debt requires refreshing and selecting a supported full-repay mode, not increasing the amount blindly.
 
@@ -117,7 +117,7 @@ Standard vault intents default to two hours, valid more than 60 seconds and at m
 
 ## UI correctness principles
 
-Read [UI integration principles](references/ui-principles.md) for state isolation, canonical controls and amount limits, number formatting, progressive loading, source-shaped tests and honest asynchronous status. These apply to whatever product functionality the integration actually offers; they do not prescribe an application layout or feature set.
+Read [UI integration principles](references/ui-principles.md) for state isolation, canonical controls and amount limits, number formatting, resilient list loading, source-shaped tests and honest asynchronous status. These apply to whatever product functionality the integration actually offers; they do not prescribe an application layout or feature set.
 
 ## Integrator handbook
 
