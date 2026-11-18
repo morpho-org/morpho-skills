@@ -12,6 +12,8 @@ Distinguish native yield/cost, reward APR, underlying-token yield where relevant
 
 Where accepted, referral fees require integer `bps` 1–200, a valid recipient, omission of zero and disclosure of token cost/gross versus net receipt. Verify the actual body and unchanged calls rather than a configuration variable alone.
 
+Check every rendered rate for its fixed or variable label, APR or APY, and averaging window. Check that net worth, position value and earned-to-date totals include priced rewards as their own component, or are marked partial when rewards are unknown.
+
 Combined metrics are unknown when a required component fails. Confirmed no campaign differs from failure and does not erase previously earned rewards.
 
 Cumulative native earnings, campaign-scoped earned/pending/claimable rewards and non-annualized return remain distinct from the rate window. Use each token's decimals/USD price/distribution chain and preserve unknown components. Claims are separate from withdrawal and use a verified distribution chain/Distributor/recipient; unsupported reward layers are explicit, not silently batched.

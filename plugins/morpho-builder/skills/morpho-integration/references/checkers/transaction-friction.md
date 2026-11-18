@@ -10,6 +10,8 @@ Trace identity and asynchronous state: product/chain/account transitions must no
 
 Disclose actual account/chain, assets/units, approvals, calls when available, gas, fees, recipient, deadlines and protection limits before prompting. A signature-required plan may lack final calls. Verify honest pending-plan disclosure, per-signature consent and final call review after continuation. Changed amounts, quotes, guards, penalties, recipients or received positions require renewed consent.
 
+Check that Max, sliders and input validation share one bound that includes available liquidity, and that an unknown bound disables Max rather than falling back to the balance. A shortfall message must state the requested and available amounts.
+
 Inspect expiry restart, signature rejection, stale quote, liquidity shortfall and partial-call failure as state transitions, not just rendered messages. Alternate actions must retain their own schema and protections.
 
 Failed proof/simulation, rejected signatures and expired plans send nothing. Retry only bounded 429/503 service failures, never wallet transactions. Preserve inputs; do not silently weaken guards or change funding/action/recipient. Raw failures belong in details with safe recovery and request IDs.

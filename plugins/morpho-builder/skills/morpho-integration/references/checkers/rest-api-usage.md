@@ -8,7 +8,9 @@ Check each route, version prefix, selector and parameter against the fetched Ope
 
 Follow pagination to a `null` cursor before any total, maximum or absence conclusion. A cursor reused after a sort or filter change, or one the client parsed or built, is a defect.
 
-Check status handling by meaning: an unpriced token (206) or unsupported capacity (501) must not become zero; a missing resource (404) must not fall back to another chain or version; only 429 and 503 are retried, with a bound.
+Check status handling by meaning: an unpriced token (206) or unsupported capacity (501) must not become zero; a missing resource (404) must not fall back to another chain or version; 429 and 503 are retried, and only those, with a bound and `Retry-After` honored, through a wrapper every client uses. A client with no retry is a finding.
+
+Check that lists render rows before per-row enrichments finish and that one failed enrichment does not blank the list.
 
 Find every place a key is read. A key in browser code, a public bundle, a log or a client-visible error is a release blocker. Action responses must not be cached or replayed.
 
