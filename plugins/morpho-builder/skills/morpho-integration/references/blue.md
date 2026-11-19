@@ -26,7 +26,7 @@ Use realized borrowing averages for the selected shared rate window, not instant
 
 ## Capacity and target calculations
 
-Borrowing capacity is constrained by collateral health and currently available liquidity, including validated reallocatable liquidity where applicable. A target-utilization bound is distinct from total liquidity. Indexed availability is not a guaranteed fill.
+Borrowing capacity is constrained by collateral health and currently available liquidity, including validated reallocatable liquidity where applicable. A target-utilization bound is distinct from total liquidity. Max borrow is the smaller of the health bound and available liquidity, and a supply withdrawal is bounded by available liquidity as well as the position. Indexed availability is not a guaranteed fill.
 
 A safe maximum must remain below LLTV according to the Actions health buffer. Its numeric margin is not established here; do not invent a reject-free maximum. Successful simulation remains mandatory.
 

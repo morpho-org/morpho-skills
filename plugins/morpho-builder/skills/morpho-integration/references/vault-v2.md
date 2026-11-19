@@ -20,7 +20,7 @@ Performance accounting uses average-cost realized plus unrealized native earning
 
 Native/auto funding is meaningful only for a wrapped-native underlying and requires the maximum native spend. Deposit capacity and expected shares are estimates until preparation succeeds. Vaults using a Midnight liquidity adapter cannot accept the unsupported deposit; normal withdrawals in that configuration use idle assets only.
 
-Liquid withdrawal availability is bounded by both the user's position and currently withdrawable liquidity. Do not double-count liquidity-adapter availability and force-deallocation capacity. On a shortfall, use validated error details or refreshed state/options; never invent an available amount.
+Liquid withdrawal availability is bounded by both the user's position and currently withdrawable liquidity. Do not double-count liquidity-adapter availability and force-deallocation capacity. Max withdraw is the smaller of the position and that liquidity. On a shortfall, use validated error details or refreshed state/options and state the requested and available amounts; never invent an available amount.
 
 A supported ordinary full redemption uses the full-position variant rather than an estimated asset amount. Derive exact asset/share variants from the Actions schema. Ordinary asset-withdrawal slippage is preparation/attestation-only, not an on-chain maximum-share guard; share/full withdrawals have no on-chain minimum-assets guarantee. Disclose execution-price risk.
 

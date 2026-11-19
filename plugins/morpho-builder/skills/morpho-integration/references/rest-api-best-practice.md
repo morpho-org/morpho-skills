@@ -23,6 +23,7 @@ Where REST does not apply:
 
 - **Wallet state.** Token balances, allowances and transaction receipts come from the wallet or an RPC node.
 - **Merkl rewards and claims.** These use [Merkl's API](https://developers.merkl.xyz/api-reference/get/v4/opportunities) and the Distributor contract; Actions has no claim route.
+- **History.** Read protocol events, transactions and past rates from REST history and activity routes. Where no route covers a history need, show it as unavailable or name the substitute source and why. Node log scans and legacy query APIs lack REST's units, freshness and null handling, so they work best as a named fallback rather than a default.
 - **A gap in coverage.** When no REST route exists, say which value comes from another source and why. A missing Actions route is a reason to leave the action unavailable, not to build calldata.
 
 An existing integration that reads protocol data through GraphQL should move those reads to the matching REST routes, one resource at a time, comparing units and null handling as it goes.
@@ -40,7 +41,7 @@ An existing integration that reads protocol data through GraphQL should move tho
 - **Use the documented selector.** Core selectors are `<chain_id>:<address>` or `<chain_id>:<market_id>`. Midnight REST market IDs are bare; Midnight address filters must be combined with `chain_ids`, because an address alone is not unique across chains.
 - **Read the envelope, then the data.** Single resources are wrapped in `data`. Lists are cursor-paginated; Midnight lists return `{ cursor, data }` and a `null` cursor marks the last page.
 - **Treat the cursor as opaque.** It encodes the sort field, direction and filters. Changing any of them invalidates it; never parse or build one. Read `limit` defaults and bounds from the operation's specification; they vary by route and API.
-- **Paginate to the end before aggregating.** A total, a maximum or an "absent" conclusion drawn from the first page is wrong.
+- **Paginate to the end before aggregating.** A total, a maximum or an "absent" conclusion drawn from the first page is wrong. Rows can still render page by page; only the aggregate waits.
 - **Parse amounts as integers.** Base-unit and WAD values are integer strings; convert to `bigint`, never to a float. Rates such as APY averages are decimal fractions.
 - **Keep `last_indexed_block` with the data.** Different resources can be at different blocks; do not present them as one atomic snapshot.
 - **Choose the averaging window explicitly.** Vault APY-average routes take `lookback` (`six_hours` by default); Blue returns all windows in `borrow_apy_averages` and `supply_apy_averages`, so select the desired response key. Check the operation's specification. History routes derive their averaging window from `lookback`, so a chart range is not the averaging window.
@@ -55,11 +56,18 @@ An existing integration that reads protocol data through GraphQL should move tho
 | 404 | The selected resource does not exist on that chain | Report it; do not fall back to another chain or version |
 | 422 on a Midnight quote | The requested size cannot be filled | Refresh capacity and let the user choose a smaller amount |
 | 501 on reallocatable liquidity | Unsupported vault adapter or vault outside the simulated set | Treat as unknown capacity, never as zero |
+| 429 | Rate limited at the gateway; the body may not be JSON | Wait for `Retry-After` (delay seconds or an HTTP date), then retry within the bound |
 | 503 | Temporary upstream unavailability | Retry with bounded backoff |
 
-Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry only 429 and 503, as the [shared manual](../SKILL.md#recovery-and-protection-limits) requires.
+Midnight errors use `{ error: { code, message, details, request_id } }`; keep `request_id` for support. Retry 429 and 503, and only those: both are transient, so a bounded retry usually recovers, while other statuses fail the same way again. One shared fetch helper keeps the policy consistent across REST and Actions calls. Having it return structured errors (status, code, request ID) lets the interface explain failures in its own words and keep raw service messages in secondary details.
 
 Midnight list routes document short public caching (`max-age` of 2 to 5 seconds). Polling faster than the cache lifetime returns the same data; debounce quotes and bind each response to the inputs that produced it.
+
+## Reward APR convention
+
+The Merkl coverage-weighted display convention uses hourly records over the same interval: deduplicate timestamps, exclude the extra inclusive boundary bucket, discard `hasUntrustedContribution` records, and sum mean(retained `avg`) × retained/expected / 100 across opportunities. Expected hourly counts are 6, 24 and 168 for six hours, one day and seven days. Paginate before computing. Do not substitute opportunity spot APR, `totalApr` or `nativeApr`. Empty/all-excluded or failed data is unavailable, not an invented zero.
+
+Hourly retention and vendor averaging guarantees remain unconfirmed. This convention is not a Merkl guarantee. For 30/90-day or one-year native windows, omit the unsupported reward average and identify the exclusion. Vault one-hour/inception lookbacks are not automatic substitutes.
 
 ## Preparing transactions with Actions
 
@@ -72,6 +80,10 @@ Midnight list routes document short public caching (`max-age` of 2 to 5 seconds)
 - **Do not take gas values from the simulation.** A successful simulation does not prove a wallet can send the calls; let the wallet estimate gas.
 - **Disclose the `signature_mode: "none"` fallback.** When a wallet cannot sign typed data, the returned approval calls can grant more than the signature would have, including an unlimited approval. Tell the user before sending them.
 - **Classify what was sent before retrying.** After a failure, nothing, part or an unknown amount of the plan may have landed. Check a pending hash or batch before requesting the action again, or it can run twice.
+
+### Expiry bounds
+
+Standard vault intents default to two hours, valid more than 60 seconds and at most seven days ahead. Blue defaults to 30 minutes, more than 60 seconds and at most two hours. Midnight quoted borrow/market repayment defaults to 30 minutes, minimum five minutes, at most one hour and not beyond maturity; direct repayment is more than 60 seconds and at most 24 hours. Recheck the operation schema, including collateral-only exceptions. An offer expiring before the action deadline can make a quote stale.
 
 ## Verify the Actions response proof
 

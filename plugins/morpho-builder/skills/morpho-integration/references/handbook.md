@@ -84,7 +84,8 @@ A rate without context sets the wrong expectation: users assume a blended number
 - **Blue ⭐** State that the borrow rate changes with utilization. Rewards arrive as a separate token and do not reduce debt; keep them out of the borrow cost.
 - **Blue, Midnight ⭐** Show an integrator fee as the integrator's own, separate from the protocol rate, with net amount received against gross debt. Interest accrues on gross debt.
 - **Midnight ⭐** Present the fixed rate as priced from available offers: it moves with the borrow size and as offers change. Requote on input changes and before signing, and show quote freshness.
-- **Shared Rec** State the averaging window and whether the figure is APR or APY, following the [rate convention](../SKILL.md#rates-and-accounting).
+- **Shared ⭐** State the averaging window of every variable native rate and reward APR, and whether the figure is APR or APY, following the [rate convention](../SKILL.md#rates-and-accounting).
+- **Earn ⭐** Count rewards in totals such as net worth and earned to date, as their own line. When reward data is unknown, name the rewards the total leaves out where known, otherwise mark it incomplete, rather than showing native value alone as complete.
 - **Earn Rec** Show the end date of a rewards program when it has one.
 - **Blue Rec** In a high-utilization market, warn that a new borrow can itself raise the rate.
 - **Midnight Nice** Explain early exit: direct repayment before maturity pays full face value, and offer-based repayment depends on available offers and is not a guaranteed cheaper exit.
@@ -110,8 +111,8 @@ Borrowing is a risk product before it is a rate product. If a user can enter an 
 Every extra step, hidden number or ambiguous button loses users between intent and signature. Remove friction, never review or verification.
 
 - **Shared Rec** Use the fewest signatures the protocol and wallet permit: approval with action, and supplied collateral with borrow, in one action where supported. The [signature and simulation rules](../SKILL.md#signature-rounds-and-simulation) still apply.
-- **Shared Rec** Preview the outcome as the user types: position value, estimated yearly yield, borrow cost, health. These are estimates until simulation succeeds.
-- **Shared Rec** Show the wallet balance, a maximum action and the USD equivalent beside the amount input.
+- **Shared Rec** Preview the outcome as the user types: position value, estimated yearly yield, borrow cost, health. These are estimates until simulation succeeds; the review shows the simulated values.
+- **Shared Rec** Show the wallet balance, a maximum action and the USD equivalent beside the amount input. The maximum respects available liquidity and every other limit, and an amount over a limit says how much is available.
 - **Shared Rec** Lead with the headline rate and its type; do not place it below secondary details.
 - **Shared Rec** Give each screen one primary action.
 - **Shared Rec** Keep one recap order on every review: outcome, rate, cost, obligation, risk.
