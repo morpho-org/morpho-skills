@@ -69,7 +69,7 @@ Keep the contact in the profile only, never in code, configuration or logs.
 | --- | --- |
 | Product and rate model | Which manuals to read: Earn → [Vault V2](vault-v2.md); variable → [Blue](blue.md); fixed → [Midnight](midnight.md) |
 | Existing vault or market | Discover candidates through Core or Midnight REST filtered by the chosen chains and assets, and confirm the exact one with the user; verify given market IDs exist on those chains |
-| New vault, curator, new market, oracle, seeded liquidity, splitter or wrapper | Deployment and curation work this manual does not cover. List each as a prerequisite and build against the deployed address once the user supplies it; do not invent one |
+| New vault, curator, new market, oracle, seeded liquidity, lender offers, splitter or wrapper | Deployment and curation work this manual does not cover. List each as a prerequisite and build against the deployed address once the user supplies it; do not invent one. Name who posts a fixed-rate market's lender offers in the hand-off, since loans cannot fill without them |
 | Chains | Check each against the Core or Midnight REST and Actions OpenAPI chain lists before building; an unsupported chain is a gap to tell the user |
 | Asset class RWA, or gated access | Usually a gated vault or market. Gated products are not supported by the Morpho App; disclose eligibility as the [handbook](handbook.md) asks |
 | Wallet model | Non-custodial: the user's wallet signs in the client. Custodial or omnibus: the integrator's custody signs server-side, and per-user balances follow the integrator's own ledger for omnibus |
