@@ -21,6 +21,10 @@ Core rules, not the whole manual: every section and linked reference still appli
 - Bound Max and sliders by every applicable limit (balance, position, liquidity, caps, health) and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
 - Explain errors from structured data; raw service messages go in secondary details ([recovery](#recovery-and-protection-limits)).
 
+## Intake
+
+Before building a new integration, interview the user with the [integration intake](references/intake.md): Earn, Borrow or both, then the architecture and footprint questions of the Integration Compass. Confirm the resulting profile, then let it choose the product manuals, chains, assets, wallet flow and fees, and list its open questions in the hand-off. Skip the interview for a review or a change whose scope is already set.
+
 ## Concepts
 
 Choose the product from the use case and deployed configuration, not a preferred transaction template.
