@@ -2,7 +2,7 @@
 
 Before building, interview the user the way the [Integration Compass](https://morpho-integration-compass.vercel.app/) does, then build from the resulting profile. If they already have a Compass profile (its Markdown or JSON export), use it and ask only what it leaves missing or marked `?`.
 
-Ask one question at a time with the options below and their one-line meaning, and mark the recommended option where there is one. Skip a question the request, repository or earlier answers already settle, and say what you assumed. Every question except Product and Wallet model accepts "Not sure yet", recorded as `?`. In an unattended run, take the answers the brief states, record the rest as `?` and continue.
+Ask the product and architecture questions one at a time, with the options below and their one-line meaning, and mark the recommended option where there is one; ask the footprint as one grouped question, as the Compass does on a single panel. Skip a question the request, repository or earlier answers already settle, and say what you assumed. Every question except Product and Wallet model accepts "Not sure yet", recorded as `?`. In an unattended run, take the answers the brief states, record the rest as `?` and continue.
 
 ## 1. Product
 
@@ -18,7 +18,7 @@ Ask whether they want **Earn** (users deposit assets into vaults to earn yield),
 | EIP-7702: upgrade those EOAs to smart accounts? | Non-custodial with EOA | Yes (batched approvals and actions); no (separate approve and action steps) |
 | Vault: new vault, or an existing one? | Earn | New (deploy a vault the integrator curates); existing (integrate a deployed Morpho vault) |
 | Curator: who curates the new vault? | New vault | The integrator; an established curator |
-| Deposit access: who can deposit? | Earn | Open, recommended (anyone; compatible with the Morpho App); gated (a Gate controls who deposits; not supported by the Morpho App) |
+| Deposit access: who can deposit into the vault? | Earn, new or existing vault; choosing an existing vault does not settle it | Open, recommended (anyone; compatible with the Morpho App); gated (a Gate controls who deposits; not supported by the Morpho App) |
 | Curator relationship: do you have a direct relationship with the vault's curator? | Existing vault | No; yes (fees can be coordinated with the curator) |
 | Earn fee: how do you want to take a fee on deposits? | Earn | New vault: none, direct (taken by the vault), splitter (split on-chain; needs a dedicated new vault). Existing vault: none, wrapper (a contract over the vault; recommended without a curator relationship), off-chain revenue share with the curator (recommended with one) |
 | Market: new market, or an existing one? | Borrow | New (an isolated market: collateral, loan asset, oracle, LLTV, rate model); existing |
