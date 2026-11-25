@@ -20,7 +20,7 @@ Ask whether they want **Earn** (users deposit assets into vaults to earn yield),
 | Curator: who curates the new vault? | New vault | The integrator; an established curator |
 | Deposit access: who can deposit into the vault? | Earn, new or existing vault; choosing an existing vault does not settle it | Open, recommended (anyone; compatible with the Morpho App); gated (a Gate controls who deposits; not supported by the Morpho App) |
 | Curator relationship: do you have a direct relationship with the vault's curator? | Existing vault | No; yes (fees can be coordinated with the curator) |
-| Earn fee: how do you want to take a fee on deposits? | Earn | New vault: none, direct (taken by the vault), splitter (split on-chain; needs a dedicated new vault). Existing vault: none, wrapper (a contract over the vault; recommended without a curator relationship), off-chain revenue share with the curator (recommended with one) |
+| Earn fee: how do you want to take a fee on deposits? | Earn | New vault: none, direct (the vault's own performance or management fee, not a per-deposit charge), splitter (split on-chain; needs a dedicated new vault). Existing vault: none, wrapper (a contract over the vault; recommended without a curator relationship), off-chain revenue share with the curator (recommended with one) |
 | Market: new market, or an existing one? | Borrow | New (an isolated market: collateral, loan asset, oracle, LLTV, rate model); existing |
 | Market ID: which existing markets? | Existing market | One or more `0x`-prefixed 32-byte market IDs |
 | Oracle: what pricing does the new market need? | New market | Existing oracle, recommended; new oracle from existing price feeds; new price feeds and a new oracle |
