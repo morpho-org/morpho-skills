@@ -23,7 +23,7 @@ Core rules, not the whole manual: every section and linked reference still appli
 
 ## Intake
 
-Before building a new integration, interview the user with the [integration intake](references/intake.md): Earn, Borrow or both, then the architecture and footprint questions of the Integration Compass. Confirm the resulting profile, then let it choose the product manuals, chains, assets, wallet flow and fees, and list its open questions in the hand-off. Skip the interview for a review or a change whose scope is already set.
+Before building a new integration, interview the user with the [integration intake](references/intake.md): Earn, Borrow or both, then the architecture and footprint questions of the Integration Compass. Confirm the resulting profile (in an unattended run, build from the brief's answers with the rest marked `?`), then let it choose the product manuals, chains, assets, wallet flow and fees, and list its open questions in the hand-off. Skip the interview for a review or a change whose scope is already set.
 
 ## Concepts
 
