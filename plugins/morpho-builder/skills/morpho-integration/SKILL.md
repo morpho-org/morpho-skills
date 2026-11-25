@@ -20,7 +20,7 @@ Core rules, not the whole manual: every section and linked reference still appli
 - Show missing, failed or loading values as unknown, never as zero or a smaller complete-looking value; a total missing items names them where known, else is marked incomplete ([units](#identity-and-units)).
 - Bound Max and sliders by every applicable limit (balance, position, liquidity, caps, health) and state shortfall amounts ([UI principles](references/ui-principles.md#state-and-controls)).
 - Explain errors from structured data; raw service messages go in secondary details ([recovery](#recovery-and-protection-limits)).
-- When a build or change is done, end by asking the user whether to self-review it with morpho-integration-review ([review](#review)).
+- When a build or change is done, offer the user a self-review with morpho-integration-review: ask, or recommend it when no one can answer ([review](#review)).
 
 ## Concepts
 
@@ -129,6 +129,6 @@ Read the [integrator handbook](references/handbook.md) for what users must be to
 
 Review an integration read-only with the [morpho-integration-review](../morpho-integration-review/SKILL.md) skill; building needs the same invariants, not a separate specification.
 
-When you finish building or changing an integration, ask the user whether to self-review it before you hand it over. Say the review is read-only, checks the work against this manual with morpho-integration-review's specialist checkers, and reports defects separately from unverified paths. If they accept, run that skill, report the findings, fix only those they choose and offer to review again. If no one can answer, as in an unattended run, end by recommending the review rather than waiting. Do not ask when the task was itself a review.
+When you finish building or changing an integration, ask the user whether to self-review it before you hand it over. Say the review is read-only, checks the work against this manual with morpho-integration-review's specialist checkers, and reports defects separately from unverified paths. If they accept, run that skill, report the findings, fix only those they choose and offer to review again. If no one can answer, as in an unattended run, end by recommending the review rather than waiting. If morpho-integration-review is not installed, recommend installing it from the same plugin. Do not ask when the task was itself a review.
 
 Unpublished health buffers, visual thresholds, notification policy, vendor accounting guarantees, claim deployment/recipient configuration and unsupported roll/margin behavior require evidence. Do not invent them to complete a calculation or imply parity with another application.

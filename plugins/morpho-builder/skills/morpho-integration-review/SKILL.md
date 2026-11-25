@@ -5,6 +5,8 @@ description: Review a Morpho integration read-only against the morpho-integratio
 
 # Reviewing an integration
 
+This skill applies the morpho-integration skill's manual and needs it installed alongside; if that manual is missing, stop and ask the user to install it rather than reviewing from memory.
+
 Review is read-only: do not change code, configuration, copy or external state. Read the [shared manual](../morpho-integration/SKILL.md), [UI principles](../morpho-integration/references/ui-principles.md), [integrator handbook](../morpho-integration/references/handbook.md), [REST API best practice](../morpho-integration/references/rest-api-best-practice.md) and only the applicable product manuals: [Vaults](../morpho-integration/references/vault-v2.md), [Blue](../morpho-integration/references/blue.md), [Midnight](../morpho-integration/references/midnight.md).
 
 ## Establish scope and contracts
