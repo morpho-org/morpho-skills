@@ -26,7 +26,7 @@ Ask whether they want **Earn** (users deposit assets into vaults to earn yield),
 | Oracle: what pricing does the new market need? | New market | Existing oracle, recommended; new oracle from existing price feeds; new price feeds and a new oracle |
 | Borrow access: who can borrow? | Borrow | Open, recommended (compatible with the Morpho App); gated (for example KYC-wrapped collateral; not supported by the Morpho App) |
 | Origination fee: how do you want to charge for opening a loan? | Borrow | Flat fee in basis points of the borrowed amount; none |
-| Liquidity: where does the new market's borrowable liquidity come from? | New market | The market's existing supply; a supplying vault the integrator seeds; the Public Allocator (just-in-time liquidity) |
+| Liquidity: where does the new market's borrowable liquidity come from? | New market | The market's existing supply; a supplying vault the integrator seeds; the Public Allocator (just-in-time liquidity). A fixed-rate market also needs lender offers before loans can be taken ([Midnight](midnight.md#quotes-and-capacity)) |
 | Rewards: do you want to run your own incentive campaign? | Always | None (forwarded market rewards still reach users); a Merkl campaign on top |
 
 The Compass also asks how to read Morpho data. Do not ask it here: this manual requires the REST APIs, and a strictly on-chain requirement is a gap to state, not an option.
