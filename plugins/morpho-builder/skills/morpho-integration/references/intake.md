@@ -45,7 +45,7 @@ The Compass also asks how to read Morpho data. Do not ask it here: this manual r
 
 ## 4. Profile
 
-Summarize the answers as the Compass export does, then ask the user to confirm or correct it before building:
+Ask the footprint before showing the profile; record any footprint answer the user skips as `?` so it counts as open. Summarize the answers as the Compass export does, then ask the user to confirm or correct it before building:
 
 ```markdown
 # Morpho Integration Profile: <integrator>
@@ -56,8 +56,8 @@ Summarize the answers as the Compass export does, then ask the user to confirm o
 - **<Question title>:** <answer>: <its one-line meaning>
 
 ## Footprint
-- **Launch timeline:** <answer or —>
-- **Region / Chains / Asset class / <Deposit|Borrow|Collateral> assets / Wallet provider:** <answers or —>
+- **Launch timeline:** <answer or ?>
+- **Region / Chains / Asset class / <Deposit|Borrow|Collateral> assets / Wallet provider:** <answers or ?>
 ```
 
 Keep the contact in the profile only, never in code, configuration or logs.
