@@ -1,8 +1,8 @@
 # Rate and cost honesty
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check the handbook's [rate and cost honesty](../handbook.md#rate-and-cost-honesty) guidelines: fixed or variable label, component split with tokens named, and integrator fees shown separately.
+Check the handbook's [rate and cost honesty](../../../morpho-integration/references/handbook.md#rate-and-cost-honesty) guidelines: fixed or variable label, component split with tokens named, and integrator fees shown separately.
 
 Trace each rate to the selected OpenAPI operation/vendor contract and its averaging convention. Variable rates use realized averages; Midnight uses quote/effective fixed APR and maturity. Never substitute instantaneous or another-window data for a null chosen window.
 

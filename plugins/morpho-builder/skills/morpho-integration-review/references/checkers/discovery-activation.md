@@ -1,8 +1,8 @@
 # Discovery and activation
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check the handbook's [discovery and activation](../handbook.md#discovery-and-activation) guidelines for the entry points, prompts and position views the integration offers. These are growth recommendations; report gaps as usability findings, not release blockers.
+Check the handbook's [discovery and activation](../../../morpho-integration/references/handbook.md#discovery-and-activation) guidelines for the entry points, prompts and position views the integration offers. These are growth recommendations; report gaps as usability findings, not release blockers.
 
 Follow each prompt or entry point to its destination. An eligible-asset or idle-balance prompt without an action in the component, or one that leads to a different product or a stale selection, loses the intent.
 

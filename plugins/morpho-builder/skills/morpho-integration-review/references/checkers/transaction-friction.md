@@ -1,8 +1,8 @@
 # Transaction friction
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check the handbook's [transaction friction](../handbook.md#transaction-friction) guidelines: fewest signatures the protocol and wallet permit, live preview, amount entry, one primary action and a fixed recap order. Fewer steps must not remove review, verification or consent.
+Check the handbook's [transaction friction](../../../morpho-integration/references/handbook.md#transaction-friction) guidelines: fewest signatures the protocol and wallet permit, live preview, amount entry, one primary action and a fixed recap order. Fewer steps must not remove review, verification or consent.
 
 Trace an offered action from explicit intent through preparation, review, consent, wallet interaction and reconciliation. Loading/polling must not transact; pending state must prevent duplicate sends.
 
