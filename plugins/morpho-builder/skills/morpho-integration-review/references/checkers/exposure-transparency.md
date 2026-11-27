@@ -1,8 +1,8 @@
 # Exposure transparency
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check the handbook's [exposure transparency](../handbook.md#exposure-transparency) guidelines: vault or market identity, curator, collateral and allocation, liquidity, oracle and any warnings the API returns.
+Check the handbook's [exposure transparency](../../../morpho-integration/references/handbook.md#exposure-transparency) guidelines: vault or market identity, curator, collateral and allocation, liquidity, oracle and any warnings the API returns.
 
 For functionality the integration offers, essential identity, units, source freshness, costs, protection limits and relevant risk information must be available when making the decision, not hidden behind an unrelated path.
 

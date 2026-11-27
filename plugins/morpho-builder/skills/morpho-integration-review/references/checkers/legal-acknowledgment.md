@@ -1,8 +1,8 @@
 # Legal acknowledgment
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check the handbook's [legal acknowledgment](../handbook.md#legal-acknowledgment) guidelines. The first-interaction notice is the one obligation in the handbook.
+Check the handbook's [legal acknowledgment](../../../morpho-integration/references/handbook.md#legal-acknowledgment) guidelines. The first-interaction notice is the one obligation in the handbook.
 
 Before first transaction, require active acknowledgement of integrator terms, Morpho disclaimer and relevant product risks, in substantially the handbook's wording and distinct from accepting the integrator's terms alone. No preselected consent or bypass through deep links, restored state, alternate action or wallet changes. Keep an auditable version/time without logging signatures or unnecessary personal data.
 

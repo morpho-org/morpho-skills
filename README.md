@@ -10,9 +10,10 @@ For teams building, reviewing or migrating Morpho-powered integrations. The inte
 | --- | --- |
 | Earn — Morpho Vault V2, with Vault V1 compatibility | `morpho-integration` |
 | Borrow — Blue variable rate, no maturity; Midnight fixed rate, fixed maturity | `morpho-integration` |
+| Review — read-only audit of an integration, and the self-review offered when a build is done | `morpho-integration-review` |
 | Migration — existing GraphQL reads and legacy transaction builders to REST + Actions | `migrate-graphql-to-rest` |
 
-Before building, `morpho-integration` interviews the user like the [Integration Compass](https://morpho-integration-compass.vercel.app/): Earn, Borrow or both, then architecture and footprint, and builds from the confirmed profile. Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. Each checker is a host-neutral prompt under `morpho-integration/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
+Before building, `morpho-integration` interviews the user like the [Integration Compass](https://morpho-integration-compass.vercel.app/): Earn, Borrow or both, then architecture and footprint, and builds from the confirmed profile. Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. When an implementation is done, `morpho-integration` asks the user whether to run this review on it. Each checker is a host-neutral prompt under `morpho-integration-review/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
 
 The migration skill audits query/transaction consumers, maps consumed fields to verified REST routes, rewrites transactions to Actions, and compares legacy/new outputs with explicit semantic changes and gaps. It includes a migration-report template; missing equivalents are not silently approximated.
 
@@ -59,20 +60,23 @@ For just the server connection, without the bundled skill, use `codex mcp add mo
 npx skills add morpho-org/morpho-skills
 ```
 
-`npx skills` detects supported hosts and installs the two standalone skills. The root entries under `skills/` remain symlinks to the self-contained plugin copies, so both installation paths expose the same entrypoint, product references, review orchestrator, and checker fleet.
+`npx skills` detects supported hosts and installs the three standalone skills. The root entries under `skills/` remain symlinks to the self-contained plugin copies, so both installation paths expose the same entrypoint, product references, review skill, and checker fleet.
 
 ## Development
 
-Product guidance is maintained in one public integration skill, alongside the migration skill:
+Product guidance is maintained in one public integration skill, alongside the review and migration skills:
 
 ```text
 plugins/morpho-builder/skills/
 ├── morpho-integration/
 │   ├── SKILL.md
-│   └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md,intake.md,review.md,checkers/...}
+│   └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md,intake.md}
+├── morpho-integration-review/
+│   ├── SKILL.md
+│   └── references/checkers/...
 └── migrate-graphql-to-rest/
     ├── SKILL.md
     └── references/{route-map.md,verification.md,migration-report.md}
 ```
 
-Keep Earn, Blue and Midnight manuals product-specific; maintain shared principles and specialist checker prompts once. Validate both skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.
+Keep Earn, Blue and Midnight manuals product-specific; maintain shared principles and specialist checker prompts once. Validate the three skill directories after changes with the `quick_validate.py` supplied by the Codex `skill-creator` skill.

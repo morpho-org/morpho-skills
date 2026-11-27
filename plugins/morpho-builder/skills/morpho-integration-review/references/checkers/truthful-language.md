@@ -1,8 +1,8 @@
 # Truthful language
 
-Review read-only using [review guidance](../review.md), the [shared manual](../../SKILL.md), [UI principles](../ui-principles.md), the [handbook](../handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
+Review read-only using [review guidance](../../SKILL.md), the [shared manual](../../../morpho-integration/SKILL.md), [UI principles](../../../morpho-integration/references/ui-principles.md), the [handbook](../../../morpho-integration/references/handbook.md) and the applicable product manual. Do not edit or transact. Report concrete defects and evidence limits separately, scoped by product/version; do not infer execution from source or synthetic data.
 
-Check user-facing copy against the handbook's [truthful language](../handbook.md#truthful-language) guidelines, including its avoid/use table. Read rendered copy, tooltips, errors, empty states, notifications and metadata, not only the main screens.
+Check user-facing copy against the handbook's [truthful language](../../../morpho-integration/references/handbook.md#truthful-language) guidelines, including its avoid/use table. Read rendered copy, tooltips, errors, empty states, notifications and metadata, not only the main screens.
 
 Earn means the actual Vault V2 or explicitly selected V1, not an unnamed fund, staking product or guaranteed investment. Blue is variable-rate borrowing without maturity; Midnight is fixed-rate, fixed-maturity borrowing on the selected supported chain.
 
