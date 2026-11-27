@@ -1,0 +1,5 @@
+# Local promptfoo output. Workspaces live outside the repository (see README).
+results*
+*.log
+.promptfoo/
+.cache/
