@@ -22,6 +22,10 @@ Core rules, not the whole manual: every section and linked reference still appli
 - Explain errors from structured data; raw service messages go in secondary details ([recovery](#recovery-and-protection-limits)).
 - When a build or change is done, offer the user a self-review with morpho-integration-review: ask, or recommend it when no one can answer ([review](#review)).
 
+## Intake
+
+Before building a new integration, interview the user with the [integration intake](references/intake.md): Earn, Borrow or both, then the architecture and footprint questions of the Integration Compass. Confirm the resulting profile (in an unattended run, build from the brief's answers with the rest marked `?`), then let it choose the product manuals, chains, assets, wallet flow and fees, and list its open questions in the hand-off. Skip the interview for a review or a change whose scope is already set.
+
 ## Concepts
 
 Choose the product from the use case and deployed configuration, not a preferred transaction template.

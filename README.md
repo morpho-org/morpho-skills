@@ -13,7 +13,7 @@ For teams building, reviewing or migrating Morpho-powered integrations. The inte
 | Review — read-only audit of an integration, and the self-review offered when a build is done | `morpho-integration-review` |
 | Migration — existing GraphQL reads and legacy transaction builders to REST + Actions | `migrate-graphql-to-rest` |
 
-Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. When an implementation is done, `morpho-integration` asks the user whether to run this review on it. Each checker is a host-neutral prompt under `morpho-integration-review/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
+Before building, `morpho-integration` interviews the user like the [Integration Compass](https://morpho-integration-compass.vercel.app/): Earn, Borrow or both, then architecture and footprint, and builds from the confirmed profile. Read only the applicable product manuals. Reviews assess the functionality actually offered and the agreed integration scope using eleven specialist checkers: one per handbook category, plus REST API usage and units and transaction integrity, in parallel when delegation is available. When an implementation is done, `morpho-integration` asks the user whether to run this review on it. Each checker is a host-neutral prompt under `morpho-integration-review/references/checkers/`; conclusions keep defects, unverified paths and product-specific evidence separate. Actions API keys stay server-side. The skills provide guidance, not a transaction execution service.
 
 The migration skill audits query/transaction consumers, maps consumed fields to verified REST routes, rewrites transactions to Actions, and compares legacy/new outputs with explicit semantic changes and gaps. It includes a migration-report template; missing equivalents are not silently approximated.
 
@@ -70,7 +70,7 @@ Product guidance is maintained in one public integration skill, alongside the re
 plugins/morpho-builder/skills/
 ├── morpho-integration/
 │   ├── SKILL.md
-│   └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md}
+│   └── references/{vault-v2.md,blue.md,midnight.md,ui-principles.md,handbook.md,rest-api-best-practice.md,intake.md}
 ├── morpho-integration-review/
 │   ├── SKILL.md
 │   └── references/checkers/...
